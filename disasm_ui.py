@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+#disasm_ui.py
 
 # ----------------------------------------------------------------------
 # Be sure to add the python path that points to the LLDB shared library.
@@ -9,15 +10,23 @@
 # ----------------------------------------------------------------------
 
 import lldb
+from lldbutil import print_stacktrace
 import os
+import os.path
 import sys
 import re
+import binascii
+import webbrowser
 
 from PyQt6.QtGui import *
 from PyQt6.QtCore import *
 
 from PyQt6.QtWidgets import *
 from PyQt6 import uic, QtWidgets
+
+from assemblerTextEdit import *
+from registerTreeView import *
+from config import *
 
 APP_NAME = "LLDB-GUI"
 WINDOW_SIZE = 620
@@ -34,322 +43,63 @@ process = None
 global target
 target = None
 
-#def disassemble_instructions(insts):
-#   for i in insts:
-#       print(i)
+interruptTargetLoad = False
 
-class AssemblerTextEdit(QWidget):
+class ProcessThreadObject(QObject):
+    process = None
+    threads = []
     
-    lineCount = 0
-    
-    def setAsmText(self, txt):
-        self.txtCode.append(txt)
-        self.txtLineCount.append(str(self.lineCount) + ":")
-        self.lineCount += 1
+    def __init__(self, process):
+        super(ProcessThreadObject, self).__init__()
+        self.process = process
+#       self.threads = threads
         
-    def __init__(self):
-        super().__init__()
-        
-        self.setLayout(QHBoxLayout())
-        
-        self.txtLineCount = QTextEdit()
-        self.txtLineCount.setFixedWidth(70)
-#       self.lineCount.setContentsMargins(0)
-#       self.lineCount.setTextBackgroundColor(QColor("lightgray"))
-        self.txtLineCount.setTextColor(QColor("black"))
-        self.txtLineCount.setStyleSheet("background-color: rgb(200, 200, 200); padding-left:0; padding-top:0; padding-bottom:0; padding-right:0; margin-left:0px; margin-right:0px;")
-        self.txtLineCount.setReadOnly(True)
-#       self.layout().addWidget(self.lineCount)
-        
-        self.txtCode = QTextEdit()
-        self.txtCode.setTextColor(QColor("black"))
-        self.txtCode.setStyleSheet("background-color: rgb(200, 200, 200); padding-left:0; padding-top:0; padding-bottom:0; padding-right:0; margin-left:0px; margin-right:0px;")
-        self.txtCode.setReadOnly(True)
-#       self.layout().addWidget(self.txtCode)
-        self.txtLineCount.verticalScrollBar().setVisible(False)
-        self.txtLineCount.verticalScrollBar().hide()
-        self.txtLineCount.horizontalScrollBar().setVisible(False)
-        self.txtLineCount.horizontalScrollBar().hide()
-        
-        self.txtLineCount.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.txtLineCount.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        
-        self.txtLineCount.horizontalScrollBar().valueChanged.connect(
-            self.txtCode.horizontalScrollBar().setValue)
-        self.txtLineCount.verticalScrollBar().valueChanged.connect(
-            self.txtCode.verticalScrollBar().setValue)
-        self.txtCode.horizontalScrollBar().valueChanged.connect(
-            self.txtLineCount.horizontalScrollBar().setValue)
-        self.txtCode.verticalScrollBar().valueChanged.connect(
-            self.txtLineCount.verticalScrollBar().setValue)
-        
-        self.frame = QFrame()
-        
-        self.vlayout = QHBoxLayout()
-        self.frame.setLayout(self.vlayout)
-        
-        self.vlayout.addWidget(self.txtLineCount)
-        self.vlayout.addWidget(self.txtCode)
-        self.vlayout.setSpacing(0)
-        self.vlayout.setContentsMargins(0, 0, 0, 0)
-        
-        self.frame.setFrameShape(QFrame.Shape.NoFrame)
-        self.frame.setFrameStyle(QFrame.Shape.NoFrame)
-        self.frame.setContentsMargins(0, 0, 0, 0)
-#       self.frame.spac
-        # .setSpacing(0)
-        
-        self.widget = QWidget()
-        self.layFrame = QHBoxLayout()
-        self.layFrame.addWidget(self.frame)
-        self.widget.setLayout(self.layFrame)
-        
-        self.layout().addWidget(self.widget)
-        
-class CustomTextEdit(QTextEdit):
-    
-    def __init__(self):
-        super().__init__()
-        
-        self.cursorPositionChanged.connect(self.updateLineNumberArea)
-#       self.setWordWrapMode(Qt) # .setWordWrapMode(QTextEdit.WordWrapMode.NoWrap)
-        self.highlightCurrentLine()
-        
-        self.lineNumberArea = QWidget(self)
-        self.lineNumberArea.setGeometry(QRect(0, 0, self.width(), 20))
-        self.lineNumberArea.setObjectName("lineNumberArea")
-#       self.lineNumberArea.setAlignment(Qt.AlignRight)
-        
-        self.updateLineNumberAreaWidth()
-#       self.connect(self, &QTextEdit::cursorPositionChanged, self.updateLineNumberArea)
-#       self.connect(self, &QTextEdit::updateRequest, self.updateLineNumberArea)
-        
-    def paintEvent(self, event):
-        super().paintEvent(event)
-        
-        self.lineNumberArea.update()
-        
-        painter = QPainter(self.viewport())
-#       painter.fillRect(event.rect(), QColor("lightgray"))
-    
-    def updateLineNumberAreaWidth(self):
-        metrics = QFontMetrics(self.font())
-#       lineNumberWidth = metrics.horizontalAdvance("0") * self.blockCount()
-        lineNumberWidth = 20
-        self.lineNumberArea.setFixedWidth(lineNumberWidth + 10)
-        
-    def updateLineNumberArea(self):
-        cursor = self.textCursor()
-        block = cursor.block()
-        blockNumber = block.blockNumber() + 1
-        
-        if blockNumber < 0:
-            blockNumber = 0
-            
-        cursorEnd = cursor.position() + cursor.block().length()
-        lineCount = self.document().lastBlock().blockNumber() + 1
-        
-        self.lineNumberArea.update(0, 0, self.lineNumberArea.width(), lineCount * 20)
-        
-    def highlightCurrentLine(self):
-        cursor = self.textCursor()
-        
-        if not cursor.hasSelection():
-            lineColor = QColor("gray")
-            selectionColor = Qt.BrushStyle.NoBrush
-        else:
-            selectionColor = Qt.highlightSelection()
-            lineColor = self.palette().color(QPalette.Text)
-            
-        format = QTextCharFormat()
-        format.setBackground(lineColor)
-        
-#       cursor.setBlockFormat(format)
-        
-    
-class RegisterTreeWidget(QTreeWidget):
-    def __init__(self):
-        super().__init__()
-#       self.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
-        
-class Pymobiledevice3GUIWindow(QMainWindow):
-    """PyMobiledevice3GUI's main window (GUI or view)."""
-    
-    def extract_address(self, string):
-        pattern = r'\[0x([0-9a-fA-F]+)\]'
-        
-        # Use re.search to find the match
-        match = re.search(pattern, string)
-        
-        if match:
-            hex_value = match.group(1)
-            print("Hex value:", hex_value)
-            return hex_value
-        else:
-            print("No hex value found in the string.")
-            return ""
-#       pattern = r"0x\d+"
-#       match = re.search(pattern, string)
-#       if match:
-#           return match.group(0)
-#       else:
-#           return None
-#   def extract_address(self, string):
-#       pattern = r"0x(?P<address>\d+)"
-#       match = re.search(pattern, string)
-#       if match:
-#           return match.group("address")
-#       else:
-#           return None
-    def read_memory(self, process, address, size):
-        error = lldb.SBError()
-        target = process.GetTarget()
-        
-        # Read memory using ReadMemory function
-        data = target.ReadMemory(address, size, error)
-        
-        if error.Success():
-            return data
-        else:
-            print("Error reading memory:", error)
-            return None
-        
-    def breakpoint_cb(self, frame, bpno, err):
-        print('breakpoint callback')
-        return False
-    
-    def disassemble_instructions(self, insts):
-        global target
-        for i in insts:
-#           for function in dir(i):
-##               if function.startswith("__file_addr_property__"):
-##                   for function2 in dir(function):
-##                       print(f'>>> {function2}')
-##               if function.startswith("__"):
-##                   continue
-#               
-##               print(function)
-#               pass
-                
-            print(i)
-            address = self.extract_address(f'{i}')
-            self.txtMultiline.setTextColor(QColor("white"))
-            self.txtMultiline.insertPlainText(f'0x{address}:\t')
-            self.txtMultiline.setTextColor(QColor("green"))
-            self.txtMultiline.insertPlainText(f'{i.GetMnemonic(target)}\t{i.GetOperands(target)}\n') # \t{i.GetData(target)}
-            self.txtMultilineNG.setAsmText(f'0x{address}:\t{i.GetMnemonic(target)}\t{i.GetOperands(target)}')
-            
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle(APP_NAME + " " + APP_VERSION)
-        self.setBaseSize(WINDOW_SIZE * 2, WINDOW_SIZE)
-        self.setMinimumSize(WINDOW_SIZE * 2, WINDOW_SIZE)
+    def addThread(self, thread):
+        self.threads.append(thread)
 
-        self.toolbar = QToolBar('Main ToolBar')
-        self.addToolBar(self.toolbar)
-        self.toolbar.setIconSize(QSize(32, 32))
+class TargetLoadReceiver(QObject):
+#	data_received = pyqtSignal(str)
+    interruptTargetLoad = pyqtSignal()
+    
+class TargetLoadWorkerSignals(QObject):
+    finished = pyqtSignal()
+    sendProgressUpdate = pyqtSignal(int)
+    loadRegister = pyqtSignal(str)
+    loadRegisterValue = pyqtSignal(int, str, str, str)
+    loadProcess = pyqtSignal(object)
+    loadThread = pyqtSignal(int, object)
+    
+    
+class TargetLoadWorker(QRunnable):
+    
+#   treeWidget = None
+    window = None
+    
+    def __init__(self, window_obj):
+        super(TargetLoadWorker, self).__init__()
+        self.isTargetLoadActive = False
+        self.window = window_obj
+#       self.treeWidget = tree_widget
+#       self.root_item = root_item
+#       self.data_receiver = data_receiver
+        self.signals = TargetLoadWorkerSignals()
         
-        # new menu item
-        new_action = QAction(QIcon(os.path.join("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/resources/", 'bug.png')), '&Bug', self)
-        new_action.setStatusTip('Start Debugging')
-        new_action.setShortcut('Ctrl+R')
-#       new_action.triggered.connect(self.new_document)
-#       file_menu.addAction(new_action)
-        self.toolbar.addAction(new_action)
+    def run(self):
+        QCoreApplication.processEvents()	
+        self.runTargetLoad()
         
-        run_action = QAction(QIcon(os.path.join("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/resources/", 'play.png')), '&Run', self)
-        run_action.setStatusTip('Run Debugging')
-        run_action.setShortcut('Ctrl+P')
-#       new_action.triggered.connect(self.new_document)
-#       file_menu.addAction(new_action)
-        self.toolbar.addAction(run_action)
+    def runTargetLoad(self):
+#       self.treeWidget.setEnabled(False)
+        QCoreApplication.processEvents()
+        if self.isTargetLoadActive:
+            interruptTargetLoad = True
+            return
+        else:
+            interruptTargetLoad = False
+        QCoreApplication.processEvents()	
+        self.isTargetLoadActive = True
         
-        step_over_action = QAction(QIcon(os.path.join("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/resources/", 'step_over_ng2.png')), '&StepOver', self)
-        step_over_action.setStatusTip('Step over')
-        step_over_action.setShortcut('Ctrl+T')
-#       new_action.triggered.connect(self.new_document)
-#       file_menu.addAction(new_action)
-        self.toolbar.addAction(step_over_action)
-        
-        step_into_action = QAction(QIcon(os.path.join("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/resources/", 'step_into.png')), '&StepInto', self)
-        step_into_action.setStatusTip('Step Into')
-        step_into_action.setShortcut('Ctrl+I')
-#       new_action.triggered.connect(self.new_document)
-#       file_menu.addAction(new_action)
-        self.toolbar.addAction(step_into_action)
-        
-        step_out_action = QAction(QIcon(os.path.join("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/resources/", 'step_out_ng.png')), '&StepOut', self)
-        step_out_action.setStatusTip('Step out')
-        step_out_action.setShortcut('Ctrl+O')
-#       new_action.triggered.connect(self.new_document)
-#       file_menu.addAction(new_action)
-        self.toolbar.addAction(step_out_action)
-        
-        self.txtMultiline = CustomTextEdit()
-        self.txtMultiline.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
-        self.txtMultiline.setReadOnly(True)
-        
-        font = QFont("Courier New")
-        font.setFixedPitch(True)
-        
-        self.txtMultiline.setFont(font)
-#       self.txtMultiline.append(f'HELLO')
-        
-        self.splitter = QSplitter()
-        self.splitter.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-#       self.splitter.setLayout(QHBoxLayout())
-        self.splitter.setOrientation(Qt.Orientation.Vertical)
-        
-        self.layout = QVBoxLayout()
-        
-        self.txtMultilineNG = AssemblerTextEdit()
-        
-        self.splitter.addWidget(self.txtMultilineNG)
-        
-        self.tabWidget = QTabWidget()
-        
-        self.splitter.addWidget(self.tabWidget)
-        
-        self.layout.addWidget(self.splitter)
-        
-        self.wdgCmd = QWidget()
-        self.layCmd = QHBoxLayout()
-        self.wdgCmd.setLayout(self.layCmd)
-        
-        self.lblCmd = QLabel("Command: ")
-        self.lblCmd.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
-        
-        self.txtCmd = QLineEdit()
-        self.txtCmd.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
-        
-        self.cmdExecuteCmd = QPushButton("Execute")
-        self.cmdExecuteCmd.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
-        
-        self.layCmd.addWidget(self.lblCmd)
-        self.layCmd.addWidget(self.txtCmd)
-        self.layCmd.addWidget(self.cmdExecuteCmd)
-        
-        self.layout.addWidget(self.wdgCmd)
-        
-#       self.treRegister = RegisterTreeWidget()
-#       self.layout.addWidget(self.treRegister)
-#       
-#       self.treRegister.setFont(font)
-#       self.treRegister.setHeaderLabels(['Register Group', 'Registername', 'Value'])
-#       self.treRegister.header().resizeSection(0, 306)
-        
-        
-#       self.root_item = QTreeWidgetItem(self.treRegister, ['General purpose register', 'eax', '0x5'])
-#       self.root_item2 = QTreeWidgetItem(self.treRegister, ['Floating point register', 'eax', '0x5'])
-        # Set the layout of the dialog
-#       self.setLayout(self.layout)
-        
-        centralWidget = QWidget(self)
-        centralWidget.setLayout(self.layout)
-        
-        self.setCentralWidget(centralWidget)
-        
-#       return
+        self.sendProgressUpdate(5)
         # Create a new debugger instance
         debugger = lldb.SBDebugger.Create()
         
@@ -365,18 +115,16 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         target = debugger.CreateTargetWithFileAndArch(exe, None) # lldb.LLDB_ARCH_DEFAULT)
         
         if target:
+            self.sendProgressUpdate(10)
             print("Has target")
             
-        
             # If the target is valid set a breakpoint at main
             main_bp = target.BreakpointCreateByName(fname, target.GetExecutable().GetFilename())
-#           main_bp.SetScriptCallbackFunction('breakpoint_cb')
+            error = main_bp.SetScriptCallbackBody("\
+            print 'Hit breakpoint callback'")
+#           main_bp.SetScriptCallbackFunction('disasm_ui.breakpoint_cb')
+#           main_bp.SetAutoContinue(auto_continue=True)
             print(main_bp)
-            
-            #   breakpoint = target.BreakpointCreateByAddress(0x100003f60) # 0x100003c90)
-            #   breakpoint.SetEnabled(True)
-            #   breakpoint.SetScriptCallbackFunction('breakpoint_cb')
-            #   print(breakpoint)
             
             # Launch the process. Since we specified synchronous mode, we won't return
             # from this function until we hit the breakpoint at main
@@ -384,27 +132,12 @@ class Pymobiledevice3GUIWindow(QMainWindow):
             process = target.LaunchSimple(None, None, os.getcwd())
             print(process)
             
-            
-#           
-##           pymobiledevice3GUIApp.exec()
-#           # This causes an error and the callback is never called.
-#       #   opt = lldb.SBExpressionOptions()
-#       #   opt.SetIgnoreBreakpoints(False)
-#       #   v = target.EvaluateExpression('main()', opt)
-#       #   err = v.GetError()
-#       #   if err.fail:
-#       #       print(err.GetCString())
-#       #   else:
-#       #       print(v.value)
-#       #   error = lldb.SBError()
-#       #   
-#       #   sb_launch_info = lldb.SBLaunchInfo(None)
-#       #   # sb_launch_info.SetExecutableFile(exe, True)
-#       #   
-#       #   process = target.Launch(sb_launch_info, error) #debugger.GetListener(), None, None, None, '/tmp/stdout.txt', None, None, 0, True, error)
-#           
             # Make sure the launch went ok
             if process:
+#               processThreadObj = ProcessThreadObject(process)
+                self.signals.loadProcess.emit(process)
+                QCoreApplication.processEvents()
+                self.sendProgressUpdate(15)
                 print("Process launched OK")
                 # Print some simple process info
                 state = process.GetState()
@@ -414,19 +147,37 @@ class Pymobiledevice3GUIWindow(QMainWindow):
                     
                     print(f'GetNumThreads: {process.GetNumThreads()}')
                     # Get the first thread
+                    for thrd in range(process.GetNumThreads()):
+                        print(f'process.GetThreadAtIndex({thrd}) {process.GetThreadAtIndex(thrd).GetIndexID()}')
+                    
+                    idxThread = 0
                     thread = process.GetThreadAtIndex(0)
                     if thread:
+                        idxThread += 1
+                        self.signals.loadThread.emit(idxThread, thread)
+                        QCoreApplication.processEvents()
+#                       processThreadObj.addThread(thread)
+                        self.sendProgressUpdate(20)
                         # Print some simple thread info
                         print(thread)
-#                   else:
-#                       print("NO THREAD")
-#           return
+                        print_stacktrace(thread)
                         print(f'GetNumFrames: {thread.GetNumFrames()}')
                         # Get the first frame
                         frame = thread.GetFrameAtIndex(0)
                         if frame:
+                            self.sendProgressUpdate(25)
                             # Print some simple frame info
                             print(frame)
+#                           print(f'GetDisplayFunctionName: {frame.GetFunctionName()}')
+##                           self.txtMultiline.appendAsmText(f'Function: {frame.GetFunctionName()}', False)
+#                           self.window.txtMultiline.insertText(f'Function: ', False)
+#                           self.window.txtMultiline.setTextColor("blue")
+#                           self.window.txtMultiline.insertText(f'{frame.GetFunctionName()}', True)
+#                           self.window.txtMultiline.setTextColor()
+                            
+#                           for frameNG2 in dir(frame):
+#                               print(frameNG2)
+                                
                             function = frame.GetFunction()
                             # See if we have debug info (a function)
                             if function:
@@ -434,8 +185,9 @@ class Pymobiledevice3GUIWindow(QMainWindow):
                                 # function
                                 print(function)
                                 
-#                           else:
-#                               print("NO FUCNTION")
+#                               for functionNG2 in dir(function):
+#                                   print(functionNG2)
+                                    
                                 # Now get all instructions for this function and print
                                 # them
                                 insts = function.GetInstructions(target)
@@ -448,83 +200,101 @@ class Pymobiledevice3GUIWindow(QMainWindow):
                                     # We do have a symbol, print some info for the
                                     # symbol
                                     print(symbol)
+                                    
+#                                   print(f'DisplayName: {symbol.GetName()}')
                                     # Now get all instructions for this symbol and
                                     # print them
                                     insts = symbol.GetInstructions(target)
                                     self.disassemble_instructions(insts)
-                            
-#                           0x0000000108a01910
-                            
-#                           # Specify the memory address and size you want to read
-#                           address = 0x0000000108a01b90
-#                           size = 32  # Adjust the size based on your data type (e.g., int, float)
-#                           
-#                           # Read memory and print the result
-#                           data = self.read_memory(process, target.ResolveLoadAddress(address), size)
-#                           
-#                           hex_string = ''.join("%02x" % byte for byte in data)
-##                           formatted_hex_string = re.sub(r"<\d{3}", r"\g ", hex_string)
-#                           formatted_hex_string = ' '.join(re.findall(r'.{4}', hex_string))
-#                           
-#                           if data:
-#                               print(f"Data at address {hex(address)}: {data}\n{formatted_hex_string}")
-                            
+                                    
+#                                   for functionNG2 in dir(symbol):
+#   #                                   if functionNG2.startswith("__"):
+#   #                                       continue
+#                                       print(functionNG2)
+                                                
                             registerList = frame.GetRegisters()
                             print(
                                 "Frame registers (size of register set = %d):"
                                 % registerList.GetSize()
                             )
+                            self.sendProgressUpdate(30)
+                            currReg = 0
                             for value in registerList:
                                 # print value
                                 print(
                                     "%s (number of children = %d):"
                                     % (value.GetName(), value.GetNumChildren())
                                 )
-                                tabDet = QWidget()
-                                treDet = RegisterTreeWidget()
-                                tabDet.setLayout(QVBoxLayout())
-                                tabDet.layout().addWidget(treDet)
-                                
-                                treDet.setFont(font)
-                                treDet.setHeaderLabels(['Registername', 'Value', 'Memory'])
-                                treDet.header().resizeSection(0, 306)
-                                treDet.header().resizeSection(1, 256)
-                                self.tabWidget.addTab(tabDet, value.GetName())
-                                
+                                self.signals.loadRegister.emit(value.GetName())
+#                               continue
 #                               registerNode = QTreeWidgetItem(self.treRegister, [value.GetName() + " (" + str(value.GetNumChildren()) + ")", '', ''])
 #                               QTreeWidgetItem(self.treRegister, ['Floating point register', 'eax', '0x5'])
                                 for child in value:
-                                    print(
-                                        "Name: ", child.GetName(), " Value: ", child.GetValue()
-                                    )
+#                                   print(
+#                                       "Name: ", child.GetName(), " Value: ", child.GetValue()
+#                                   )
                                     
-                                    variable_type = type(child.GetValue())
+#                                   variable_type = type(child.GetValue())
                                     
-                                    print(f"The type of child.GetValue() is: {variable_type}")
+#                                   print(f"The type of child.GetValue() is: {variable_type}")
                                     
                                     memoryValue = ""
                                     try:
                                         
                                         # Specify the memory address and size you want to read
-                                        address = 0x0000000108a01b90
-                                        addr2 = 0x0000000108a01910
+#                                       address = 0x0000000108a01b90
+#                                       addr2 = 0x0000000108a01910
                                         size = 32  # Adjust the size based on your data type (e.g., int, float)
                                         
                                         # Read memory and print the result
                                         data = self.read_memory(process, target.ResolveLoadAddress(int(child.GetValue(), 16)), size)
 #                                       data = self.read_memory(process, child.GetValue(), size)
+#                                       print(data)
                                         
                                         hex_string = ''.join("%02x" % byte for byte in data)
+                                        
+#                                       try:
+#                                           ascii_string = data.decode("ascii")
+#                                           print(ascii_string)  # Output: Hello World
+#                                       except Exception as e2:
+#                                           pass
+#                                           
+#                                           
+#                                           
+#                                       try:
+#                                           byte_string = bytes.fromhex(hex_string)
+#                                           ascii_string = byte_string.decode("ascii")
+#                                           print(ascii_string)
+#                                       except Exception as e2:
+#                                           pass
+#                                           
+#                                       try:
+#                                           binary_data = binascii.unhexlify(hex_string)
+#                                           ascii_string = binary_data.decode("ascii")
+#                                           print(ascii_string)
+#                                       except Exception as e2:
+#                                           pass
+                                            
+                                            
+                                            
             #                           formatted_hex_string = re.sub(r"<\d{3}", r"\g ", hex_string)
-                                        formatted_hex_string = ' '.join(re.findall(r'.{4}', hex_string))
+                                        formatted_hex_string = ' '.join(re.findall(r'.{2}', hex_string))
                                         memoryValue = formatted_hex_string
 #                                       if data:
 #                                           print(f"Data at address {hex(address)}: {data}\n{formatted_hex_string}")
                                     except Exception as e:
-                                        print(f"Error getting memory for addr: {e}")
+#                                       print(f"Error getting memory for addr: {e}")
                                         pass
-                                    registerDetailNode = QTreeWidgetItem(treDet, [child.GetName(), child.GetValue(), memoryValue])
-                                    
+                                        
+                                    self.signals.loadRegisterValue.emit(currReg, child.GetName(), child.GetValue(), memoryValue)
+                                    QCoreApplication.processEvents()
+#                                   registerDetailNode = QTreeWidgetItem(treDet, [child.GetName(), child.GetValue(), memoryValue])
+                                currProg = (registerList.GetSize() - currReg)
+                                self.sendProgressUpdate(30 + (70 / currProg))
+                                currReg += 1
+                            
+#                           self.updateStatusBar("Target '%s' loaded successfully!" % exe)
+                            
 #                   print(
 #                       "Hit the breakpoint at main, enter to continue and wait for program to exit or 'Ctrl-D'/'quit' to terminate the program"
 #                   )
@@ -550,19 +320,321 @@ class Pymobiledevice3GUIWindow(QMainWindow):
                 print("Process NOT launched!!!")
         else:
             print("Has NO target")
-#           
-#       #sys.exit(pymobiledevice3GUIApp.exec())
-#           
-##       lldb.SBDebugger.Terminate()
+            
+        self.isTargetLoadActive = False
+#       self.treeWidget.setEnabled(True)
+#       QCoreApplication.processEvents()
+        self.signals.finished.emit()
+        QCoreApplication.processEvents()
+        
+    def sendProgressUpdate(self, progress):
+        self.signals.sendProgressUpdate.emit(int(progress))
+        QCoreApplication.processEvents()
+        
+    def handle_interruptTargetLoad(self):
+#		print(f"Received interrupt in the sysLog worker thread")
+#		self.isSysLogActive = False
+        pass
+        
+    def extract_address(self, string):
+        pattern = r'\[0x([0-9a-fA-F]+)\]'
+        
+        # Use re.search to find the match
+        match = re.search(pattern, string)
+        
+        if match:
+            hex_value = match.group(1)
+            return hex_value
+        else:
+            print("No hex value found in the string.")
+            return ""
 
-#def breakpoint_cb(frame, bpno, err):
-#   print('breakpoint callback')
+    def read_memory(self, process, address, size):
+        error = lldb.SBError()
+        target = process.GetTarget()
+        
+        # Read memory using ReadMemory function
+        data = target.ReadMemory(address, size, error)
+        
+        if error.Success():
+            return data
+        else:
+            print("Error reading memory:", error)
+            return None
+        
+    def disassemble_instructions(self, insts):
+        global target
+        for i in insts:
+#           print(i)
+            address = self.extract_address(f'{i}')
+            self.window.txtMultiline.appendAsmText(f'0x{address}:\t{i.GetMnemonic(target)}\t{i.GetOperands(target)}')
+            QCoreApplication.processEvents()
+        
+def breakpoint_cb(frame, bpno, err):
+    print('>>> breakpoint callback')
 #   return False
-#
-#def disassemble_instructions(insts):
-#   for i in insts:
-#       print(i)
+        
+class Pymobiledevice3GUIWindow(QMainWindow):
+    """PyMobiledevice3GUI's main window (GUI or view)."""
+    
+    def githubURL_click(self, s):
+        url = ConfigClass.githubURL
+        webbrowser.open(url)
+        
+        
+    def load_clicked(self, s):
+#       pathToLocalFiles = QFileDialog.getOpenFileNames(None, "Select target", "~/", "", "")
+#       print(pathToLocalFiles)
+        dialog = QFileDialog(None, "Select executable or library", "", "All Files (*.*)")
+        dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
+        dialog.setNameFilter("Executables (*.exe *.com *.bat *);;Libraries (*.dll *.so *.dylib)")
+    
+        if dialog.exec():
+            filename = dialog.selectedFiles()[0]
+            print(filename)
+        else:
+            return None
+            
+    def __init__(self):
+        super().__init__()
+        self.processNode = None
+        self.setWindowTitle(APP_NAME + " " + APP_VERSION)
+        self.setBaseSize(WINDOW_SIZE * 2, WINDOW_SIZE)
+        self.setMinimumSize(WINDOW_SIZE * 2, WINDOW_SIZE)
 
+        self.toolbar = QToolBar('Main ToolBar')
+        self.addToolBar(Qt.ToolBarArea.LeftToolBarArea, self.toolbar)
+        self.toolbar.setIconSize(QSize(ConfigClass.toolbarIconSize, ConfigClass.toolbarIconSize))
+        
+        self.statusBar = QStatusBar()
+        self.setStatusBar(self.statusBar)
+        
+        self.progressbar = QProgressBar()
+        self.progressbar.setMinimum(0)
+        self.progressbar.setMaximum(100)
+        self.progressbar.setValue(0)
+        self.progressbar.setFixedWidth(100)
+        # Add the progress bar to the status bar
+        self.statusBar.addPermanentWidget(self.progressbar)
+        
+        # new menu item
+        load_action = QAction(QIcon(os.path.join("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/resources/", 'bug.png')), '&Load Target', self)
+        load_action.setStatusTip('Load Target')
+        load_action.setShortcut('Ctrl+L')
+        load_action.triggered.connect(self.load_clicked)
+        
+#       file_menu.addAction(new_action)
+        self.toolbar.addAction(load_action)
+        
+        run_action = QAction(QIcon(os.path.join("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/resources/", 'play.png')), '&Run', self)
+        run_action.setStatusTip('Run Debugging')
+        run_action.setShortcut('Ctrl+P')
+#       new_action.triggered.connect(self.new_document)
+#       file_menu.addAction(new_action)
+        self.toolbar.addAction(run_action)
+        
+        step_over_action = QAction(QIcon(os.path.join("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/resources/", 'step_over_ng2.png')), '&Step Over', self)
+        step_over_action.setStatusTip('Step over')
+        step_over_action.setShortcut('Ctrl+T')
+#       new_action.triggered.connect(self.new_document)
+#       file_menu.addAction(new_action)
+        self.toolbar.addAction(step_over_action)
+        
+        step_into_action = QAction(QIcon(os.path.join("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/resources/", 'step_into.png')), '&Step Into', self)
+        step_into_action.setStatusTip('Step Into')
+        step_into_action.setShortcut('Ctrl+I')
+#       new_action.triggered.connect(self.new_document)
+#       file_menu.addAction(new_action)
+        self.toolbar.addAction(step_into_action)
+        
+        step_out_action = QAction(QIcon(os.path.join("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/resources/", 'step_out_ng.png')), '&Step Out', self)
+        step_out_action.setStatusTip('Step out')
+        step_out_action.setShortcut('Ctrl+O')
+#       new_action.triggered.connect(self.new_document)
+#       file_menu.addAction(new_action)
+        self.toolbar.addAction(step_out_action)
+        
+        githubURL_action = QAction(QIcon(os.path.join("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/resources/", 'github.png')), 'Github &repo', self)
+        githubURL_action.setStatusTip('Github repo')
+#       supportURL_action.setShortcut('Ctrl+O')
+        githubURL_action.triggered.connect(self.githubURL_click)
+#       file_menu.addAction(new_action)
+        self.toolbar.addAction(githubURL_action)
+        
+        menu = self.menuBar()
+        
+#       load_menu = menu.addMenu("Load target")
+#       load_menu.addAction(load_action)
+#       
+#       github_menu = menu.addMenu("Github &repo")
+#       github_menu.addAction(githubURL_action)
+        
+        main_menu = QtWidgets.QMenu('pyLLDBGUI', menu)
+        menu.addMenu(main_menu)
+        
+        main_menu.addAction(load_action)
+        main_menu.addAction(githubURL_action)
+##       load_menu = main_menu.addMenu("Load target")
+#       main_menu.addAction(load_action)
+#       
+##       github_menu = main_menu.addMenu("Github &repo")
+#       main_menu.addAction(githubURL_action)
+        
+        
+            
+#       font = QFont("Courier New")
+#       font.setFixedPitch(True)
+        
+        self.splitter = QSplitter()
+        self.splitter.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+#       self.splitter.setLayout(QHBoxLayout())
+        self.splitter.setOrientation(Qt.Orientation.Vertical)
+        
+        self.layout = QVBoxLayout()
+        
+        self.txtMultiline = AssemblerTextEdit()
+        
+        self.splitter.addWidget(self.txtMultiline)
+        
+        self.tabWidget = QTabWidget()
+        
+        self.splitter.addWidget(self.tabWidget)
+        
+        self.tabRegister = QWidget()
+        self.tabRegister.setLayout(QVBoxLayout())
+        
+        self.tabRegisters = QTabWidget()
+        
+        self.tabRegister.layout().addWidget(self.tabRegisters)
+        
+        self.tabWidget.addTab(self.tabRegister, "Registers")
+        
+        
+#       tabDet = QWidget()
+        self.treThreads = QTreeWidget()
+#       self.regTreeList.append(treDet)
+#       tabDet.setLayout(QVBoxLayout())
+#       tabDet.layout().addWidget(treDet)
+        
+        self.treThreads.setFont(ConfigClass.font)
+        self.treThreads.setHeaderLabels(['Process', 'Thread', 'Frames'])
+        self.treThreads.header().resizeSection(0, 128)
+        self.treThreads.header().resizeSection(1, 256)
+#       self.tabRegisters.addTab(tabDet, regType)
+        
+        self.tabThreads = QWidget()
+        self.tabThreads.setLayout(QVBoxLayout())
+        self.tabThreads.layout().addWidget(self.treThreads)
+        self.tabWidget.addTab(self.tabThreads, "Threads")
+        
+        self.tabFrames = QWidget()
+        self.tabFrames.setLayout(QVBoxLayout())
+#       tabDet.layout().addWidget(treDet)
+        self.tabWidget.addTab(self.tabFrames, "Frames")
+        
+        self.tabMemory = QWidget()
+        self.tabMemory.setLayout(QVBoxLayout())
+#       tabDet.layout().addWidget(treDet)
+        self.tabWidget.addTab(self.tabMemory, "Memory")
+        
+        self.layout.addWidget(self.splitter)
+        
+        self.wdgCmd = QWidget()
+        self.layCmd = QHBoxLayout()
+        self.wdgCmd.setLayout(self.layCmd)
+        
+        self.lblCmd = QLabel("Command: ")
+        self.lblCmd.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
+        
+        self.txtCmd = QLineEdit()
+        self.txtCmd.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+        
+        self.cmdExecuteCmd = QPushButton("Execute")
+        self.cmdExecuteCmd.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
+        
+        self.layCmd.addWidget(self.lblCmd)
+        self.layCmd.addWidget(self.txtCmd)
+        self.layCmd.addWidget(self.cmdExecuteCmd)
+        
+        self.layout.addWidget(self.wdgCmd)
+        
+        centralWidget = QWidget(self)
+        centralWidget.setLayout(self.layout)
+        
+        self.setCentralWidget(centralWidget)
+        
+        self.threadpool = QThreadPool()
+        
+        self.setWindowTitle(APP_NAME + " " + APP_VERSION + " - " + os.path.basename(exe))
+        
+        self.updateStatusBar("Loading target '%s' ..." % exe)
+        
+        self.start_workerLoadTarget()
+    
+    def start_workerLoadTarget(self):
+        self.updateStatusBar("Starting worker ...")
+        workerLoadTarget = TargetLoadWorker(self)
+        workerLoadTarget.signals.sendProgressUpdate.connect(self.handle_progressUpdate)
+        workerLoadTarget.signals.finished.connect(self.handle_progressFinished)
+        workerLoadTarget.signals.loadRegister.connect(self.handle_loadRegister)
+        workerLoadTarget.signals.loadRegisterValue.connect(self.handle_loadRegisterValue)
+        workerLoadTarget.signals.loadProcess.connect(self.handle_loadProcess)
+        workerLoadTarget.signals.loadThread.connect(self.handle_loadThread)
+        
+        self.threadpool.start(workerLoadTarget)
+    
+    def handle_loadRegisterValue(self, regIdx, regName, regValue, regMemory):
+        registerDetailNode = QTreeWidgetItem(self.regTreeList[regIdx], [regName, regValue, regMemory])
+        
+#   def handle_loadProcess(self, regIdx, regName, regValue, regMemory):
+#       registerDetailNode = QTreeWidgetItem(self.regTreeList[regIdx], [regName, regValue, regMemory])
+    
+    regTreeList = []
+    
+    def handle_loadThread(self, idx, thread):
+        self.threadNode = QTreeWidgetItem(self.processNode, ["", "#" + str(idx) + " " + str(thread.GetThreadID()) + " (0x" + hex(thread.GetThreadID()) + ")", ""])
+        pass
+        
+    def handle_loadProcess(self, process):
+        self.processNode = QTreeWidgetItem(self.treThreads, ["#" + str(process.GetProcessID()), '', ''])
+        pass
+    
+    def handle_loadRegister(self, regType):
+        tabDet = QWidget()
+        treDet = RegisterTreeWidget()
+        self.regTreeList.append(treDet)
+        tabDet.setLayout(QVBoxLayout())
+        tabDet.layout().addWidget(treDet)
+        
+        treDet.setFont(ConfigClass.font)
+        treDet.setHeaderLabels(['Registername', 'Value', 'Memory'])
+        treDet.header().resizeSection(0, 128)
+        treDet.header().resizeSection(1, 256)
+        self.tabRegisters.addTab(tabDet, regType)
+        pass
+        
+    def handle_progressFinished(self):
+#       t = Timer(1.0, self.resetProgress)
+#       t.start() # after 30 seconds, "hello, world" will be printed
+        pass
+        
+    def updateProgress(self, newValue, finished = False):
+        #       print(f"newValue: {newValue}")
+        self.progressbar.setValue(int(newValue))
+#       if finished:
+#           self.handle_progressFinished()
+#           #       self.progressbar.repaint()
+#           
+#   def resetProgress(self):
+##       self.updateStatusBar("Ready ...")
+#       self.updateProgress(0)
+        
+    def handle_progressUpdate(self, newProgress:int):
+        self.updateProgress(newProgress)
+        
+    def updateStatusBar(self, msg):
+        self.statusBar.showMessage(msg)
+        
 #
 #def usage():
 #   print("Usage: disasm.py [-n name] executable-image")
