@@ -68,6 +68,7 @@ class TargetLoadWorkerSignals(QObject):
     loadRegisterValue = pyqtSignal(int, str, str, str)
     loadProcess = pyqtSignal(object)
     loadThread = pyqtSignal(int, object)
+    addInstruction = pyqtSignal(str, bool)
     
     
 class TargetLoadWorker(QRunnable):
@@ -368,7 +369,8 @@ class TargetLoadWorker(QRunnable):
         for i in insts:
 #           print(i)
             address = self.extract_address(f'{i}')
-            self.window.txtMultiline.appendAsmText(f'0x{address}:\t{i.GetMnemonic(target)}\t{i.GetOperands(target)}')
+            self.signals.addInstruction.emit(f'0x{address}:\t{i.GetMnemonic(target)}\t{i.GetOperands(target)}', True)
+#           self.window.txtMultiline.appendAsmText(f'0x{address}:\t{i.GetMnemonic(target)}\t{i.GetOperands(target)}')
             QCoreApplication.processEvents()
         
 def breakpoint_cb(frame, bpno, err):
@@ -570,9 +572,14 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         workerLoadTarget.signals.loadRegisterValue.connect(self.handle_loadRegisterValue)
         workerLoadTarget.signals.loadProcess.connect(self.handle_loadProcess)
         workerLoadTarget.signals.loadThread.connect(self.handle_loadThread)
+        workerLoadTarget.signals.addInstruction.connect(self.handle_addInstruction)
+        
         
         self.threadpool.start(workerLoadTarget)
     
+    def handle_addInstruction(self, txt, addLineNum):
+        self.txtMultiline.appendAsmText(txt, addLineNum)
+        
     def handle_loadRegisterValue(self, regIdx, regName, regValue, regMemory):
         registerDetailNode = QTreeWidgetItem(self.regTreeList[regIdx], [regName, regValue, regMemory])
     
