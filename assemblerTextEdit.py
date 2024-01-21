@@ -82,22 +82,85 @@ class DisassemblyTextEdit(QTextEdit):
 
 	def contextMenuEvent(self, event):
 		self.context_menu.exec(event.globalPos())
+
+class DisassemblyTableWidget(QTableWidget):
+	
+	def __init__(self):
+		super().__init__()
+		self.context_menu = QMenu(self)
+		actionCopyAddress = self.context_menu.addAction("Copy address")
+		actionCopyInstruction = self.context_menu.addAction("Copy instruction")
+		actionCopyHex = self.context_menu.addAction("Copy hex value")
+		self.context_menu.addSeparator()
+		actionFindReferences = self.context_menu.addAction("Find references")
+		
+		self.setColumnCount(4)
+		self.setColumnWidth(0, 48)
+		self.setColumnWidth(1, 108)
+		self.setColumnWidth(2, 256)
+		self.setColumnWidth(3, 512)
+#		self.setRowCount(2)
+		self.verticalHeader().hide()
+		self.horizontalHeader().hide()
+		self.setFont(ConfigClass.font)
+		
+		self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+		self.setShowGrid(False)
+		
+	def contextMenuEvent(self, event):
+		self.context_menu.exec(event.globalPos())
+	
+	def resetContent(self):
+		for row in range(self.rowCount(), 0):
+			self.removeRow(row)  # Remove row at index `row`
+			
+	def addRow(self, lineNum, address, instr, comment):
+		currRowCount = self.rowCount()
+		self.setRowCount(currRowCount + 1)
+		self.addItem(currRowCount, 0, str(lineNum) + ":")
+		self.addItem(currRowCount, 1, address)
+		self.addItem(currRowCount, 2, instr)
+		self.addItem(currRowCount, 3, comment)
+		
+		self.setRowHeight(currRowCount, 18)
+		
+	def addItem(self, row, col, txt):
+		item = QTableWidgetItem(txt, QTableWidgetItem.ItemType.Type)
+		item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable) #Qt.ItemFlag.ItemIsSelectable)
+		
+		# Insert the items into the row
+		self.setItem(row, col, item)
 		
 class AssemblerTextEdit(QWidget):
 	
 	lineCount = 0
+	lineCountNG = 0
 	
 	def clear(self):
 		self.txtCode.clear()
 		self.txtLineCount.clear()
 		self.lineCount = 0
+		self.lineCountNG = 0
+		self.table.resetContent()
 		pass
-		
+	
+	def appendAsmTextNG(self, addr, instr, comment, addLineNum = True):
+#		self.txtCode.append(txt)
+		if addLineNum:
+			self.lineCountNG += 1
+#			self.txtLineCount.append(str(self.lineCount) + ":")
+			self.table.addRow(self.lineCountNG, addr, instr, comment)
+		else:
+			self.table.addRow(0, addr, instr, comment)
+#			self.txtLineCount.append(" ")
+#			print("addLineNum IS FALSE")
+			
 	def appendAsmText(self, txt, addLineNum = True):
 		self.txtCode.append(txt)
 		if addLineNum:
 			self.lineCount += 1
 			self.txtLineCount.append(str(self.lineCount) + ":")
+#			self.table.addRow(self.lineCount, txt, "", "")
 		else:
 			self.txtLineCount.append(" ")
 #			print("addLineNum IS FALSE")
@@ -206,8 +269,60 @@ class AssemblerTextEdit(QWidget):
 		self.vlayout = QHBoxLayout()
 		self.frame.setLayout(self.vlayout)
 		
-		self.vlayout.addWidget(self.txtLineCount)
-		self.vlayout.addWidget(self.txtCode)
+#		self.vlayout.addWidget(self.txtLineCount)
+#		self.vlayout.addWidget(self.txtCode)
+		
+		self.table = DisassemblyTableWidget()
+#		self.table.setColumnCount(4)
+#		self.table.setColumnWidth(3, 256)
+#		self.table.setRowCount(1)
+#		self.table.verticalHeader().hide()
+#		self.table.horizontalHeader().hide()
+#		self.table.setFont(ConfigClass.font)
+		
+#		self.table.addRow(1, "0x10006fe4", "push ebp", "; Some comment")
+#		self.table.addRow(2, "0x10006fe8", "mov esi ebp", "; Some comment 123")
+#		Create QTableWidgetItem objects for each column
+#		item0 = DisassemblyTableWidgetItem("1:", QTableWidgetItem.ItemType.Type)
+#		item0.setBackground(QBrush(QColor(255, 0, 0)))
+#		item1 = QTableWidgetItem("0x10006fe4", QTableWidgetItem.ItemType.Type)
+#		item2 = QTableWidgetItem("push ebp", QTableWidgetItem.ItemType.Type)
+#		item3 = QTableWidgetItem("; Some comment", QTableWidgetItem.ItemType.Type)
+#		
+#		item10 = DisassemblyTableWidgetItem("2:", QTableWidgetItem.ItemType.Type)
+#		item11 = QTableWidgetItem("0x10006fe8", QTableWidgetItem.ItemType.Type)
+#		item12 = QTableWidgetItem("push esi", QTableWidgetItem.ItemType.Type)
+#		item13 = QTableWidgetItem("; Some comment 123", QTableWidgetItem.ItemType.Type)
+#		
+#		# Insert the items into the row
+#		self.table.setItem(0, 0, item0)
+#		self.table.setItem(0, 1, item1)
+#		self.table.setItem(0, 2, item2)
+#		self.table.setItem(0, 3, item3)
+#		
+#		self.table.setItem(1, 0, item10)
+#		self.table.setItem(1, 1, item11)
+#		self.table.setItem(1, 2, item12)
+#		self.table.setItem(1, 3, item13)
+#		
+##		self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+##		self.table.setShowGrid(False)
+#		self.table.setRowHeight(0, 18)
+#		self.table.setRowHeight(1, 18)
+		
+#		data = [
+#			[4, 9, 2],
+#			[1, 0, 0],
+#			[3, 5, 0],
+#			[3, 3, 2],
+#			[7, 8, 9],
+#		]
+#
+#		self.model = DisassemblyTableModel(data)
+#		self.table.setModel(self.model)
+		
+		self.vlayout.addWidget(self.table)
+						
 		self.vlayout.setSpacing(0)
 		self.vlayout.setContentsMargins(0, 0, 0, 0)
 		

@@ -37,12 +37,88 @@ APP_VERSION = "v0.0.1"
 
 fname = "main"
 exe = "/Users/dave/Downloads/hello_world/hello_world_test"
+
+global debugger
+debugger = None
+
 global process
 process = None
 
 global target
 target = None
 
+interruptExecCommand = False
+
+        
+class ExecCommandReceiver(QObject):
+#	data_received = pyqtSignal(str)
+    interruptExecCommand = pyqtSignal()
+    
+class ExecCommandWorkerSignals(QObject):
+    finished = pyqtSignal(object)
+#   sendProgressUpdate = pyqtSignal(int)
+#   loadRegister = pyqtSignal(str)
+#   loadRegisterValue = pyqtSignal(int, str, str, str)
+#   loadProcess = pyqtSignal(object)
+#   loadThread = pyqtSignal(int, object)
+#   addInstruction = pyqtSignal(str, bool, bool, bool, str)
+#   
+#   addInstructionNG = pyqtSignal(str, str, str, bool, bool, bool, str)
+#   
+#   setTextColor = pyqtSignal(str, bool)
+    
+class ExecCommandWorker(QRunnable):
+    
+#   targetPath = "/Users/dave/Downloads/hello_world/hello_world_test"
+#   window = None
+    
+    def __init__(self, command):
+        super(ExecCommandWorker, self).__init__()
+        self.isExecCommandActive = False
+        self.command = command
+#       self.window = window_obj
+#       self.targetPath = target
+#       self.treeWidget = tree_widget
+#       self.root_item = root_item
+#       self.data_receiver = data_receiver
+        self.signals = ExecCommandWorkerSignals()
+        
+    def run(self):
+        QCoreApplication.processEvents()
+        self.runExecCommand()
+        
+    def runExecCommand(self):
+#       self.treeWidget.setEnabled(False)
+        QCoreApplication.processEvents()
+        if self.isExecCommandActive:
+            interruptExecCommand = True
+            return
+        else:
+            interruptExecCommand = False
+        QCoreApplication.processEvents()
+        self.isExecCommandActive = True
+        
+        global debugger
+        res = lldb.SBCommandReturnObject()
+        
+        # Get the command interpreter
+        command_interpreter = debugger.GetCommandInterpreter()
+        
+        # Execute the 'frame variable' command
+        command_interpreter.HandleCommand(self.command, res)
+#       print(f'{res}')
+        
+        self.isExecCommandActive = False
+#       self.treeWidget.setEnabled(True)
+#       QCoreApplication.processEvents()
+        self.signals.finished.emit(res)
+        QCoreApplication.processEvents()
+    
+    def handle_interruptExecCommand(self):
+#		print(f"Received interrupt in the sysLog worker thread")
+#		self.isSysLogActive = False
+        pass
+        
 interruptTargetLoad = False
 
 class ProcessThreadObject(QObject):
@@ -70,6 +146,9 @@ class TargetLoadWorkerSignals(QObject):
     loadThread = pyqtSignal(int, object)
     addInstruction = pyqtSignal(str, bool, bool, bool, str)
     
+    addInstructionNG = pyqtSignal(str, str, str, bool, bool, bool, str)
+    
+    setTextColor = pyqtSignal(str, bool)
     
 class TargetLoadWorker(QRunnable):
     
@@ -87,7 +166,7 @@ class TargetLoadWorker(QRunnable):
         self.signals = TargetLoadWorkerSignals()
         
     def run(self):
-        QCoreApplication.processEvents()	
+        QCoreApplication.processEvents()
         self.runTargetLoad()
         
     def runTargetLoad(self):
@@ -98,10 +177,12 @@ class TargetLoadWorker(QRunnable):
             return
         else:
             interruptTargetLoad = False
-        QCoreApplication.processEvents()	
+        QCoreApplication.processEvents()
         self.isTargetLoadActive = True
         
         self.sendProgressUpdate(5)
+        
+        global debugger
         # Create a new debugger instance
         debugger = lldb.SBDebugger.Create()
         
@@ -148,6 +229,14 @@ class TargetLoadWorker(QRunnable):
                 if state == lldb.eStateStopped:
                     print("state == lldb.eStateStopped")
                     
+#                   res = lldb.SBCommandReturnObject()
+#                   
+#                   # Get the command interpreter
+#                   command_interpreter = debugger.GetCommandInterpreter()
+#               
+#                   # Execute the 'frame variable' command
+#                   command_interpreter.HandleCommand('re read', res)
+#                   print(f'{res}')
                     print(f'GetNumThreads: {process.GetNumThreads()}')
                     # Get the first thread
                     for thrd in range(process.GetNumThreads()):
@@ -173,7 +262,9 @@ class TargetLoadWorker(QRunnable):
                             print(frame)
                             
                             self.signals.addInstruction.emit(f'Function: ', False, False, False, "black")
+                            self.signals.setTextColor.emit("blue", False)
                             self.signals.addInstruction.emit(f'{frame.GetFunctionName()}', True, False, False, "blue")
+                            self.signals.setTextColor.emit("black", False)
                             QCoreApplication.processEvents()
                             
 #                           print(f'GetDisplayFunctionName: {frame.GetFunctionName()}')
@@ -348,6 +439,13 @@ class TargetLoadWorker(QRunnable):
         # Print the result
         print(result.GetSummary())
         
+#       global process
+#       # Get the current process
+##       process = lldb.process()
+#   
+#       # Execute the 'frame variable' command
+#       process.get_output(['frame variable'])
+        
     def sendProgressUpdate(self, progress):
         self.signals.sendProgressUpdate.emit(int(progress))
         QCoreApplication.processEvents()
@@ -389,6 +487,8 @@ class TargetLoadWorker(QRunnable):
 #           print(i)
             address = self.extract_address(f'{i}')
             self.signals.addInstruction.emit(f'0x{address}:\t{i.GetMnemonic(target)}\t{i.GetOperands(target)}', True, True, False, "black")
+            self.signals.addInstructionNG.emit(f'0x{address}', f'{i.GetMnemonic(target)}\t{i.GetOperands(target)}', f'{i.GetComment(target)}', True, True, False, "black")
+            
 #           self.window.txtMultiline.appendAsmText(f'0x{address}:\t{i.GetMnemonic(target)}\t{i.GetOperands(target)}')
             QCoreApplication.processEvents()
         
@@ -568,9 +668,12 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         
         self.txtCmd = QLineEdit()
         self.txtCmd.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+        self.txtCmd.setText("re read")
+        self.txtCmd.returnPressed.connect(self.click_execCommand)
         
         self.cmdExecuteCmd = QPushButton("Execute")
         self.cmdExecuteCmd.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
+        self.cmdExecuteCmd.clicked.connect(self.click_execCommand)
         
         self.layCmd.addWidget(self.lblCmd)
         self.layCmd.addWidget(self.txtCmd)
@@ -598,6 +701,32 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         
         self.start_workerLoadTarget(exe)
     
+#   def handle_return_pressed(self):
+##       # Get the text entered in the QLineEdit
+##       text = line_edit.text()
+##       # Process the entered text
+##       print(text)
+#       self.click_execCommand()
+        
+    def click_execCommand(self):
+        self.start_execCommandWorker(self.txtCmd.text())
+#       pass
+        
+    def start_execCommandWorker(self, command):
+        workerExecCommand = ExecCommandWorker(command)
+        workerExecCommand.signals.finished.connect(self.handle_commandFinished)
+        
+        self.threadpool.start(workerExecCommand)
+        
+#       pass
+        
+    def handle_commandFinished(self, res):
+#       print(f'OUTPUT: {res.GetOutput()}')
+        self.txtConsole.append(res.GetOutput())
+#       for i in dir(res):
+#           print(f'{i}')
+#       pass
+    
     def start_workerLoadTarget(self, target):
 #       self.updateStatusBar("Starting worker ...")
         
@@ -608,6 +737,10 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.txtMultiline.clear()
         self.regTreeList.clear()
         self.tabRegisters.clear()
+#       self.txtMultiline.table.clearContents()
+        
+#       for row in range(self.txtMultiline.table.rowCount()):
+#           self.txtMultiline.table.removeRow(row)  # Remove row at index `row`
         
         workerLoadTarget = TargetLoadWorker(self, target)
         workerLoadTarget.signals.sendProgressUpdate.connect(self.handle_progressUpdate)
@@ -617,10 +750,21 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         workerLoadTarget.signals.loadProcess.connect(self.handle_loadProcess)
         workerLoadTarget.signals.loadThread.connect(self.handle_loadThread)
         workerLoadTarget.signals.addInstruction.connect(self.handle_addInstruction)
-        
+        workerLoadTarget.signals.addInstructionNG.connect(self.handle_addInstructionNG)
+        workerLoadTarget.signals.setTextColor.connect(self.handle_setTextColor)
         
         self.threadpool.start(workerLoadTarget)
     
+    def handle_setTextColor(self, color = "black", lineNum = False):
+        self.txtMultiline.setTextColor(color, lineNum)
+        pass
+        
+    def handle_addInstructionNG(self, addr, instr, comment, addLineNum, newLine, bold, color):
+        if newLine:
+            self.txtMultiline.appendAsmTextNG(addr, instr, comment, addLineNum)
+        else:
+            self.txtMultiline.insertText(txt, bold, color)
+            
     def handle_addInstruction(self, txt, addLineNum, newLine, bold, color):
         if newLine:
             self.txtMultiline.appendAsmText(txt, addLineNum)
