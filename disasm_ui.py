@@ -106,7 +106,11 @@ class ExecCommandWorker(QRunnable):
         
         # Execute the 'frame variable' command
         command_interpreter.HandleCommand(self.command, res)
-#       print(f'{res}')
+        print(f'{res}')
+        for i in dir(res):
+            print(i)
+        print(res.Succeeded())
+        print(res.GetError())
         
         self.isExecCommandActive = False
 #       self.treeWidget.setEnabled(True)
@@ -495,6 +499,42 @@ class TargetLoadWorker(QRunnable):
 def breakpoint_cb(frame, bpno, err):
     print('>>> breakpoint callback')
 #   return False
+    
+class HistoryLineEdit(QLineEdit):
+    
+    lstCommands = []
+    currCmd = 0
+    
+#   def click_execCommand(self):
+#       newCommand = self.txtCmd.text()
+#       
+#       if len(self.lstCommands) > 0:
+#           if self.lstCommands[len(self.lstCommands) - 1] != newCommand:
+#               self.lstCommands.append(newCommand)
+#               currCmd = len(self.lstCommands) - 1
+                
+    def __init__(self):
+        super().__init__()
+        
+    def keyPressEvent(self, event):
+        
+        if event.key() in (Qt.Key.Key_Up, Qt.Key.Key_Down):
+            print("Up or down key pressed")
+            
+            if self.currCmd > 0:
+                self.currCmd -= 1
+                if self.currCmd < len(self.lstCommands):
+                    self.setText(self.lstCommands[self.currCmd])
+            event.accept()  # Prevent event from being passed to QLineEdit for default behavior
+#       elif not event.isAccepted():  # Check if event was already handled
+#           print("event not accepted")
+#           self.txtCmd.event(event)  # Pass event to QLineEdit for default behavior
+#       elif event.isAccepted():  # Check if event was already handled
+#           print("event accepted")
+#           self.txtCmd.event(event)  # Pass event to QLineEdit for default behavior
+        else:
+            super(HistoryLineEdit, self).keyPressEvent(event)
+#           return False
         
 class Pymobiledevice3GUIWindow(QMainWindow):
     """PyMobiledevice3GUI's main window (GUI or view)."""
@@ -666,10 +706,44 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.lblCmd = QLabel("Command: ")
         self.lblCmd.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
         
-        self.txtCmd = QLineEdit()
+        self.txtCmd = HistoryLineEdit()
         self.txtCmd.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
         self.txtCmd.setText("re read")
         self.txtCmd.returnPressed.connect(self.click_execCommand)
+        
+#       def on_key_press_event(event):
+#           if event.key() == Qt.Key.Key_Up:
+#               print("Up key pressed")
+#               self.currCmd -= 1
+#               self.txtCmd.setText(self.lstCommands[self.currCmd])
+#           elif event.key() == Qt.Key.Key_Down:
+#               print("Down key pressed")
+#           elif event.key() == Qt.Key.Key_Return:
+#               print("Return key pressed")
+#               self.click_execCommand()
+#           elif event.isAccepted():
+#               print("Other keypress not handled")
+#               self.txtCmd.keyPressEvent(event)
+#           else:
+#               event.accept()  # Allow other keypresses to be processed by the QLineEdit
+
+#       def handle_key_press(event):
+#           if event.key() in (Qt.Key.Key_Up, Qt.Key.Key_Down):
+#               print("Up or down key pressed")
+#               event.accept()  # Prevent event from being passed to QLineEdit for default behavior
+#           elif not event.isAccepted():  # Check if event was already handled
+#               print("event not accepted")
+#               self.txtCmd.event(event)  # Pass event to QLineEdit for default behavior
+#           elif event.isAccepted():  # Check if event was already handled
+#               print("event accepted")
+#               self.txtCmd.event(event)  # Pass event to QLineEdit for default behavior
+##           elif event.isAccepted():
+##               print("Other keypress not handled")
+##           else:
+##               event.accept()  # Allow other keypresses to be processed by the QLineEdit
+#               
+##       self.txtCmd.installEventFilter(self.txtCmd)
+##       self.txtCmd.keyPressEvent = handle_key_press
         
         self.cmdExecuteCmd = QPushButton("Execute")
         self.cmdExecuteCmd.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
@@ -708,9 +782,22 @@ class Pymobiledevice3GUIWindow(QMainWindow):
 ##       # Process the entered text
 ##       print(text)
 #       self.click_execCommand()
-        
+    
+#   lstCommands = []
+#   currCmd = 0
+    
     def click_execCommand(self):
-        self.start_execCommandWorker(self.txtCmd.text())
+        newCommand = self.txtCmd.text()
+        
+        if len(self.txtCmd.lstCommands) > 0:
+            if self.txtCmd.lstCommands[len(self.txtCmd.lstCommands) - 1] != newCommand:
+                self.txtCmd.lstCommands.append(newCommand)
+                self.txtCmd.currCmd = len(self.txtCmd.lstCommands)
+        else:
+            self.txtCmd.lstCommands.append(newCommand)
+            self.txtCmd.currCmd = len(self.txtCmd.lstCommands)
+            
+        self.start_execCommandWorker(newCommand)
 #       pass
         
     def start_execCommandWorker(self, command):
@@ -764,13 +851,15 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         if newLine:
             self.txtMultiline.appendAsmTextNG(addr, instr, comment, addLineNum)
         else:
-            self.txtMultiline.insertText(txt, bold, color)
+#           self.txtMultiline.insertText(txt, bold, color)
+            pass
             
     def handle_addInstruction(self, txt, addLineNum, newLine, bold, color):
-        if newLine:
-            self.txtMultiline.appendAsmText(txt, addLineNum)
-        else:
-            self.txtMultiline.insertText(txt, bold, color)
+#       if newLine:
+#           self.txtMultiline.appendAsmText(txt, addLineNum)
+#       else:
+#           self.txtMultiline.insertText(txt, bold, color)
+        pass
         
     def handle_loadRegisterValue(self, regIdx, regName, regValue, regMemory):
         registerDetailNode = QTreeWidgetItem(self.regTreeList[regIdx], [regName, regValue, regMemory])
