@@ -72,13 +72,14 @@ class TargetLoadWorkerSignals(QObject):
     
 class TargetLoadWorker(QRunnable):
     
-#   treeWidget = None
+    targetPath = "/Users/dave/Downloads/hello_world/hello_world_test"
     window = None
     
-    def __init__(self, window_obj):
+    def __init__(self, window_obj, target = "/Users/dave/Downloads/hello_world/hello_world_test"):
         super(TargetLoadWorker, self).__init__()
         self.isTargetLoadActive = False
         self.window = window_obj
+        self.targetPath = target
 #       self.treeWidget = tree_widget
 #       self.root_item = root_item
 #       self.data_receiver = data_receiver
@@ -109,10 +110,10 @@ class TargetLoadWorker(QRunnable):
         
         print(f'debugger: {debugger}')
         # Create a target from a file and arch
-        print("Creating a target for '%s'" % exe)
+        print("Creating a target for '%s'" % self.targetPath)
         
         global target
-        target = debugger.CreateTargetWithFileAndArch(exe, None) # lldb.LLDB_ARCH_DEFAULT)
+        target = debugger.CreateTargetWithFileAndArch(self.targetPath, None) # lldb.LLDB_ARCH_DEFAULT)
         
         if target:
             self.sendProgressUpdate(10)
@@ -377,14 +378,14 @@ def breakpoint_cb(frame, bpno, err):
 class Pymobiledevice3GUIWindow(QMainWindow):
     """PyMobiledevice3GUI's main window (GUI or view)."""
     
+    regTreeList = []
+    
     def githubURL_click(self, s):
         url = ConfigClass.githubURL
         webbrowser.open(url)
         
         
     def load_clicked(self, s):
-#       pathToLocalFiles = QFileDialog.getOpenFileNames(None, "Select target", "~/", "", "")
-#       print(pathToLocalFiles)
         dialog = QFileDialog(None, "Select executable or library", "", "All Files (*.*)")
         dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
         dialog.setNameFilter("Executables (*.exe *.com *.bat *);;Libraries (*.dll *.so *.dylib)")
@@ -392,6 +393,7 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         if dialog.exec():
             filename = dialog.selectedFiles()[0]
             print(filename)
+            self.start_workerLoadTarget(filename)
         else:
             return None
             
@@ -463,27 +465,11 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         
         menu = self.menuBar()
         
-#       load_menu = menu.addMenu("Load target")
-#       load_menu.addAction(load_action)
-#       
-#       github_menu = menu.addMenu("Github &repo")
-#       github_menu.addAction(githubURL_action)
-        
         main_menu = QtWidgets.QMenu('pyLLDBGUI', menu)
         menu.addMenu(main_menu)
         
         main_menu.addAction(load_action)
         main_menu.addAction(githubURL_action)
-##       load_menu = main_menu.addMenu("Load target")
-#       main_menu.addAction(load_action)
-#       
-##       github_menu = main_menu.addMenu("Github &repo")
-#       main_menu.addAction(githubURL_action)
-        
-        
-            
-#       font = QFont("Courier New")
-#       font.setFixedPitch(True)
         
         self.splitter = QSplitter()
         self.splitter.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
@@ -508,13 +494,8 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.tabRegister.layout().addWidget(self.tabRegisters)
         
         self.tabWidget.addTab(self.tabRegister, "Registers")
-        
-        
-#       tabDet = QWidget()
+
         self.treThreads = QTreeWidget()
-#       self.regTreeList.append(treDet)
-#       tabDet.setLayout(QVBoxLayout())
-#       tabDet.layout().addWidget(treDet)
         
         self.treThreads.setFont(ConfigClass.font)
         self.treThreads.setHeaderLabels(['Process', 'Thread', 'Frames'])
@@ -565,15 +546,24 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         
         self.threadpool = QThreadPool()
         
-        self.setWindowTitle(APP_NAME + " " + APP_VERSION + " - " + os.path.basename(exe))
+#       self.setWindowTitle(APP_NAME + " " + APP_VERSION + " - " + os.path.basename(exe))
+#       
+#       self.updateStatusBar("Loading target '%s' ..." % exe)
         
-        self.updateStatusBar("Loading target '%s' ..." % exe)
-        
-        self.start_workerLoadTarget()
+        self.start_workerLoadTarget(exe)
     
-    def start_workerLoadTarget(self):
-        self.updateStatusBar("Starting worker ...")
-        workerLoadTarget = TargetLoadWorker(self)
+    def start_workerLoadTarget(self, target):
+#       self.updateStatusBar("Starting worker ...")
+        
+        self.setWindowTitle(APP_NAME + " " + APP_VERSION + " - " + os.path.basename(target))
+        
+        self.updateStatusBar("Loading target '%s' ..." % target)
+        
+        self.txtMultiline.clear()
+        self.regTreeList.clear()
+        self.tabRegisters.clear()
+        
+        workerLoadTarget = TargetLoadWorker(self, target)
         workerLoadTarget.signals.sendProgressUpdate.connect(self.handle_progressUpdate)
         workerLoadTarget.signals.finished.connect(self.handle_progressFinished)
         workerLoadTarget.signals.loadRegister.connect(self.handle_loadRegister)
@@ -585,17 +575,14 @@ class Pymobiledevice3GUIWindow(QMainWindow):
     
     def handle_loadRegisterValue(self, regIdx, regName, regValue, regMemory):
         registerDetailNode = QTreeWidgetItem(self.regTreeList[regIdx], [regName, regValue, regMemory])
-        
-#   def handle_loadProcess(self, regIdx, regName, regValue, regMemory):
-#       registerDetailNode = QTreeWidgetItem(self.regTreeList[regIdx], [regName, regValue, regMemory])
-    
-    regTreeList = []
     
     def handle_loadThread(self, idx, thread):
-        self.threadNode = QTreeWidgetItem(self.processNode, ["", "#" + str(idx) + " " + str(thread.GetThreadID()) + " (0x" + hex(thread.GetThreadID()) + ")", ""])
+        self.threadNode = QTreeWidgetItem(self.processNode, ["", "#" + str(idx) + " " + str(thread.GetThreadID()) + " (0x" + hex(thread.GetThreadID()) + ")", thread.GetQueueName()])
+        self.processNode.setExpanded(True)
         pass
         
     def handle_loadProcess(self, process):
+        self.treThreads.clear()
         self.processNode = QTreeWidgetItem(self.treThreads, ["#" + str(process.GetProcessID()), '', ''])
         pass
     

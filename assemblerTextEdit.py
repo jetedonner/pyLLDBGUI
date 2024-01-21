@@ -79,51 +79,20 @@ class DisassemblyTextEdit(QTextEdit):
 		actionFindReferences = self.context_menu.addAction("Find references")
 #		self.context_menu.addSeparator()
 #		actionCopyAddress = self.context_menu.addAction("Find references")
-	
-#	def paintEvent(self, event):
-##		painter = QPainter(self.viewport())
-##		painter.drawLine(10, 10, 200, 10)
-#		path = QPainterPath()
-#		path.moveTo(50, 50)
-#		path.arcTo(40, 40, 10, 10, 0, 270)
-#		path.closeSubpath()
-#		
-#		# Create a QPainter and attach it to the textEdit
-#		painter = QPainter(self.viewport())
-#		
-#		# Set the painter's pen and brush
-#		pen = QPen(Qt.GlobalColor.red, 2)
-#		brush = QBrush(Qt.GlobalColor.red)
-#		painter.setPen(pen)
-#		painter.setBrush(brush)
-#		
-##		painter.begin(self)  # Capture painter's actions
-#		# Paint the circle
-#		painter.drawPath(path)
-#		
-#		# Release the painter
-#		painter.end()
-#		
-#		super(DisassemblyTextEdit, self).paintEvent(event)
-		
+
 	def contextMenuEvent(self, event):
-#		menu = QMenu(self)
-#		action1 = QAction("Cut", self)
-#		action1.triggered.connect(self.cut)
-#		menu.addAction(action1)
-#		
-#		action2 = QAction("Copy", self)
-#		action2.triggered.connect(self.copy)
-#		menu.addAction(action2)
-#		
-#		menu.show()
 		self.context_menu.exec(event.globalPos())
-#		menu.exec_(event.globalPos())
 		
 class AssemblerTextEdit(QWidget):
 	
 	lineCount = 0
 	
+	def clear(self):
+		self.txtCode.clear()
+		self.txtLineCount.clear()
+		self.lineCount = 0
+		pass
+		
 	def appendAsmText(self, txt, addLineNum = True):
 		self.txtCode.append(txt)
 		if addLineNum:
