@@ -520,10 +520,14 @@ class HistoryLineEdit(QLineEdit):
         
         if event.key() in (Qt.Key.Key_Up, Qt.Key.Key_Down):
             print("Up or down key pressed")
-            
-            if self.currCmd > 0:
-                self.currCmd -= 1
-                if self.currCmd < len(self.lstCommands):
+            if event.key() == Qt.Key.Key_Up:
+                if self.currCmd > 0:
+                    self.currCmd -= 1
+                    if self.currCmd < len(self.lstCommands):
+                        self.setText(self.lstCommands[self.currCmd])
+            else:
+                if self.currCmd < len(self.lstCommands) - 1:
+                    self.currCmd += 1
                     self.setText(self.lstCommands[self.currCmd])
             event.accept()  # Prevent event from being passed to QLineEdit for default behavior
 #       elif not event.isAccepted():  # Check if event was already handled
@@ -792,10 +796,10 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         if len(self.txtCmd.lstCommands) > 0:
             if self.txtCmd.lstCommands[len(self.txtCmd.lstCommands) - 1] != newCommand:
                 self.txtCmd.lstCommands.append(newCommand)
-                self.txtCmd.currCmd = len(self.txtCmd.lstCommands)
+                self.txtCmd.currCmd = len(self.txtCmd.lstCommands) - 1
         else:
             self.txtCmd.lstCommands.append(newCommand)
-            self.txtCmd.currCmd = len(self.txtCmd.lstCommands)
+            self.txtCmd.currCmd = len(self.txtCmd.lstCommands) - 1
             
         self.start_execCommandWorker(newCommand)
 #       pass
