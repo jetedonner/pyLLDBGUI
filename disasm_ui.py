@@ -682,7 +682,8 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.txtConsole = QTextEdit()
         self.txtConsole.setReadOnly(True)
         self.txtConsole.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
-        self.txtConsole.insertPlainText("(lldb)")
+        self.txtConsole.setFont(ConfigClass.font)
+#       self.txtConsole.insertPlainText("(lldb)")
         self.layCmdParent.addWidget(self.txtConsole)
         self.layCmdParent.addWidget(self.wdgCmd)
         
