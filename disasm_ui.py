@@ -68,7 +68,7 @@ class TargetLoadWorkerSignals(QObject):
     loadRegisterValue = pyqtSignal(int, str, str, str)
     loadProcess = pyqtSignal(object)
     loadThread = pyqtSignal(int, object)
-    addInstruction = pyqtSignal(str, bool)
+    addInstruction = pyqtSignal(str, bool, bool, bool, str)
     
     
 class TargetLoadWorker(QRunnable):
@@ -136,6 +136,7 @@ class TargetLoadWorker(QRunnable):
             
             # Make sure the launch went ok
             if process:
+                self.executeCmd()
 #               processThreadObj = ProcessThreadObject(process)
                 self.signals.loadProcess.emit(process)
                 QCoreApplication.processEvents()
@@ -170,6 +171,11 @@ class TargetLoadWorker(QRunnable):
                             self.sendProgressUpdate(25)
                             # Print some simple frame info
                             print(frame)
+                            
+                            self.signals.addInstruction.emit(f'Function: ', False, False, False, "black")
+                            self.signals.addInstruction.emit(f'{frame.GetFunctionName()}', True, False, False, "blue")
+                            QCoreApplication.processEvents()
+                            
 #                           print(f'GetDisplayFunctionName: {frame.GetFunctionName()}')
 ##                           self.txtMultiline.appendAsmText(f'Function: {frame.GetFunctionName()}', False)
 #                           self.window.txtMultiline.insertText(f'Function: ', False)
@@ -328,6 +334,19 @@ class TargetLoadWorker(QRunnable):
 #       QCoreApplication.processEvents()
         self.signals.finished.emit()
         QCoreApplication.processEvents()
+    
+    def executeCmd(self):
+        # This causes an error and the callback is never called.
+        opt = lldb.SBExpressionOptions()
+        opt.SetIgnoreBreakpoints(False)
+        
+        global target
+        print("EXECUTING COMMAND:")
+        # Execute the "re read" command
+        result = target.EvaluateExpression("re read", opt)
+        
+        # Print the result
+        print(result.GetSummary())
         
     def sendProgressUpdate(self, progress):
         self.signals.sendProgressUpdate.emit(int(progress))
@@ -369,7 +388,7 @@ class TargetLoadWorker(QRunnable):
         for i in insts:
 #           print(i)
             address = self.extract_address(f'{i}')
-            self.signals.addInstruction.emit(f'0x{address}:\t{i.GetMnemonic(target)}\t{i.GetOperands(target)}', True)
+            self.signals.addInstruction.emit(f'0x{address}:\t{i.GetMnemonic(target)}\t{i.GetOperands(target)}', True, True, False, "black")
 #           self.window.txtMultiline.appendAsmText(f'0x{address}:\t{i.GetMnemonic(target)}\t{i.GetOperands(target)}')
             QCoreApplication.processEvents()
         
@@ -481,6 +500,19 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.layout = QVBoxLayout()
         
         self.txtMultiline = AssemblerTextEdit()
+        self.txtMultiline.setContentsMargins(0, 0, 0, 0)
+        self.splitter.setContentsMargins(0, 0, 0, 0)
+        
+#       self.gbCode = QGroupBox("Source")
+##       self.gbCode.setContentsMargins(0, 0, 0, 0)
+#       self.gbCode.setStyleSheet("""
+#               QGroupBox {
+#                   padding: 0;
+#               }
+#           """)
+#       self.gbCode.setLayout(QHBoxLayout())
+#       self.gbCode.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Maximum)
+#       self.gbCode.layout().addWidget(self.txtMultiline)
         
         self.splitter.addWidget(self.txtMultiline)
         
@@ -492,13 +524,10 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.tabRegister.setLayout(QVBoxLayout())
         
         self.tabRegisters = QTabWidget()
-        
         self.tabRegister.layout().addWidget(self.tabRegisters)
-        
         self.tabWidget.addTab(self.tabRegister, "Registers")
 
         self.treThreads = QTreeWidget()
-        
         self.treThreads.setFont(ConfigClass.font)
         self.treThreads.setHeaderLabels(['Process', 'Thread', 'Frames'])
         self.treThreads.header().resizeSection(0, 128)
@@ -520,11 +549,19 @@ class Pymobiledevice3GUIWindow(QMainWindow):
 #       tabDet.layout().addWidget(treDet)
         self.tabWidget.addTab(self.tabMemory, "Memory")
         
+        self.tabConsole = QWidget()
+        self.tabConsole.setLayout(QVBoxLayout())
+#       tabDet.layout().addWidget(treDet)
+        self.tabWidget.addTab(self.tabConsole, "Console")
+        
         self.layout.addWidget(self.splitter)
         
         self.wdgCmd = QWidget()
+        self.wdgConsole = QWidget()
+        self.layCmdParent = QVBoxLayout()
         self.layCmd = QHBoxLayout()
         self.wdgCmd.setLayout(self.layCmd)
+        self.wdgConsole.setLayout(self.layCmdParent)
         
         self.lblCmd = QLabel("Command: ")
         self.lblCmd.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
@@ -539,7 +576,14 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.layCmd.addWidget(self.txtCmd)
         self.layCmd.addWidget(self.cmdExecuteCmd)
         
-        self.layout.addWidget(self.wdgCmd)
+        self.txtConsole = QTextEdit()
+        self.txtConsole.setReadOnly(True)
+        self.txtConsole.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+        self.txtConsole.insertPlainText("(lldb)")
+        self.layCmdParent.addWidget(self.txtConsole)
+        self.layCmdParent.addWidget(self.wdgCmd)
+        
+        self.tabConsole.layout().addWidget(self.wdgConsole)
         
         centralWidget = QWidget(self)
         centralWidget.setLayout(self.layout)
@@ -577,8 +621,11 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         
         self.threadpool.start(workerLoadTarget)
     
-    def handle_addInstruction(self, txt, addLineNum):
-        self.txtMultiline.appendAsmText(txt, addLineNum)
+    def handle_addInstruction(self, txt, addLineNum, newLine, bold, color):
+        if newLine:
+            self.txtMultiline.appendAsmText(txt, addLineNum)
+        else:
+            self.txtMultiline.insertText(txt, bold, color)
         
     def handle_loadRegisterValue(self, regIdx, regName, regValue, regMemory):
         registerDetailNode = QTreeWidgetItem(self.regTreeList[regIdx], [regName, regValue, regMemory])
