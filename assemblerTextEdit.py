@@ -145,12 +145,13 @@ class DisassemblyTableWidget(QTableWidget):
 		self.context_menu.addSeparator()
 		actionFindReferences = self.context_menu.addAction("Find references")
 		
-		self.setColumnCount(5)
+		self.setColumnCount(6)
 		self.setColumnWidth(0, 32)
 		self.setColumnWidth(1, 72)
 		self.setColumnWidth(2, 108)
 		self.setColumnWidth(3, 256)
-		self.setColumnWidth(4, 512)
+		self.setColumnWidth(4, 384)
+		self.setColumnWidth(5, 512)
 		self.verticalHeader().hide()
 		self.horizontalHeader().hide()
 		self.setFont(ConfigClass.font)
@@ -181,7 +182,7 @@ class DisassemblyTableWidget(QTableWidget):
 		for row in range(self.rowCount(), 0):
 			self.removeRow(row)
 			
-	def addRow(self, lineNum, address, instr, comment):
+	def addRow(self, lineNum, address, instr, comment, data):
 		currRowCount = self.rowCount()
 		self.setRowCount(currRowCount + 1)
 
@@ -191,7 +192,8 @@ class DisassemblyTableWidget(QTableWidget):
 		self.addItem(currRowCount, 1, str(lineNum) + ":")
 		self.addItem(currRowCount, 2, address)
 		self.addItem(currRowCount, 3, instr)
-		self.addItem(currRowCount, 4, comment)
+		self.addItem(currRowCount, 4, data)
+		self.addItem(currRowCount, 5, comment)
 		
 		self.setRowHeight(currRowCount, 18)
 		
@@ -216,14 +218,14 @@ class AssemblerTextEdit(QWidget):
 		self.table.resetContent()
 		pass
 	
-	def appendAsmTextNG(self, addr, instr, comment, addLineNum = True):
+	def appendAsmTextNG(self, addr, instr, comment, data, addLineNum = True):
 #		self.txtCode.append(txt)
 		if addLineNum:
 			self.lineCountNG += 1
 #			self.txtLineCount.append(str(self.lineCount) + ":")
-			self.table.addRow(self.lineCountNG, addr, instr, comment)
+			self.table.addRow(self.lineCountNG, addr, instr, comment, data)
 		else:
-			self.table.addRow(0, addr, instr, comment)
+			self.table.addRow(0, addr, instr, comment, data)
 #			self.txtLineCount.append(" ")
 #			print("addLineNum IS FALSE")
 			

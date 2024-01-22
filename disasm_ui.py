@@ -11,6 +11,7 @@
 
 import lldb
 from lldbutil import print_stacktrace
+from inputHelper import FBInputHandler
 import os
 import os.path
 import sys
@@ -125,6 +126,19 @@ class ExecCommandWorker(QRunnable):
         
 interruptTargetLoad = False
 
+class UserInputListener:
+    def __init__(self, process, queue):
+#       super(UserInputListener, self).__init__()
+        self.process = process
+        self.queue = queue
+        
+    def input_received(self, data):
+        # Process user input data
+        # Update the program state based on the input
+        # Send commands to LLDB to continue execution or interact with the program
+        self.queue.put(data)
+        
+
 class ProcessThreadObject(QObject):
     process = None
     threads = []
@@ -150,15 +164,19 @@ class TargetLoadWorkerSignals(QObject):
     loadThread = pyqtSignal(int, object)
     addInstruction = pyqtSignal(str, bool, bool, bool, str)
     
-    addInstructionNG = pyqtSignal(str, str, str, bool, bool, bool, str)
+    addInstructionNG = pyqtSignal(str, str, str, str, bool, bool, bool, str)
     
     setTextColor = pyqtSignal(str, bool)
-    
+
 class TargetLoadWorker(QRunnable):
     
     targetPath = "/Users/dave/Downloads/hello_world/hello_world_test"
     window = None
+    inputHandler = None
     
+    def inputCallback(self, data):
+        print(data)
+        
     def __init__(self, window_obj, target = "/Users/dave/Downloads/hello_world/hello_world_test"):
         super(TargetLoadWorker, self).__init__()
         self.isTargetLoadActive = False
@@ -194,6 +212,17 @@ class TargetLoadWorker(QRunnable):
         # stops. We do this by setting the async mode to false.
         debugger.SetAsync(False)
         
+        for i in dir(debugger):
+            print(i)
+#       {lldb.getVersion()}
+        print(f"VEARSION: {sys.modules['lldb'].__file__} / {debugger.GetVersionString()}")
+        
+#       print(lldb)
+        
+        for i in dir(lldb):
+            print(i)
+#       self.inputHandler = FBInputHandler(debugger, self.inputCallback)
+        
         print(f'debugger: {debugger}')
         # Create a target from a file and arch
         print("Creating a target for '%s'" % self.targetPath)
@@ -217,11 +246,17 @@ class TargetLoadWorker(QRunnable):
             # from this function until we hit the breakpoint at main
             global process
             process = target.LaunchSimple(None, None, os.getcwd())
+#           process.Stop()
+#           self.inputHandler.start()
             print(process)
             
             # Make sure the launch went ok
             if process:
                 self.executeCmd()
+                
+#               listener = UserInputListener(process, queue)
+#               process.SetInputReader(listener)
+                
 #               processThreadObj = ProcessThreadObject(process)
                 self.signals.loadProcess.emit(process)
                 QCoreApplication.processEvents()
@@ -489,9 +524,26 @@ class TargetLoadWorker(QRunnable):
         global target
         for i in insts:
 #           print(i)
+            
+#           string = "bf 01 00 00 00                  .....
+#           hello_world_test[0x100003f80]: callq 0x100003f90"
+            
+#           hex_data = re.search(r"\b(0x[0-9a-fA-F]{4})\b", f'{i}')
+#           first_14_chars = f'{i}'[:14]
+#           print(first_14_chars)
+#           if hex_data:
+#               print(hex_data.group(1))
+#           else:
+#               print("No hex data found")
+                
+#           for i2 in dir(i.GetData(target)):
+#               print(f'>>>>>> {i2}')
+            
+            print(i.GetData(target))
+            
             address = self.extract_address(f'{i}')
             self.signals.addInstruction.emit(f'0x{address}:\t{i.GetMnemonic(target)}\t{i.GetOperands(target)}', True, True, False, "black")
-            self.signals.addInstructionNG.emit(f'0x{address}', f'{i.GetMnemonic(target)}\t{i.GetOperands(target)}', f'{i.GetComment(target)}', True, True, False, "black")
+            self.signals.addInstructionNG.emit(f'0x{address}', f'{i.GetMnemonic(target)}\t{i.GetOperands(target)}', f'{i.GetComment(target)}', f'{i.GetData(target)}', True, True, False, "black")
             
 #           self.window.txtMultiline.appendAsmText(f'0x{address}:\t{i.GetMnemonic(target)}\t{i.GetOperands(target)}')
             QCoreApplication.processEvents()
@@ -851,9 +903,9 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.txtMultiline.setTextColor(color, lineNum)
         pass
         
-    def handle_addInstructionNG(self, addr, instr, comment, addLineNum, newLine, bold, color):
+    def handle_addInstructionNG(self, addr, instr, comment, data, addLineNum, newLine, bold, color):
         if newLine:
-            self.txtMultiline.appendAsmTextNG(addr, instr, comment, addLineNum)
+            self.txtMultiline.appendAsmTextNG(addr, instr, comment, data.replace("                             ", "\t\t").replace("		            ", "\t\t\t").replace("		         ", "\t\t").replace("		      ", "\t\t").replace("			   ", "\t\t\t"), addLineNum)
         else:
 #           self.txtMultiline.insertText(txt, bold, color)
             pass
