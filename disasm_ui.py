@@ -932,8 +932,10 @@ class Pymobiledevice3GUIWindow(QMainWindow):
             frame = thread.GetFrameAtIndex(idx2)
             print(dir(frame))
             frameNode = QTreeWidgetItem(self.threadNode, ["", "", "#" + str(frame.GetFrameID()) + " " + str(frame.GetPCAddress())]) # + " " + str(thread.GetThreadID()) + " (0x" + hex(thread.GetThreadID()) + ")", thread.GetQueueName()])
-            frameNode.setExpanded(True)
+            
         self.processNode.setExpanded(True)
+        if self.threadNode:
+            self.threadNode.setExpanded(True)
         pass
         
     def handle_loadProcess(self, process):
