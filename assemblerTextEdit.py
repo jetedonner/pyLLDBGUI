@@ -92,8 +92,8 @@ class DisassemblyImageTableWidgetItem(QTableWidgetItem):
 	def __init__(self):
 		self.iconStd = QIcon()
 		super().__init__(self.iconStd, "", QTableWidgetItem.ItemType.Type)
-		self.iconBPEnabled = QIcon(os.path.join("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/resources/", 'bug.png'))
-		self.iconBPDisabled = QIcon(os.path.join("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/resources/", 'bug_bw_greyscale.png'))
+		self.iconBPEnabled = ConfigClass.iconBPEnabled # QIcon(os.path.join("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/resources/", 'bug.png'))
+		self.iconBPDisabled = ConfigClass.iconBPDisabled # QIcon(os.path.join("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/resources/", 'bug_bw_greyscale.png'))
 		self.setFlags(self.flags() & ~Qt.ItemFlag.ItemIsEditable)
 		pass
 		

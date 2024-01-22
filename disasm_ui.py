@@ -293,143 +293,147 @@ class TargetLoadWorker(QRunnable):
                         print(thread)
                         print_stacktrace(thread)
                         print(f'GetNumFrames: {thread.GetNumFrames()}')
-                        # Get the first frame
-                        frame = thread.GetFrameAtIndex(0)
-                        if frame:
-                            self.sendProgressUpdate(25)
-                            # Print some simple frame info
-                            print(frame)
+                        
+                        for idx2 in range(thread.GetNumFrames()):
+#                           print(thread.GetFrameAtIndex(idx2))
                             
-                            self.signals.addInstruction.emit(f'Function: ', False, False, False, "black")
-                            self.signals.setTextColor.emit("blue", False)
-                            self.signals.addInstruction.emit(f'{frame.GetFunctionName()}', True, False, False, "blue")
-                            self.signals.setTextColor.emit("black", False)
-                            QCoreApplication.processEvents()
-                            
-#                           print(f'GetDisplayFunctionName: {frame.GetFunctionName()}')
-##                           self.txtMultiline.appendAsmText(f'Function: {frame.GetFunctionName()}', False)
-#                           self.window.txtMultiline.insertText(f'Function: ', False)
-#                           self.window.txtMultiline.setTextColor("blue")
-#                           self.window.txtMultiline.insertText(f'{frame.GetFunctionName()}', True)
-#                           self.window.txtMultiline.setTextColor()
-                            
-#                           for frameNG2 in dir(frame):
-#                               print(frameNG2)
+                            # Get the first frame
+                            frame = thread.GetFrameAtIndex(idx2)
+                            if frame:
+                                self.sendProgressUpdate(25)
+                                # Print some simple frame info
+                                print(frame)
+                                        
+                                self.signals.addInstruction.emit(f'Function: ', False, False, False, "black")
+                                self.signals.setTextColor.emit("blue", False)
+                                self.signals.addInstruction.emit(f'{frame.GetFunctionName()}', True, False, False, "blue")
+                                self.signals.setTextColor.emit("black", False)
+                                QCoreApplication.processEvents()
                                 
-                            function = frame.GetFunction()
-                            # See if we have debug info (a function)
-                            if function:
-                                # We do have a function, print some info for the
-                                # function
-                                print(function)
+    #                           print(f'GetDisplayFunctionName: {frame.GetFunctionName()}')
+    ##                           self.txtMultiline.appendAsmText(f'Function: {frame.GetFunctionName()}', False)
+    #                           self.window.txtMultiline.insertText(f'Function: ', False)
+    #                           self.window.txtMultiline.setTextColor("blue")
+    #                           self.window.txtMultiline.insertText(f'{frame.GetFunctionName()}', True)
+    #                           self.window.txtMultiline.setTextColor()
                                 
-#                               for functionNG2 in dir(function):
-#                                   print(functionNG2)
+    #                           for frameNG2 in dir(frame):
+    #                               print(frameNG2)
                                     
-                                # Now get all instructions for this function and print
-                                # them
-                                insts = function.GetInstructions(target)
-                                self.disassemble_instructions(insts)
-                            else:
-                                # See if we have a symbol in the symbol table for where
-                                # we stopped
-                                symbol = frame.GetSymbol()
-                                if symbol:
-                                    # We do have a symbol, print some info for the
-                                    # symbol
-                                    print(symbol)
+                                function = frame.GetFunction()
+                                # See if we have debug info (a function)
+                                if function:
+                                    # We do have a function, print some info for the
+                                    # function
+                                    print(function)
                                     
-#                                   print(f'DisplayName: {symbol.GetName()}')
-                                    # Now get all instructions for this symbol and
-                                    # print them
-                                    insts = symbol.GetInstructions(target)
+    #                               for functionNG2 in dir(function):
+    #                                   print(functionNG2)
+                                        
+                                    # Now get all instructions for this function and print
+                                    # them
+                                    insts = function.GetInstructions(target)
                                     self.disassemble_instructions(insts)
-                                    
-#                                   for functionNG2 in dir(symbol):
-#   #                                   if functionNG2.startswith("__"):
-#   #                                       continue
-#                                       print(functionNG2)
-                                                
-                            registerList = frame.GetRegisters()
-                            print(
-                                "Frame registers (size of register set = %d):"
-                                % registerList.GetSize()
-                            )
-                            self.sendProgressUpdate(30)
-                            currReg = 0
-                            for value in registerList:
-                                # print value
+                                else:
+                                    # See if we have a symbol in the symbol table for where
+                                    # we stopped
+                                    symbol = frame.GetSymbol()
+                                    if symbol:
+                                        # We do have a symbol, print some info for the
+                                        # symbol
+                                        print(symbol)
+                                        
+    #                                   print(f'DisplayName: {symbol.GetName()}')
+                                        # Now get all instructions for this symbol and
+                                        # print them
+                                        insts = symbol.GetInstructions(target)
+                                        self.disassemble_instructions(insts)
+                                        
+    #                                   for functionNG2 in dir(symbol):
+    #   #                                   if functionNG2.startswith("__"):
+    #   #                                       continue
+    #                                       print(functionNG2)
+                                                    
+                                registerList = frame.GetRegisters()
                                 print(
-                                    "%s (number of children = %d):"
-                                    % (value.GetName(), value.GetNumChildren())
+                                    "Frame registers (size of register set = %d):"
+                                    % registerList.GetSize()
                                 )
-                                self.signals.loadRegister.emit(value.GetName())
-#                               continue
-#                               registerNode = QTreeWidgetItem(self.treRegister, [value.GetName() + " (" + str(value.GetNumChildren()) + ")", '', ''])
-#                               QTreeWidgetItem(self.treRegister, ['Floating point register', 'eax', '0x5'])
-                                for child in value:
-#                                   print(
-#                                       "Name: ", child.GetName(), " Value: ", child.GetValue()
-#                                   )
-                                    
-#                                   variable_type = type(child.GetValue())
-                                    
-#                                   print(f"The type of child.GetValue() is: {variable_type}")
-                                    
-                                    memoryValue = ""
-                                    try:
+                                self.sendProgressUpdate(30)
+                                currReg = 0
+                                for value in registerList:
+                                    # print value
+                                    print(
+                                        "%s (number of children = %d):"
+                                        % (value.GetName(), value.GetNumChildren())
+                                    )
+                                    self.signals.loadRegister.emit(value.GetName())
+    #                               continue
+    #                               registerNode = QTreeWidgetItem(self.treRegister, [value.GetName() + " (" + str(value.GetNumChildren()) + ")", '', ''])
+    #                               QTreeWidgetItem(self.treRegister, ['Floating point register', 'eax', '0x5'])
+                                    for child in value:
+    #                                   print(
+    #                                       "Name: ", child.GetName(), " Value: ", child.GetValue()
+    #                                   )
                                         
-                                        # Specify the memory address and size you want to read
-#                                       address = 0x0000000108a01b90
-#                                       addr2 = 0x0000000108a01910
-                                        size = 32  # Adjust the size based on your data type (e.g., int, float)
+    #                                   variable_type = type(child.GetValue())
                                         
-                                        # Read memory and print the result
-                                        data = self.read_memory(process, target.ResolveLoadAddress(int(child.GetValue(), 16)), size)
-#                                       data = self.read_memory(process, child.GetValue(), size)
-#                                       print(data)
+    #                                   print(f"The type of child.GetValue() is: {variable_type}")
                                         
-                                        hex_string = ''.join("%02x" % byte for byte in data)
-                                        
-#                                       try:
-#                                           ascii_string = data.decode("ascii")
-#                                           print(ascii_string)  # Output: Hello World
-#                                       except Exception as e2:
-#                                           pass
-#                                           
-#                                           
-#                                           
-#                                       try:
-#                                           byte_string = bytes.fromhex(hex_string)
-#                                           ascii_string = byte_string.decode("ascii")
-#                                           print(ascii_string)
-#                                       except Exception as e2:
-#                                           pass
-#                                           
-#                                       try:
-#                                           binary_data = binascii.unhexlify(hex_string)
-#                                           ascii_string = binary_data.decode("ascii")
-#                                           print(ascii_string)
-#                                       except Exception as e2:
-#                                           pass
+                                        memoryValue = ""
+                                        try:
                                             
+                                            # Specify the memory address and size you want to read
+    #                                       address = 0x0000000108a01b90
+    #                                       addr2 = 0x0000000108a01910
+                                            size = 32  # Adjust the size based on your data type (e.g., int, float)
                                             
+                                            # Read memory and print the result
+                                            data = self.read_memory(process, target.ResolveLoadAddress(int(child.GetValue(), 16)), size)
+    #                                       data = self.read_memory(process, child.GetValue(), size)
+    #                                       print(data)
                                             
-            #                           formatted_hex_string = re.sub(r"<\d{3}", r"\g ", hex_string)
-                                        formatted_hex_string = ' '.join(re.findall(r'.{2}', hex_string))
-                                        memoryValue = formatted_hex_string
-#                                       if data:
-#                                           print(f"Data at address {hex(address)}: {data}\n{formatted_hex_string}")
-                                    except Exception as e:
-#                                       print(f"Error getting memory for addr: {e}")
-                                        pass
-                                        
-                                    self.signals.loadRegisterValue.emit(currReg, child.GetName(), child.GetValue(), memoryValue)
-                                    QCoreApplication.processEvents()
-#                                   registerDetailNode = QTreeWidgetItem(treDet, [child.GetName(), child.GetValue(), memoryValue])
-                                currProg = (registerList.GetSize() - currReg)
-                                self.sendProgressUpdate(30 + (70 / currProg))
-                                currReg += 1
+                                            hex_string = ''.join("%02x" % byte for byte in data)
+                                            
+    #                                       try:
+    #                                           ascii_string = data.decode("ascii")
+    #                                           print(ascii_string)  # Output: Hello World
+    #                                       except Exception as e2:
+    #                                           pass
+    #                                           
+    #                                           
+    #                                           
+    #                                       try:
+    #                                           byte_string = bytes.fromhex(hex_string)
+    #                                           ascii_string = byte_string.decode("ascii")
+    #                                           print(ascii_string)
+    #                                       except Exception as e2:
+    #                                           pass
+    #                                           
+    #                                       try:
+    #                                           binary_data = binascii.unhexlify(hex_string)
+    #                                           ascii_string = binary_data.decode("ascii")
+    #                                           print(ascii_string)
+    #                                       except Exception as e2:
+    #                                           pass
+                                                
+                                                
+                                                
+                #                           formatted_hex_string = re.sub(r"<\d{3}", r"\g ", hex_string)
+                                            formatted_hex_string = ' '.join(re.findall(r'.{2}', hex_string))
+                                            memoryValue = formatted_hex_string
+    #                                       if data:
+    #                                           print(f"Data at address {hex(address)}: {data}\n{formatted_hex_string}")
+                                        except Exception as e:
+    #                                       print(f"Error getting memory for addr: {e}")
+                                            pass
+                                            
+                                        self.signals.loadRegisterValue.emit(currReg, child.GetName(), child.GetValue(), memoryValue)
+                                        QCoreApplication.processEvents()
+    #                                   registerDetailNode = QTreeWidgetItem(treDet, [child.GetName(), child.GetValue(), memoryValue])
+                                    currProg = (registerList.GetSize() - currReg)
+                                    self.sendProgressUpdate(30 + (70 / currProg))
+                                    currReg += 1
                             
 #                           self.updateStatusBar("Target '%s' loaded successfully!" % exe)
                             
@@ -539,7 +543,7 @@ class TargetLoadWorker(QRunnable):
 #           for i2 in dir(i.GetData(target)):
 #               print(f'>>>>>> {i2}')
             
-            print(i.GetData(target))
+#           print(i.GetData(target))
             
             address = self.extract_address(f'{i}')
             self.signals.addInstruction.emit(f'0x{address}:\t{i.GetMnemonic(target)}\t{i.GetOperands(target)}', True, True, False, "black")
@@ -922,6 +926,13 @@ class Pymobiledevice3GUIWindow(QMainWindow):
     
     def handle_loadThread(self, idx, thread):
         self.threadNode = QTreeWidgetItem(self.processNode, ["", "#" + str(idx) + " " + str(thread.GetThreadID()) + " (0x" + hex(thread.GetThreadID()) + ")", thread.GetQueueName()])
+        
+#       print(thread.GetNumFrames())
+        for idx2 in range(thread.GetNumFrames()):
+            frame = thread.GetFrameAtIndex(idx2)
+            print(dir(frame))
+            frameNode = QTreeWidgetItem(self.threadNode, ["", "", "#" + str(frame.GetFrameID()) + " " + str(frame.GetPCAddress())]) # + " " + str(thread.GetThreadID()) + " (0x" + hex(thread.GetThreadID()) + ")", thread.GetQueueName()])
+            frameNode.setExpanded(True)
         self.processNode.setExpanded(True)
         pass
         
@@ -1008,12 +1019,13 @@ def close_application():
 global pymobiledevice3GUIApp
 pymobiledevice3GUIApp = QApplication([])
 pymobiledevice3GUIApp.aboutToQuit.connect(close_application)
+ConfigClass.initIcons()
 
 #   IconHelper.initIcons()
 #   
 #   # Set the app icon
 #pymobiledevice3GUIApp.setWindowIcon(IconHelper.iconApp) #QIcon(icon))
-pymobiledevice3GUIApp.setWindowIcon(QIcon(os.path.join("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/resources/", 'bug.png')))
+pymobiledevice3GUIApp.setWindowIcon(ConfigClass.iconBPEnabled)
 pymobiledevice3GUIWindow = Pymobiledevice3GUIWindow()
 pymobiledevice3GUIWindow.show()
 #PyMobiledevice3GUI(view=pymobiledevice3GUIWindow)
