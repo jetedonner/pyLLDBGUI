@@ -284,9 +284,10 @@ class TargetLoadWorker(QRunnable):
                     idxThread = 0
                     thread = process.GetThreadAtIndex(0)
                     if thread:
-                        idxThread += 1
+                        
                         self.signals.loadThread.emit(idxThread, thread)
                         QCoreApplication.processEvents()
+                        idxThread += 1
 #                       processThreadObj.addThread(thread)
                         self.sendProgressUpdate(20)
                         # Print some simple thread info
@@ -304,11 +305,11 @@ class TargetLoadWorker(QRunnable):
                                 # Print some simple frame info
                                 print(frame)
                                         
-                                self.signals.addInstruction.emit(f'Function: ', False, False, False, "black")
-                                self.signals.setTextColor.emit("blue", False)
-                                self.signals.addInstruction.emit(f'{frame.GetFunctionName()}', True, False, False, "blue")
-                                self.signals.setTextColor.emit("black", False)
-                                QCoreApplication.processEvents()
+#                               self.signals.addInstruction.emit(f'Function: ', False, False, False, "black")
+#                               self.signals.setTextColor.emit("blue", False)
+#                               self.signals.addInstruction.emit(f'{frame.GetFunctionName()}', True, False, False, "blue")
+#                               self.signals.setTextColor.emit("black", False)
+#                               QCoreApplication.processEvents()
                                 
     #                           print(f'GetDisplayFunctionName: {frame.GetFunctionName()}')
     ##                           self.txtMultiline.appendAsmText(f'Function: {frame.GetFunctionName()}', False)
@@ -319,40 +320,41 @@ class TargetLoadWorker(QRunnable):
                                 
     #                           for frameNG2 in dir(frame):
     #                               print(frameNG2)
-                                    
-                                function = frame.GetFunction()
-                                # See if we have debug info (a function)
-                                if function:
-                                    # We do have a function, print some info for the
-                                    # function
-                                    print(function)
-                                    
-    #                               for functionNG2 in dir(function):
-    #                                   print(functionNG2)
+                                
+                                if idx2 == 0:
+                                    function = frame.GetFunction()
+                                    # See if we have debug info (a function)
+                                    if function:
+                                        # We do have a function, print some info for the
+                                        # function
+                                        print(function)
                                         
-                                    # Now get all instructions for this function and print
-                                    # them
-                                    insts = function.GetInstructions(target)
-                                    self.disassemble_instructions(insts)
-                                else:
-                                    # See if we have a symbol in the symbol table for where
-                                    # we stopped
-                                    symbol = frame.GetSymbol()
-                                    if symbol:
-                                        # We do have a symbol, print some info for the
-                                        # symbol
-                                        print(symbol)
-                                        
-    #                                   print(f'DisplayName: {symbol.GetName()}')
-                                        # Now get all instructions for this symbol and
-                                        # print them
-                                        insts = symbol.GetInstructions(target)
+        #                               for functionNG2 in dir(function):
+        #                                   print(functionNG2)
+                                            
+                                        # Now get all instructions for this function and print
+                                        # them
+                                        insts = function.GetInstructions(target)
                                         self.disassemble_instructions(insts)
-                                        
-    #                                   for functionNG2 in dir(symbol):
-    #   #                                   if functionNG2.startswith("__"):
-    #   #                                       continue
-    #                                       print(functionNG2)
+                                    else:
+                                        # See if we have a symbol in the symbol table for where
+                                        # we stopped
+                                        symbol = frame.GetSymbol()
+                                        if symbol:
+                                            # We do have a symbol, print some info for the
+                                            # symbol
+                                            print(symbol)
+                                            
+        #                                   print(f'DisplayName: {symbol.GetName()}')
+                                            # Now get all instructions for this symbol and
+                                            # print them
+                                            insts = symbol.GetInstructions(target)
+                                            self.disassemble_instructions(insts)
+                                            
+        #                                   for functionNG2 in dir(symbol):
+        #   #                                   if functionNG2.startswith("__"):
+        #   #                                       continue
+        #                                       print(functionNG2)
                                                     
                                 registerList = frame.GetRegisters()
                                 print(
@@ -527,48 +529,20 @@ class TargetLoadWorker(QRunnable):
     def disassemble_instructions(self, insts):
         global target
         for i in insts:
-#           print(i)
-            
-#           string = "bf 01 00 00 00                  .....
-#           hello_world_test[0x100003f80]: callq 0x100003f90"
-            
-#           hex_data = re.search(r"\b(0x[0-9a-fA-F]{4})\b", f'{i}')
-#           first_14_chars = f'{i}'[:14]
-#           print(first_14_chars)
-#           if hex_data:
-#               print(hex_data.group(1))
-#           else:
-#               print("No hex data found")
-                
-#           for i2 in dir(i.GetData(target)):
-#               print(f'>>>>>> {i2}')
-            
-#           print(i.GetData(target))
-            
             address = self.extract_address(f'{i}')
-            self.signals.addInstruction.emit(f'0x{address}:\t{i.GetMnemonic(target)}\t{i.GetOperands(target)}', True, True, False, "black")
+#           self.signals.addInstruction(.emit(f'0x{address}:\t{i.GetMnemonic(target)}\t{i.GetOperands(target)}', True, True, False, "black")
             self.signals.addInstructionNG.emit(f'0x{address}', f'{i.GetMnemonic(target)}\t{i.GetOperands(target)}', f'{i.GetComment(target)}', f'{i.GetData(target)}', True, True, False, "black")
             
-#           self.window.txtMultiline.appendAsmText(f'0x{address}:\t{i.GetMnemonic(target)}\t{i.GetOperands(target)}')
             QCoreApplication.processEvents()
         
 def breakpoint_cb(frame, bpno, err):
     print('>>> breakpoint callback')
-#   return False
     
 class HistoryLineEdit(QLineEdit):
     
     lstCommands = []
     currCmd = 0
     
-#   def click_execCommand(self):
-#       newCommand = self.txtCmd.text()
-#       
-#       if len(self.lstCommands) > 0:
-#           if self.lstCommands[len(self.lstCommands) - 1] != newCommand:
-#               self.lstCommands.append(newCommand)
-#               currCmd = len(self.lstCommands) - 1
-                
     def __init__(self):
         super().__init__()
         
@@ -586,15 +560,8 @@ class HistoryLineEdit(QLineEdit):
                     self.currCmd += 1
                     self.setText(self.lstCommands[self.currCmd])
             event.accept()  # Prevent event from being passed to QLineEdit for default behavior
-#       elif not event.isAccepted():  # Check if event was already handled
-#           print("event not accepted")
-#           self.txtCmd.event(event)  # Pass event to QLineEdit for default behavior
-#       elif event.isAccepted():  # Check if event was already handled
-#           print("event accepted")
-#           self.txtCmd.event(event)  # Pass event to QLineEdit for default behavior
         else:
             super(HistoryLineEdit, self).keyPressEvent(event)
-#           return False
         
 class Pymobiledevice3GUIWindow(QMainWindow):
     """PyMobiledevice3GUI's main window (GUI or view)."""
@@ -679,9 +646,7 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         
         githubURL_action = QAction(QIcon(os.path.join("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/resources/", 'github.png')), 'Github &repo', self)
         githubURL_action.setStatusTip('Github repo')
-#       supportURL_action.setShortcut('Ctrl+O')
         githubURL_action.triggered.connect(self.githubURL_click)
-#       file_menu.addAction(new_action)
         self.toolbar.addAction(githubURL_action)
         
         menu = self.menuBar()
@@ -694,7 +659,6 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         
         self.splitter = QSplitter()
         self.splitter.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-#       self.splitter.setLayout(QHBoxLayout())
         self.splitter.setOrientation(Qt.Orientation.Vertical)
         
         self.layout = QVBoxLayout()
@@ -702,17 +666,6 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.txtMultiline = AssemblerTextEdit()
         self.txtMultiline.setContentsMargins(0, 0, 0, 0)
         self.splitter.setContentsMargins(0, 0, 0, 0)
-        
-#       self.gbCode = QGroupBox("Source")
-##       self.gbCode.setContentsMargins(0, 0, 0, 0)
-#       self.gbCode.setStyleSheet("""
-#               QGroupBox {
-#                   padding: 0;
-#               }
-#           """)
-#       self.gbCode.setLayout(QHBoxLayout())
-#       self.gbCode.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Maximum)
-#       self.gbCode.layout().addWidget(self.txtMultiline)
         
         self.splitter.addWidget(self.txtMultiline)
         
@@ -729,9 +682,9 @@ class Pymobiledevice3GUIWindow(QMainWindow):
 
         self.treThreads = QTreeWidget()
         self.treThreads.setFont(ConfigClass.font)
-        self.treThreads.setHeaderLabels(['Process', 'Thread', 'Frames'])
+        self.treThreads.setHeaderLabels(['Process / Threads', 'Hex ID', 'Frames'])
         self.treThreads.header().resizeSection(0, 128)
-        self.treThreads.header().resizeSection(1, 256)
+        self.treThreads.header().resizeSection(1, 128)
 #       self.tabRegisters.addTab(tabDet, regType)
         
         self.tabThreads = QWidget()
@@ -771,40 +724,6 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.txtCmd.setText("re read")
         self.txtCmd.returnPressed.connect(self.click_execCommand)
         
-#       def on_key_press_event(event):
-#           if event.key() == Qt.Key.Key_Up:
-#               print("Up key pressed")
-#               self.currCmd -= 1
-#               self.txtCmd.setText(self.lstCommands[self.currCmd])
-#           elif event.key() == Qt.Key.Key_Down:
-#               print("Down key pressed")
-#           elif event.key() == Qt.Key.Key_Return:
-#               print("Return key pressed")
-#               self.click_execCommand()
-#           elif event.isAccepted():
-#               print("Other keypress not handled")
-#               self.txtCmd.keyPressEvent(event)
-#           else:
-#               event.accept()  # Allow other keypresses to be processed by the QLineEdit
-
-#       def handle_key_press(event):
-#           if event.key() in (Qt.Key.Key_Up, Qt.Key.Key_Down):
-#               print("Up or down key pressed")
-#               event.accept()  # Prevent event from being passed to QLineEdit for default behavior
-#           elif not event.isAccepted():  # Check if event was already handled
-#               print("event not accepted")
-#               self.txtCmd.event(event)  # Pass event to QLineEdit for default behavior
-#           elif event.isAccepted():  # Check if event was already handled
-#               print("event accepted")
-#               self.txtCmd.event(event)  # Pass event to QLineEdit for default behavior
-##           elif event.isAccepted():
-##               print("Other keypress not handled")
-##           else:
-##               event.accept()  # Allow other keypresses to be processed by the QLineEdit
-#               
-##       self.txtCmd.installEventFilter(self.txtCmd)
-##       self.txtCmd.keyPressEvent = handle_key_press
-        
         self.cmdExecuteCmd = QPushButton("Execute")
         self.cmdExecuteCmd.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
         self.cmdExecuteCmd.clicked.connect(self.click_execCommand)
@@ -817,7 +736,6 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.txtConsole.setReadOnly(True)
         self.txtConsole.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
         self.txtConsole.setFont(ConfigClass.font)
-#       self.txtConsole.insertPlainText("(lldb)")
         self.layCmdParent.addWidget(self.txtConsole)
         self.layCmdParent.addWidget(self.wdgCmd)
         
@@ -830,21 +748,7 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         
         self.threadpool = QThreadPool()
         
-#       self.setWindowTitle(APP_NAME + " " + APP_VERSION + " - " + os.path.basename(exe))
-#       
-#       self.updateStatusBar("Loading target '%s' ..." % exe)
-        
         self.start_workerLoadTarget(exe)
-    
-#   def handle_return_pressed(self):
-##       # Get the text entered in the QLineEdit
-##       text = line_edit.text()
-##       # Process the entered text
-##       print(text)
-#       self.click_execCommand()
-    
-#   lstCommands = []
-#   currCmd = 0
     
     def click_execCommand(self):
         newCommand = self.txtCmd.text()
@@ -897,7 +801,6 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         workerLoadTarget.signals.loadRegisterValue.connect(self.handle_loadRegisterValue)
         workerLoadTarget.signals.loadProcess.connect(self.handle_loadProcess)
         workerLoadTarget.signals.loadThread.connect(self.handle_loadThread)
-        workerLoadTarget.signals.addInstruction.connect(self.handle_addInstruction)
         workerLoadTarget.signals.addInstructionNG.connect(self.handle_addInstructionNG)
         workerLoadTarget.signals.setTextColor.connect(self.handle_setTextColor)
         
@@ -914,18 +817,18 @@ class Pymobiledevice3GUIWindow(QMainWindow):
 #           self.txtMultiline.insertText(txt, bold, color)
             pass
             
-    def handle_addInstruction(self, txt, addLineNum, newLine, bold, color):
-#       if newLine:
-#           self.txtMultiline.appendAsmText(txt, addLineNum)
-#       else:
-#           self.txtMultiline.insertText(txt, bold, color)
-        pass
+#   def handle_addInstruction(self, txt, addLineNum, newLine, bold, color):
+##       if newLine:
+##           self.txtMultiline.appendAsmText(txt, addLineNum)
+##       else:
+##           self.txtMultiline.insertText(txt, bold, color)
+#       pass
         
     def handle_loadRegisterValue(self, regIdx, regName, regValue, regMemory):
         registerDetailNode = QTreeWidgetItem(self.regTreeList[regIdx], [regName, regValue, regMemory])
     
     def handle_loadThread(self, idx, thread):
-        self.threadNode = QTreeWidgetItem(self.processNode, ["", "#" + str(idx) + " " + str(thread.GetThreadID()) + " (0x" + hex(thread.GetThreadID()) + ")", thread.GetQueueName()])
+        self.threadNode = QTreeWidgetItem(self.processNode, ["#" + str(idx) + " " + str(thread.GetThreadID()), "0x" + hex(thread.GetThreadID()) + "", thread.GetQueueName()])
         
 #       print(thread.GetNumFrames())
         for idx2 in range(thread.GetNumFrames()):
@@ -940,7 +843,7 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         
     def handle_loadProcess(self, process):
         self.treThreads.clear()
-        self.processNode = QTreeWidgetItem(self.treThreads, ["#" + str(process.GetProcessID()), '', ''])
+        self.processNode = QTreeWidgetItem(self.treThreads, ["#0 " + str(process.GetProcessID()), "0x" + hex(process.GetProcessID()) + "", process.GetTarget().GetExecutable().GetFilename()])
         pass
     
     def handle_loadRegister(self, regType):

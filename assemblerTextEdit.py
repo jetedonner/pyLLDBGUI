@@ -145,15 +145,22 @@ class DisassemblyTableWidget(QTableWidget):
 		self.context_menu.addSeparator()
 		actionFindReferences = self.context_menu.addAction("Find references")
 		
-		self.setColumnCount(6)
-		self.setColumnWidth(0, 32)
-		self.setColumnWidth(1, 72)
-		self.setColumnWidth(2, 108)
-		self.setColumnWidth(3, 256)
-		self.setColumnWidth(4, 384)
-		self.setColumnWidth(5, 512)
+		self.setColumnCount(7)
+		self.setColumnWidth(0, 12)
+		self.setColumnWidth(1, 32)
+		self.setColumnWidth(2, 72)
+		self.setColumnWidth(3, 108)
+		self.setColumnWidth(4, 256)
+		self.setColumnWidth(5, 384)
+		self.setColumnWidth(6, 512)
 		self.verticalHeader().hide()
-		self.horizontalHeader().hide()
+		self.horizontalHeader().show()
+		self.setHorizontalHeaderLabels(['', '', '#', 'Address', 'Instruction', 'Hex', 'Comment'])
+		self.horizontalHeaderItem(2).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
+		self.horizontalHeaderItem(3).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
+		self.horizontalHeaderItem(4).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
+		self.horizontalHeaderItem(5).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
+		self.horizontalHeaderItem(6).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
 		self.setFont(ConfigClass.font)
 		
 		self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
@@ -161,8 +168,8 @@ class DisassemblyTableWidget(QTableWidget):
 		self.cellDoubleClicked.connect(self.on_double_click)
 		
 	def on_double_click(self, row, col):
-		if col == 0:
-			print(f"Double clicked at row {row} and column {col}")
+		if col in range(3):
+#			print(f"Double clicked at row {row} and column {col}")
 			self.toggleBPOn(row)
 		
 	def contextMenuEvent(self, event):
@@ -174,7 +181,7 @@ class DisassemblyTableWidget(QTableWidget):
 		self.context_menu.exec(event.globalPos())
 	
 	def toggleBPOn(self, row):
-		item = self.item(row, 0)
+		item = self.item(row, 1)
 		item.toggleBPOn()
 		pass
 	
@@ -188,12 +195,13 @@ class DisassemblyTableWidget(QTableWidget):
 
 		item = DisassemblyImageTableWidgetItem()
 		
-		self.setItem(currRowCount, 0, item)
-		self.addItem(currRowCount, 1, str(lineNum) + ":")
-		self.addItem(currRowCount, 2, address)
-		self.addItem(currRowCount, 3, instr)
-		self.addItem(currRowCount, 4, data)
-		self.addItem(currRowCount, 5, comment)
+		self.addItem(currRowCount, 0, '')
+		self.setItem(currRowCount, 1, item)
+		self.addItem(currRowCount, 2, str(lineNum) + ":")
+		self.addItem(currRowCount, 3, address)
+		self.addItem(currRowCount, 4, instr)
+		self.addItem(currRowCount, 5, data)
+		self.addItem(currRowCount, 6, comment)
 		
 		self.setRowHeight(currRowCount, 18)
 		
