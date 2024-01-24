@@ -160,10 +160,6 @@ class AssemblerTextEdit(QWidget):
 			self.table.addRow(0, addr, instr, comment, data)
 	
 	def setTextColor(self, color = "black", lineNum = False):
-#		if lineNum:
-#			self.txtLineCount.setTextColor(QColor(color))
-#		else:
-#			self.txtCode.setTextColor(QColor(color))
 		pass
 		
 	def __init__(self):

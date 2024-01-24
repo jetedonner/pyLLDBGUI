@@ -31,8 +31,6 @@ from config import *
 
 APP_NAME = "LLDB-GUI"
 WINDOW_SIZE = 620
-#DISPLAY_HEIGHT = 35
-#BUTTON_SIZE = 40
 
 APP_VERSION = "v0.0.1"
 
@@ -52,21 +50,10 @@ interruptExecCommand = False
 
         
 class ExecCommandReceiver(QObject):
-#	data_received = pyqtSignal(str)
     interruptExecCommand = pyqtSignal()
     
 class ExecCommandWorkerSignals(QObject):
     finished = pyqtSignal(object)
-#   sendProgressUpdate = pyqtSignal(int)
-#   loadRegister = pyqtSignal(str)
-#   loadRegisterValue = pyqtSignal(int, str, str, str)
-#   loadProcess = pyqtSignal(object)
-#   loadThread = pyqtSignal(int, object)
-#   addInstruction = pyqtSignal(str, bool, bool, bool, str)
-#   
-#   addInstructionNG = pyqtSignal(str, str, str, bool, bool, bool, str)
-#   
-#   setTextColor = pyqtSignal(str, bool)
     
 class ExecCommandWorker(QRunnable):
     
@@ -77,11 +64,9 @@ class ExecCommandWorker(QRunnable):
         self.signals = ExecCommandWorkerSignals()
         
     def run(self):
-#       QCoreApplication.processEvents()
         self.runExecCommand()
         
     def runExecCommand(self):
-#       QCoreApplication.processEvents()
         if self.isExecCommandActive:
             interruptExecCommand = True
             return
@@ -141,7 +126,6 @@ class ProcessThreadObject(QObject):
         self.threads.append(thread)
 
 class TargetLoadReceiver(QObject):
-#	data_received = pyqtSignal(str)
     interruptTargetLoad = pyqtSignal()
     
 class TargetLoadWorkerSignals(QObject):
@@ -171,9 +155,6 @@ class TargetLoadWorker(QRunnable):
         self.isTargetLoadActive = False
         self.window = window_obj
         self.targetPath = target
-#       self.treeWidget = tree_widget
-#       self.root_item = root_item
-#       self.data_receiver = data_receiver
         self.signals = TargetLoadWorkerSignals()
         
     def run(self):
@@ -181,8 +162,6 @@ class TargetLoadWorker(QRunnable):
         self.runTargetLoad()
         
     def runTargetLoad(self):
-#       self.treeWidget.setEnabled(False)
-        QCoreApplication.processEvents()
         if self.isTargetLoadActive:
             interruptTargetLoad = True
             return
@@ -243,10 +222,6 @@ class TargetLoadWorker(QRunnable):
             if process:
                 self.executeCmd()
                 
-#               listener = UserInputListener(process, queue)
-#               process.SetInputReader(listener)
-                
-#               processThreadObj = ProcessThreadObject(process)
                 self.signals.loadProcess.emit(process)
                 QCoreApplication.processEvents()
                 self.sendProgressUpdate(15)
@@ -256,15 +231,7 @@ class TargetLoadWorker(QRunnable):
                 print(process)
                 if state == lldb.eStateStopped:
                     print("state == lldb.eStateStopped")
-                    
-#                   res = lldb.SBCommandReturnObject()
-#                   
-#                   # Get the command interpreter
-#                   command_interpreter = debugger.GetCommandInterpreter()
-#               
-#                   # Execute the 'frame variable' command
-#                   command_interpreter.HandleCommand('re read', res)
-#                   print(f'{res}')
+
                     print(f'GetNumThreads: {process.GetNumThreads()}')
                     # Get the first thread
                     for thrd in range(process.GetNumThreads()):
@@ -277,7 +244,6 @@ class TargetLoadWorker(QRunnable):
                         self.signals.loadThread.emit(idxThread, thread)
                         QCoreApplication.processEvents()
                         idxThread += 1
-#                       processThreadObj.addThread(thread)
                         self.sendProgressUpdate(20)
                         # Print some simple thread info
                         print(thread)
@@ -285,7 +251,6 @@ class TargetLoadWorker(QRunnable):
                         print(f'GetNumFrames: {thread.GetNumFrames()}')
                         
                         for idx2 in range(thread.GetNumFrames()):
-#                           print(thread.GetFrameAtIndex(idx2))
                             
                             # Get the first frame
                             frame = thread.GetFrameAtIndex(idx2)

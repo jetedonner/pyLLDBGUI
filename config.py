@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 import os
+import sys
 
 from os.path import abspath
 from os.path import dirname, realpath
 from os import getcwd, path
-
-import sys
 
 from PyQt6.QtGui import *
 from PyQt6.QtCore import *
