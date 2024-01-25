@@ -46,6 +46,9 @@ process = None
 global target
 target = None
 
+global thread
+thread = None
+
 interruptExecCommand = False
 
         
@@ -137,7 +140,7 @@ class TargetLoadWorkerSignals(QObject):
     loadThread = pyqtSignal(int, object)
     addInstruction = pyqtSignal(str, bool, bool, bool, str)
     
-    addInstructionNG = pyqtSignal(str, str, str, str, bool, bool, bool, str)
+    addInstructionNG = pyqtSignal(str, str, str, str, bool, bool, bool, str, str)
     
     setTextColor = pyqtSignal(str, bool)
 
@@ -160,6 +163,17 @@ class TargetLoadWorker(QRunnable):
     def run(self):
         QCoreApplication.processEvents()
         self.runTargetLoad()
+        
+    def convert_address(self, address):
+        # Get the address to be converted
+#       address = "0x0000000100003f5f"
+        
+        # Convert the address to hex
+        converted_address = int(address, 16)
+        
+        # Print the converted address
+#       print("Converted address:", hex(converted_address))
+        return hex(converted_address)
         
     def runTargetLoad(self):
         if self.isTargetLoadActive:
@@ -238,9 +252,35 @@ class TargetLoadWorker(QRunnable):
                         print(f'process.GetThreadAtIndex({thrd}) {process.GetThreadAtIndex(thrd).GetIndexID()}')
                     
                     idxThread = 0
+                    
+                    global thread
                     thread = process.GetThreadAtIndex(0)
+                    
                     if thread:
                         
+                        
+                         
+#                       # Get the current register state
+#                       register_state = thread.GetThreadState()
+#                   
+#                       # Get the RIP register value
+#                       rip_value = register_state.GetRegisterValue("rip")
+#                   
+#                       # Print the RIP value
+#                       print("Current RIP:", hex(rip_value))
+                            
+#                       # Get the current instruction address
+#                       instruction_address = thread.GetInstructionAddress()
+#                   
+#                       # Get the current instruction location
+#                       instruction_location = lldb.SBInstructionLocation(process, instruction_address)
+#                   
+#                       # Get the file and line number where the instruction is located
+#                       file_name, line_number = instruction_location.GetLineEntry().GetFileNameAndLine()
+#                   
+#                       # Print the file and line number
+#                       print("Current instruction location:", file_name, line_number)
+                            
                         self.signals.loadThread.emit(idxThread, thread)
                         QCoreApplication.processEvents()
                         idxThread += 1
@@ -259,7 +299,11 @@ class TargetLoadWorker(QRunnable):
                                 # Print some simple frame info
                                 print(frame)
                                 
+                                print(f'AAAAA >>>> {hex(frame.GetPC())}')
+                                
                                 if idx2 == 0:
+                                    rip = self.convert_address(frame.register["rip"].value)
+                                    print(rip)
                                     function = frame.GetFunction()
                                     # See if we have debug info (a function)
                                     if function:
@@ -273,7 +317,7 @@ class TargetLoadWorker(QRunnable):
                                         # Now get all instructions for this function and print
                                         # them
                                         insts = function.GetInstructions(target)
-                                        self.disassemble_instructions(insts)
+                                        self.disassemble_instructions(insts, rip)
                                     else:
                                         # See if we have a symbol in the symbol table for where
                                         # we stopped
@@ -287,7 +331,7 @@ class TargetLoadWorker(QRunnable):
                                             # Now get all instructions for this symbol and
                                             # print them
                                             insts = symbol.GetInstructions(target)
-                                            self.disassemble_instructions(insts)
+                                            self.disassemble_instructions(insts, rip)
                                             
         #                                   for functionNG2 in dir(symbol):
         #   #                                   if functionNG2.startswith("__"):
@@ -405,12 +449,12 @@ class TargetLoadWorker(QRunnable):
             print("Error reading memory:", error)
             return None
         
-    def disassemble_instructions(self, insts):
+    def disassemble_instructions(self, insts, rip):
         global target
         for i in insts:
             address = self.extract_address(f'{i}')
 #           self.signals.addInstruction(.emit(f'0x{address}:\t{i.GetMnemonic(target)}\t{i.GetOperands(target)}', True, True, False, "black")
-            self.signals.addInstructionNG.emit(f'0x{address}', f'{i.GetMnemonic(target)}\t{i.GetOperands(target)}', f'{i.GetComment(target)}', f'{i.GetData(target)}', True, True, False, "black")
+            self.signals.addInstructionNG.emit(f'0x{address}', f'{i.GetMnemonic(target)}\t{i.GetOperands(target)}', f'{i.GetComment(target)}', f'{i.GetData(target)}', True, True, False, "black", rip)
             
             QCoreApplication.processEvents()
         
@@ -505,7 +549,7 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         step_over_action = QAction(QIcon(os.path.join("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/resources/", 'step_over_ng2.png')), '&Step Over', self)
         step_over_action.setStatusTip('Step over')
         step_over_action.setShortcut('Ctrl+T')
-#       new_action.triggered.connect(self.new_document)
+        step_over_action.triggered.connect(self.handle_stepNext)
 #       file_menu.addAction(new_action)
         self.toolbar.addAction(step_over_action)
         
@@ -571,10 +615,10 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.tabThreads.layout().addWidget(self.treThreads)
         self.tabWidget.addTab(self.tabThreads, "Threads")
         
-        self.tabFrames = QWidget()
-        self.tabFrames.setLayout(QVBoxLayout())
-#       tabDet.layout().addWidget(treDet)
-        self.tabWidget.addTab(self.tabFrames, "Frames")
+#       self.tabFrames = QWidget()
+#       self.tabFrames.setLayout(QVBoxLayout())
+##       tabDet.layout().addWidget(treDet)
+#       self.tabWidget.addTab(self.tabFrames, "Frames")
         
         self.tabMemory = QWidget()
         self.tabMemory.setLayout(QVBoxLayout())
@@ -677,9 +721,9 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.txtMultiline.setTextColor(color, lineNum)
         pass
         
-    def handle_addInstructionNG(self, addr, instr, comment, data, addLineNum, newLine, bold, color):
+    def handle_addInstructionNG(self, addr, instr, comment, data, addLineNum, newLine, bold, color, rip):
         if newLine:
-            self.txtMultiline.appendAsmTextNG(addr, instr, comment, data.replace("                             ", "\t\t").replace("		            ", "\t\t\t").replace("		         ", "\t\t").replace("		      ", "\t\t").replace("			   ", "\t\t\t"), addLineNum)
+            self.txtMultiline.appendAsmTextNG(addr, instr, comment, data.replace("                             ", "\t\t").replace("		            ", "\t\t\t").replace("		         ", "\t\t").replace("		      ", "\t\t").replace("			   ", "\t\t\t"), addLineNum, rip)
         else:
 #           self.txtMultiline.insertText(txt, bold, color)
             pass
@@ -741,6 +785,17 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         
     def updateStatusBar(self, msg):
         self.statusBar.showMessage(msg)
+        
+    def handle_stepNext(self):
+        global thread
+        thread.StepInstruction(True)
+        frame = thread.GetFrameAtIndex(0)
+        print(f'NEXT STEP {frame.register["rip"].value}')
+        
+        # Get the current instruction
+#       instruction = frame
+        print(f'NEXT INSTRUCTION {hex(frame.GetPC())}')
+        self.txtMultiline.setPC(frame.GetPC())
         
 def close_application():
     global process

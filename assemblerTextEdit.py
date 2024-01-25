@@ -77,7 +77,7 @@ class DisassemblyTableWidget(QTableWidget):
 		actionFindReferences = self.context_menu.addAction("Find references")
 		
 		self.setColumnCount(7)
-		self.setColumnWidth(0, 12)
+		self.setColumnWidth(0, 24)
 		self.setColumnWidth(1, 32)
 		self.setColumnWidth(2, 72)
 		self.setColumnWidth(3, 108)
@@ -86,7 +86,7 @@ class DisassemblyTableWidget(QTableWidget):
 		self.setColumnWidth(6, 512)
 		self.verticalHeader().hide()
 		self.horizontalHeader().show()
-		self.setHorizontalHeaderLabels(['', '', '#', 'Address', 'Instruction', 'Hex', 'Comment'])
+		self.setHorizontalHeaderLabels(['PC', 'BP', '#', 'Address', 'Instruction', 'Hex', 'Comment'])
 		self.horizontalHeaderItem(2).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
 		self.horizontalHeaderItem(3).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
 		self.horizontalHeaderItem(4).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
@@ -119,13 +119,13 @@ class DisassemblyTableWidget(QTableWidget):
 		for row in range(self.rowCount(), 0):
 			self.removeRow(row)
 			
-	def addRow(self, lineNum, address, instr, comment, data):
+	def addRow(self, lineNum, address, instr, comment, data, rip = ""):
 		currRowCount = self.rowCount()
 		self.setRowCount(currRowCount + 1)
 
 		item = DisassemblyImageTableWidgetItem()
 		
-		self.addItem(currRowCount, 0, '')
+		self.addItem(currRowCount, 0, ('>' if rip == address else ''))
 		self.setItem(currRowCount, 1, item)
 		self.addItem(currRowCount, 2, str(lineNum) + ":")
 		self.addItem(currRowCount, 3, address)
@@ -152,14 +152,23 @@ class AssemblerTextEdit(QWidget):
 		self.table.resetContent()
 		pass
 	
-	def appendAsmTextNG(self, addr, instr, comment, data, addLineNum = True):
+	def appendAsmTextNG(self, addr, instr, comment, data, addLineNum = True, rip = ""):
 		if addLineNum:
 			self.lineCountNG += 1
-			self.table.addRow(self.lineCountNG, addr, instr, comment, data)
+			self.table.addRow(self.lineCountNG, addr, instr, comment, data, rip)
 		else:
-			self.table.addRow(0, addr, instr, comment, data)
+			self.table.addRow(0, addr, instr, comment, data, rip)
 	
 	def setTextColor(self, color = "black", lineNum = False):
+		pass
+		
+	def setPC(self, pc):
+		for row in range(self.table.rowCount()):
+			if self.table.item(row, 3).text() == hex(pc):
+				print("FOUND ROW")
+				self.table.item(row, 0).setText('>')
+			else:
+				self.table.item(row, 0).setText('')
 		pass
 		
 	def __init__(self):
