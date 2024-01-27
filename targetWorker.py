@@ -25,7 +25,7 @@ from PyQt6 import uic, QtWidgets
 import lldbHelper
 
 fname = "main"
-exe = "/Users/dave/Downloads/hello_world/hello_world_test"
+exe = "/Users/dave/Downloads/hello_world/hello_world"
 
 #global debugger
 #debugger = None
@@ -59,7 +59,7 @@ class TargetLoadWorkerSignals(QObject):
 	
 class TargetLoadWorker(QRunnable):
 	
-	targetPath = "/Users/dave/Downloads/hello_world/hello_world_test"
+	targetPath = "/Users/dave/Downloads/hello_world/hello_world"
 	window = None
 	inputHandler = None
 	
@@ -71,7 +71,7 @@ class TargetLoadWorker(QRunnable):
 	def inputCallback(self, data):
 		print(data)
 		
-	def __init__(self, window_obj, target = "/Users/dave/Downloads/hello_world/hello_world_test"):
+	def __init__(self, window_obj, target = "/Users/dave/Downloads/hello_world/hello_world"):
 		super(TargetLoadWorker, self).__init__()
 		self.isTargetLoadActive = False
 		self.window = window_obj
@@ -145,18 +145,19 @@ class TargetLoadWorker(QRunnable):
 		print("Creating a target for '%s'" % self.targetPath)
 		
 		
-		self.target = lldbHelper.debugger.CreateTargetWithFileAndArch(self.targetPath, None) # lldb.LLDB_ARCH_DEFAULT)
-		global target
-		target = self.target
+		lldbHelper.target = lldbHelper.debugger.CreateTargetWithFileAndArch(self.targetPath, None) # lldb.LLDB_ARCH_DEFAULT)
+#		global target
+#		target = self.target
 		
-		if self.target:
+		if lldbHelper.target:
 			self.sendProgressUpdate(10)
 #			print("Has target")
 			
 			# If the target is valid set a breakpoint at main
-			main_bp = self.target.BreakpointCreateByName(fname, self.target.GetExecutable().GetFilename())
-			error = main_bp.SetScriptCallbackBody("\
-			print 'Hit breakpoint callback'")
+			main_bp = lldbHelper.target.BreakpointCreateByName(fname, lldbHelper.target.GetExecutable().GetFilename())
+			main_bp.AddName(fname)
+#			error = main_bp.SetScriptCallbackBody("\
+#			print 'Hit breakpoint callback'")
 #           main_bp.SetScriptCallbackFunction('disasm_ui.breakpoint_cb')
 #           main_bp.SetAutoContinue(auto_continue=True)
 			print(main_bp)
@@ -164,7 +165,7 @@ class TargetLoadWorker(QRunnable):
 			# Launch the process. Since we specified synchronous mode, we won't return
 			# from this function until we hit the breakpoint at main
 			
-			lldbHelper.process = target.LaunchSimple(None, None, os.getcwd())
+			lldbHelper.process = lldbHelper.target.LaunchSimple(None, None, os.getcwd())
 #			global process
 #			process = self.process
 #           process.Stop()
@@ -191,7 +192,7 @@ class TargetLoadWorker(QRunnable):
 				# Print some simple process info
 				state = lldbHelper.process.GetState()
 #				print(self.process)
-				if state == lldb.eStateStopped:
+				if True: #state == lldb.eStateStopped:
 					print("state == lldb.eStateStopped")
 					
 					
@@ -270,7 +271,7 @@ class TargetLoadWorker(QRunnable):
 										
 										# Now get all instructions for this function and print
 										# them
-										insts = function.GetInstructions(self.target)
+										insts = function.GetInstructions(lldbHelper.target)
 										self.disassemble_instructions(insts, rip)
 									else:
 										# See if we have a symbol in the symbol table for where
@@ -284,7 +285,7 @@ class TargetLoadWorker(QRunnable):
 		#                                   print(f'DisplayName: {symbol.GetName()}')
 											# Now get all instructions for this symbol and
 											# print them
-											insts = symbol.GetInstructions(self.target)
+											insts = symbol.GetInstructions(lldbHelper.target)
 											self.disassemble_instructions(insts, rip)
 											
 		#                                   for functionNG2 in dir(symbol):
@@ -325,7 +326,7 @@ class TargetLoadWorker(QRunnable):
 												size = 32  # Adjust the size based on your data type (e.g., int, float)
 												
 												# Read memory and print the result
-												data = self.read_memory(self.process, target.ResolveLoadAddress(int(child.GetValue(), 16)), size)
+												data = self.read_memory(self.process, lldbHelper.target.ResolveLoadAddress(int(child.GetValue(), 16)), size)
 												
 												hex_string = ''.join("%02x" % byte for byte in data)
 												
@@ -404,10 +405,10 @@ class TargetLoadWorker(QRunnable):
 			return None
 		
 	def disassemble_instructions(self, insts, rip):
-		global target
+#		global target
 		for i in insts:
 			address = self.extract_address(f'{i}')
 #           self.signals.addInstruction(.emit(f'0x{address}:\t{i.GetMnemonic(target)}\t{i.GetOperands(target)}', True, True, False, "black")
-			self.signals.addInstructionNG.emit(f'0x{address}', f'{i.GetMnemonic(target)}\t{i.GetOperands(target)}', f'{i.GetComment(target)}', f'{i.GetData(target)}', True, True, False, "black", rip)
+			self.signals.addInstructionNG.emit(f'0x{address}', f'{i.GetMnemonic(lldbHelper.target)}\t{i.GetOperands(lldbHelper.target)}', f'{i.GetComment(lldbHelper.target)}', f'{i.GetData(lldbHelper.target)}', True, True, False, "black", rip)
 			
 			QCoreApplication.processEvents()

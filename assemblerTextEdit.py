@@ -239,26 +239,28 @@ class BreakpointsTableWidget(QTableWidget):
 #		actionFindReferences = self.context_menu.addAction("Find references")
 #		self.actionShowMemory = self.context_menu.addAction("Show memory")
 #		
-#		self.setColumnCount(7)
-#		self.setColumnWidth(0, 24)
-#		self.setColumnWidth(1, 32)
-#		self.setColumnWidth(2, 72)
-#		self.setColumnWidth(3, 108)
-#		self.setColumnWidth(4, 256)
+		self.setColumnCount(5)
+		self.setColumnWidth(0, 24)
+		self.setColumnWidth(1, 32)
+		self.setColumnWidth(2, 96)
+		self.setColumnWidth(3, 108)
+		self.setColumnWidth(4, 32)
 #		self.setColumnWidth(5, 324)
 #		self.setColumnWidth(6, 304)
-#		self.verticalHeader().hide()
-#		self.horizontalHeader().show()
-#		self.setHorizontalHeaderLabels(['PC', 'BP', '#', 'Address', 'Instruction', 'Hex', 'Comment'])
-#		self.horizontalHeaderItem(2).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
-#		self.horizontalHeaderItem(3).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
-#		self.horizontalHeaderItem(4).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
+		self.verticalHeader().hide()
+		self.horizontalHeader().show()
+		self.setHorizontalHeaderLabels(['State', '#', 'Address', 'Name', 'Hit'])#, 'Instruction', 'Hex', 'Comment'])
+		self.horizontalHeaderItem(0).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
+		self.horizontalHeaderItem(1).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
+		self.horizontalHeaderItem(2).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
+		self.horizontalHeaderItem(3).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
+		self.horizontalHeaderItem(4).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
 #		self.horizontalHeaderItem(5).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
 #		self.horizontalHeaderItem(6).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
-#		self.setFont(ConfigClass.font)
+		self.setFont(ConfigClass.font)
 #		
-#		self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-#		self.setShowGrid(False)
+		self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+		self.setShowGrid(False)
 #		self.cellDoubleClicked.connect(self.on_double_click)
 		pass
 		
@@ -286,27 +288,27 @@ class BreakpointsTableWidget(QTableWidget):
 #			self.removeRow(row)
 		pass
 			
-	def addRow(self, lineNum, address, instr, comment, data, rip = ""):
-#		currRowCount = self.rowCount()
-#		self.setRowCount(currRowCount + 1)
+	def addRow(self, state, num, address, nme, hitcount):
+		currRowCount = self.rowCount()
+		self.setRowCount(currRowCount + 1)
 #		
-#		item = DisassemblyImageTableWidgetItem()
+		item = DisassemblyImageTableWidgetItem()
 #		
 #		self.addItem(currRowCount, 0, ('>' if rip == address else ''))
-#		self.setItem(currRowCount, 1, item)
-#		self.addItem(currRowCount, 2, str(lineNum) + ":")
-#		self.addItem(currRowCount, 3, address)
-#		self.addItem(currRowCount, 4, instr)
-#		self.addItem(currRowCount, 5, data)
+		self.setItem(currRowCount, 0, item)
+		self.addItem(currRowCount, 1, "#" + str(num))
+		self.addItem(currRowCount, 2, address)
+		self.addItem(currRowCount, 3, nme)
+		self.addItem(currRowCount, 4, hitcount)
 #		self.addItem(currRowCount, 6, comment)
 #		
-#		self.setRowHeight(currRowCount, 18)
+		self.setRowHeight(currRowCount, 18)
 		pass
 		
 	def addItem(self, row, col, txt):
-#		item = QTableWidgetItem(txt, QTableWidgetItem.ItemType.Type)
-#		item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable) #Qt.ItemFlag.ItemIsSelectable)
-#		
-#		# Insert the items into the row
-#		self.setItem(row, col, item)
+		item = QTableWidgetItem(txt, QTableWidgetItem.ItemType.Type)
+		item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable) #Qt.ItemFlag.ItemIsSelectable)
+		
+		# Insert the items into the row
+		self.setItem(row, col, item)
 		pass

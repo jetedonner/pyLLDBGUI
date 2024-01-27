@@ -10,7 +10,7 @@
 # ----------------------------------------------------------------------
 
 import lldb
-from lldbutil import print_stacktrace
+from lldbutil import *
 from inputHelper import FBInputHandler
 import psutil
 import os
@@ -49,7 +49,7 @@ WINDOW_SIZE = 620
 APP_VERSION = "v0.0.1"
 
 fname = "main"
-exe = "/Users/dave/Downloads/hello_world/hello_world_test"
+exe = "/Users/dave/Downloads/hello_world/hello_world"
 
 #global debugger
 #debugger = None
@@ -466,6 +466,39 @@ class Pymobiledevice3GUIWindow(QMainWindow):
     def handle_progressFinished(self):
 #       t = Timer(1.0, self.resetProgress)
 #       t.start() # after 30 seconds, "hello, world" will be printed
+        print(f'GetNumBreakpoints() => {lldbHelper.target.GetNumBreakpoints()}')
+        idx = 0
+        for i in range(lldbHelper.target.GetNumBreakpoints()):
+            idx += 1
+            print(dir(lldbHelper.target.GetBreakpointAtIndex(i)))
+            bp_cur = lldbHelper.target.GetBreakpointAtIndex(i)
+            print(bp_cur)
+            for bl in bp_cur:
+                # Make sure the name list has the remaining name:
+                name_list = lldb.SBStringList()
+                bp_cur.GetNames(name_list)
+                print(name_list)
+                print(len(name_list))
+                print(name_list.GetSize())
+                num_names = name_list.GetSize()
+#               self.assertEquals(
+#                   num_names, 1, "Name list has %d items, expected 1." % (num_names)
+#               )
+        
+                name = name_list.GetStringAtIndex(0)
+#               self.assertEquals(
+#                   name,
+#                   other_bkpt_name,
+#                   "Remaining name was: %s expected %s." % (name, other_bkpt_name),
+#               )
+#               print(dir(bl))
+#               bp_cur = lldbHelper.target.GetBreakpointAtIndex(i)
+                print(bl)
+                print(dir(bl))
+                print(bl.GetQueueName())
+                print(get_description(bp_cur))
+                print(dir(get_description(bp_cur)))
+                self.tblBPs.addRow(bp_cur.GetID(), idx, hex(bl.GetLoadAddress()), name, str(bp_cur.GetHitCount()))
         pass
         
     def updateProgress(self, newValue, finished = False):
@@ -490,9 +523,9 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         process = debugger.GetSelectedTarget().GetProcess()
         memory = process.ReadMemory(address, data_size, error_ref)
         if error_ref.Success():
-            hex_string = binascii.hexlify(memory)
+#           hex_string = binascii.hexlify(memory)
             # `memory` is a regular byte string
-            print(f'BYTES:\n{memory}\nHEX:\n{hex_string}')
+#           print(f'BYTES:\n{memory}\nHEX:\n{hex_string}')
             self.hxtMemory.setTxtHexNG(memory, True, int(self.txtMemoryAddr.text(), 16))
         else:
             print(str(error_ref))
@@ -524,7 +557,6 @@ class Pymobiledevice3GUIWindow(QMainWindow):
 ##       
 ##       # Restore the default cursor
 ##       QApplication.setOverrideCursor(QCursor(Qt.CursorShape.ArrowCursor))
-
         
         processes = self.get_running_processes()
 
@@ -572,11 +604,11 @@ class Pymobiledevice3GUIWindow(QMainWindow):
     def handle_stepNext(self):
 #       global thread
 #       output_stream = thread.GetOutput()
-        self.workerLoadTarget.thread.StepInstruction(True)
+        lldbHelper.thread.StepInstruction(True)
 #       for line in output_stream.readlines():
 #           print(f'>>>>>>> OUTPUT OF STEP: {line}')
             
-        frame = thread.GetFrameAtIndex(0)
+        frame = lldbHelper.thread.GetFrameAtIndex(0)
         print(f'NEXT STEP {frame.register["rip"].value}')
         
         # Get the current instruction
@@ -585,9 +617,9 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.txtMultiline.setPC(frame.GetPC())
     
     def handle_stepInto(self):
-        global thread
-        thread.StepInstruction(False)
-        frame = thread.GetFrameAtIndex(0)
+#       global thread
+        lldbHelper.thread.StepInstruction(False)
+        frame = lldbHelper.thread.GetFrameAtIndex(0)
         print(f'NEXT STEP INTO {frame.register["rip"].value}')
         
 #       function = frame.GetFunction()
@@ -629,15 +661,12 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         print(f'NEXT INTO INSTRUCTION {hex(frame.GetPC())}')
         self.txtMultiline.setPC(frame.GetPC())
         
-    
-    
-        
 def close_application():
 #   global process
     # Stop all running tasks in the thread pool
-    if pymobiledevice3GUIWindow.workerLoadTarget.process:
+    if lldbHelper.process:
         print("KILLING PROCESS")
-        pymobiledevice3GUIWindow.workerLoadTarget.process.Kill()
+        lldbHelper.process.Kill()
     else:
         print("NO PROCESS TO KILL!!!")
 #   global pymobiledevice3GUIApp
