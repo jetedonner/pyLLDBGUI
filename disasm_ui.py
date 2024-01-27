@@ -18,6 +18,11 @@ import sys
 import re
 import binascii
 import webbrowser
+import ctypes
+import time
+
+#import time
+#from gi.repository import Gdk, Gtk, GObject
 
 from PyQt6.QtGui import *
 from PyQt6.QtCore import *
@@ -28,6 +33,8 @@ from PyQt6 import uic, QtWidgets
 from assemblerTextEdit import *
 from registerTreeView import *
 from config import *
+
+from PyQt6.QSwitch import *
 
 APP_NAME = "LLDB-GUI"
 WINDOW_SIZE = 620
@@ -86,11 +93,11 @@ class ExecCommandWorker(QRunnable):
         
         # Execute the 'frame variable' command
         command_interpreter.HandleCommand(self.command, res)
-        print(f'{res}')
-        for i in dir(res):
-            print(i)
-        print(res.Succeeded())
-        print(res.GetError())
+#       print(f'{res}')
+#       for i in dir(res):
+#           print(i)
+#       print(res.Succeeded())
+#       print(res.GetError())
         
         self.isExecCommandActive = False
         self.signals.finished.emit(res)
@@ -103,30 +110,30 @@ class ExecCommandWorker(QRunnable):
         
 interruptTargetLoad = False
 
-class UserInputListener:
-    def __init__(self, process, queue):
-#       super(UserInputListener, self).__init__()
-        self.process = process
-        self.queue = queue
-        
-    def input_received(self, data):
-        # Process user input data
-        # Update the program state based on the input
-        # Send commands to LLDB to continue execution or interact with the program
-        self.queue.put(data)
+#class UserInputListener:
+#   def __init__(self, process, queue):
+##       super(UserInputListener, self).__init__()
+#       self.process = process
+#       self.queue = queue
+#       
+#   def input_received(self, data):
+#       # Process user input data
+#       # Update the program state based on the input
+#       # Send commands to LLDB to continue execution or interact with the program
+#       self.queue.put(data)
         
 
-class ProcessThreadObject(QObject):
-    process = None
-    threads = []
-    
-    def __init__(self, process):
-        super(ProcessThreadObject, self).__init__()
-        self.process = process
-#       self.threads = threads
-        
-    def addThread(self, thread):
-        self.threads.append(thread)
+#class ProcessThreadObject(QObject):
+#   process = None
+#   threads = []
+#   
+#   def __init__(self, process):
+#       super(ProcessThreadObject, self).__init__()
+#       self.process = process
+##       self.threads = threads
+#       
+#   def addThread(self, thread):
+#       self.threads.append(thread)
 
 class TargetLoadReceiver(QObject):
     interruptTargetLoad = pyqtSignal()
@@ -236,6 +243,14 @@ class TargetLoadWorker(QRunnable):
             if process:
                 self.executeCmd()
                 
+                for fun in dir(process):
+                    print(fun)
+#               for module in process.GetLoadedModules():
+#                   for symbol in module.GetSymbols():
+#                       if symbol.GetType() == lldb.SBSymbolType.ST_Import:
+#                           print(symbol.GetName())
+                
+                
                 self.signals.loadProcess.emit(process)
                 QCoreApplication.processEvents()
                 self.sendProgressUpdate(15)
@@ -245,7 +260,12 @@ class TargetLoadWorker(QRunnable):
                 print(process)
                 if state == lldb.eStateStopped:
                     print("state == lldb.eStateStopped")
-
+                    
+                    
+                    print(f'GetNumQueues: {process.GetNumQueues()}')
+                    for que in range(process.GetNumQueues()):
+                        print(f'process.GetQueueAtIndex({que}) {process.GetQueueAtIndex(que)}')
+                        
                     print(f'GetNumThreads: {process.GetNumThreads()}')
                     # Get the first thread
                     for thrd in range(process.GetNumThreads()):
@@ -556,7 +576,7 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         step_into_action = QAction(QIcon(os.path.join("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/resources/", 'step_into.png')), '&Step Into', self)
         step_into_action.setStatusTip('Step Into')
         step_into_action.setShortcut('Ctrl+I')
-#       new_action.triggered.connect(self.new_document)
+        step_into_action.triggered.connect(self.handle_stepInto)
 #       file_menu.addAction(new_action)
         self.toolbar.addAction(step_into_action)
         
@@ -605,7 +625,7 @@ class Pymobiledevice3GUIWindow(QMainWindow):
 
         self.treThreads = QTreeWidget()
         self.treThreads.setFont(ConfigClass.font)
-        self.treThreads.setHeaderLabels(['Process / Threads', 'Hex ID', 'Frames'])
+        self.treThreads.setHeaderLabels(['Num / ID', 'Hex ID', 'Process / Threads / Frames'])
         self.treThreads.header().resizeSection(0, 128)
         self.treThreads.header().resizeSection(1, 128)
 #       self.tabRegisters.addTab(tabDet, regType)
@@ -647,13 +667,28 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.txtCmd.setText("re read")
         self.txtCmd.returnPressed.connect(self.click_execCommand)
         
+        self.swtAutoscroll = QSwitch("Autoscroll")
+        self.swtAutoscroll.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
+        self.swtAutoscroll.setChecked(True)
+        
         self.cmdExecuteCmd = QPushButton("Execute")
         self.cmdExecuteCmd.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
         self.cmdExecuteCmd.clicked.connect(self.click_execCommand)
         
+        self.cmdClear = QPushButton()
+        self.cmdClear.setIcon(ConfigClass.iconBin)
+        self.cmdClear.setToolTip("Clear the console log")
+        self.cmdClear.setIconSize(QSize(16, 16))
+        self.cmdClear.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
+        self.cmdClear.clicked.connect(self.clear_clicked)
+        
         self.layCmd.addWidget(self.lblCmd)
         self.layCmd.addWidget(self.txtCmd)
         self.layCmd.addWidget(self.cmdExecuteCmd)
+        self.layCmd.addWidget(self.swtAutoscroll)
+        self.layCmd.addWidget(self.cmdClear)
+        self.wdgCmd.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
+        
         
         self.txtConsole = QTextEdit()
         self.txtConsole.setReadOnly(True)
@@ -673,6 +708,10 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         
         self.start_workerLoadTarget(exe)
     
+    def clear_clicked(self):
+        self.txtConsole.setText("")
+        pass
+        
     def click_execCommand(self):
         newCommand = self.txtCmd.text()
         
@@ -693,7 +732,16 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.threadpool.start(workerExecCommand)
         
     def handle_commandFinished(self, res):
-        self.txtConsole.append(res.GetOutput())
+#       print(res.Succeeded())
+#       print(res.GetError())
+        if res.Succeeded():
+            self.txtConsole.append(res.GetOutput())
+        else:
+            self.txtConsole.append(f"{res.GetError()}")
+        
+        if self.swtAutoscroll.isChecked():
+            self.sb = self.txtConsole.verticalScrollBar()
+            self.sb.setValue(self.sb.maximum())
     
     def start_workerLoadTarget(self, target):
         
@@ -786,6 +834,23 @@ class Pymobiledevice3GUIWindow(QMainWindow):
     def updateStatusBar(self, msg):
         self.statusBar.showMessage(msg)
         
+    def show_hourglass_cursor(self, timeout):
+        watch = Gdk.Cursor(Gdk.CursorType.WATCH)
+        gdk_window = self.get_root_window()
+        gdk_window.set_cursor(watch)
+#       # Set the hourglass cursor
+#       set_cursor()
+#       
+#       # Start the timer
+#       start_time = time.time()
+#       
+#       # Wait for the specified timeout
+#       while time.time() - start_time < timeout:
+#           time.sleep(0.1)
+#           
+#       # Reset the cursor to the default
+#       set_cursor()
+        
     def handle_stepNext(self):
         global thread
         thread.StepInstruction(True)
@@ -796,6 +861,54 @@ class Pymobiledevice3GUIWindow(QMainWindow):
 #       instruction = frame
         print(f'NEXT INSTRUCTION {hex(frame.GetPC())}')
         self.txtMultiline.setPC(frame.GetPC())
+    
+    def handle_stepInto(self):
+        global thread
+        thread.StepInstruction(False)
+        frame = thread.GetFrameAtIndex(0)
+        print(f'NEXT STEP INTO {frame.register["rip"].value}')
+        
+#       function = frame.GetFunction()
+#       # See if we have debug info (a function)
+#       if function:
+#           # We do have a function, print some info for the
+#           # function
+#           print(function)
+#           
+##                               for functionNG2 in dir(function):
+##                                   print(functionNG2)
+#           
+#           # Now get all instructions for this function and print
+#           # them
+#           insts = function.GetInstructions(target)
+#           self.txtMultiline.disassemble_instructions(insts, rip)
+#       else:
+#           # See if we have a symbol in the symbol table for where
+#           # we stopped
+#           symbol = frame.GetSymbol()
+#           if symbol:
+#               # We do have a symbol, print some info for the
+#               # symbol
+#               print(symbol)
+#               
+##                                   print(f'DisplayName: {symbol.GetName()}')
+#               # Now get all instructions for this symbol and
+#               # print them
+#               insts = symbol.GetInstructions(target)
+#               self.txtMultiline.disassemble_instructions(insts, rip)
+#               
+##                                   for functionNG2 in dir(symbol):
+##   #                                   if functionNG2.startswith("__"):
+##   #                                       continue
+##                                       print(functionNG2)
+                                    
+        # Get the current instruction
+#       instruction = frame
+        print(f'NEXT INTO INSTRUCTION {hex(frame.GetPC())}')
+        self.txtMultiline.setPC(frame.GetPC())
+        
+    
+    
         
 def close_application():
     global process

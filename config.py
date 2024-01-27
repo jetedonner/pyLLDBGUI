@@ -24,6 +24,7 @@ class ConfigClass():
 	iconStd = None
 	iconBPEnabled = None
 	iconBPDisabled = None
+	iconBin = None
 	
 	@staticmethod
 	def initIcons():
@@ -33,3 +34,4 @@ class ConfigClass():
 		ConfigClass.iconStd = QIcon()
 		ConfigClass.iconBPEnabled = QIcon(os.path.join(resources_root, 'bug.png'))
 		ConfigClass.iconBPDisabled = QIcon(os.path.join(resources_root, 'bug_bw_greyscale.png'))
+		ConfigClass.iconBin = QIcon(os.path.join(resources_root, 'recyclebin.png'))
