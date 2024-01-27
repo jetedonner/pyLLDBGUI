@@ -14,7 +14,7 @@ from PyQt6 import uic, QtWidgets
 
 class ConfigClass():
 	font = QFont("Courier New")
-	font.setFixedPitch(True)
+#	font.setFixedPitch(True)
 	
 	supportURL = "https://pylldbgui.kimhauser.ch/support"
 	githubURL = "https://github.com/jetedonner/pyLLDBGUI"
@@ -25,9 +25,13 @@ class ConfigClass():
 	iconBPEnabled = None
 	iconBPDisabled = None
 	iconBin = None
+	iconPause = None
+	iconPlay = None
 	
 	@staticmethod
 	def initIcons():
+#		self.font
+		
 		project_root = dirname(realpath(__file__))
 		resources_root = os.path.join(project_root, 'resources')
 		
@@ -35,3 +39,8 @@ class ConfigClass():
 		ConfigClass.iconBPEnabled = QIcon(os.path.join(resources_root, 'bug.png'))
 		ConfigClass.iconBPDisabled = QIcon(os.path.join(resources_root, 'bug_bw_greyscale.png'))
 		ConfigClass.iconBin = QIcon(os.path.join(resources_root, 'recyclebin.png'))
+		ConfigClass.iconPause = QIcon(os.path.join(resources_root, 'pause-circular-button.png'))
+		ConfigClass.iconPlay = QIcon(os.path.join(resources_root, 'play-circular-button.png'))
+		
+		
+		

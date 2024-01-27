@@ -90,11 +90,16 @@ class DisassemblyTableWidget(QTableWidget):
 		self.verticalHeader().hide()
 		self.horizontalHeader().show()
 		self.setHorizontalHeaderLabels(['PC', 'BP', '#', 'Address', 'Instruction', 'Hex', 'Comment'])
-		self.horizontalHeaderItem(2).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
-		self.horizontalHeaderItem(3).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
-		self.horizontalHeaderItem(4).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
-		self.horizontalHeaderItem(5).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
-		self.horizontalHeaderItem(6).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
+		self.horizontalHeaderItem(2).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
+#		self.horizontalHeaderItem(2).setFont(ConfigClass.font)
+		self.horizontalHeaderItem(3).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
+#		self.horizontalHeaderItem(3).setFont(ConfigClass.font)
+		self.horizontalHeaderItem(4).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
+#		self.horizontalHeaderItem(4).setFont(ConfigClass.font)
+		self.horizontalHeaderItem(5).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
+#		self.horizontalHeaderItem(5).setFont(ConfigClass.font)
+		self.horizontalHeaderItem(6).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
+#		self.horizontalHeaderItem(6).setFont(ConfigClass.font)
 		self.setFont(ConfigClass.font)
 		
 		self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
@@ -202,3 +207,106 @@ class AssemblerTextEdit(QWidget):
 		self.widget.setLayout(self.layFrame)
 		
 		self.layout().addWidget(self.widget)
+		
+		
+class BreakpointsTableWidget(QTableWidget):
+	
+#	actionShowMemory = None
+	
+	def handle_toggleBP(self):
+#		item = self.item(self.selectedItems()[0].row(), 1)
+#		item.toggleBPOn()
+		pass
+		
+	def handle_disableBP(self):
+#		item = self.item(self.selectedItems()[0].row(), 1)
+#		item.toggleBPEnabled()
+		pass
+		
+	def __init__(self):
+		super().__init__()
+#		self.context_menu = QMenu(self)
+#		actionToggleBP = self.context_menu.addAction("Toggle Breakpoint")
+#		actionToggleBP.triggered.connect(self.handle_toggleBP)
+#		actionDisableBP = self.context_menu.addAction("Enable / Disable Breakpoint")
+#		actionDisableBP.triggered.connect(self.handle_disableBP)
+#		
+#		self.context_menu.addSeparator()
+#		actionCopyAddress = self.context_menu.addAction("Copy address")
+#		actionCopyInstruction = self.context_menu.addAction("Copy instruction")
+#		actionCopyHex = self.context_menu.addAction("Copy hex value")
+#		self.context_menu.addSeparator()
+#		actionFindReferences = self.context_menu.addAction("Find references")
+#		self.actionShowMemory = self.context_menu.addAction("Show memory")
+#		
+#		self.setColumnCount(7)
+#		self.setColumnWidth(0, 24)
+#		self.setColumnWidth(1, 32)
+#		self.setColumnWidth(2, 72)
+#		self.setColumnWidth(3, 108)
+#		self.setColumnWidth(4, 256)
+#		self.setColumnWidth(5, 324)
+#		self.setColumnWidth(6, 304)
+#		self.verticalHeader().hide()
+#		self.horizontalHeader().show()
+#		self.setHorizontalHeaderLabels(['PC', 'BP', '#', 'Address', 'Instruction', 'Hex', 'Comment'])
+#		self.horizontalHeaderItem(2).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
+#		self.horizontalHeaderItem(3).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
+#		self.horizontalHeaderItem(4).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
+#		self.horizontalHeaderItem(5).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
+#		self.horizontalHeaderItem(6).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
+#		self.setFont(ConfigClass.font)
+#		
+#		self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+#		self.setShowGrid(False)
+#		self.cellDoubleClicked.connect(self.on_double_click)
+		pass
+		
+	def on_double_click(self, row, col):
+#		if col in range(3):
+#			self.toggleBPOn(row)
+		pass
+			
+	def contextMenuEvent(self, event):
+#		for i in dir(event):
+#			print(i)
+#		print(event.pos())
+#		print(self.itemAt(event.pos().x(), event.pos().y()))
+#		print(self.selectedItems())
+#		self.context_menu.exec(event.globalPos())
+		pass
+		
+	def toggleBPOn(self, row):
+#		item = self.item(row, 1)
+#		item.toggleBPOn()
+		pass
+		
+	def resetContent(self):
+#		for row in range(self.rowCount(), 0):
+#			self.removeRow(row)
+		pass
+			
+	def addRow(self, lineNum, address, instr, comment, data, rip = ""):
+#		currRowCount = self.rowCount()
+#		self.setRowCount(currRowCount + 1)
+#		
+#		item = DisassemblyImageTableWidgetItem()
+#		
+#		self.addItem(currRowCount, 0, ('>' if rip == address else ''))
+#		self.setItem(currRowCount, 1, item)
+#		self.addItem(currRowCount, 2, str(lineNum) + ":")
+#		self.addItem(currRowCount, 3, address)
+#		self.addItem(currRowCount, 4, instr)
+#		self.addItem(currRowCount, 5, data)
+#		self.addItem(currRowCount, 6, comment)
+#		
+#		self.setRowHeight(currRowCount, 18)
+		pass
+		
+	def addItem(self, row, col, txt):
+#		item = QTableWidgetItem(txt, QTableWidgetItem.ItemType.Type)
+#		item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable) #Qt.ItemFlag.ItemIsSelectable)
+#		
+#		# Insert the items into the row
+#		self.setItem(row, col, item)
+		pass

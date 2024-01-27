@@ -12,6 +12,7 @@
 import lldb
 from lldbutil import print_stacktrace
 from inputHelper import FBInputHandler
+import psutil
 import os
 import os.path
 import sys
@@ -37,7 +38,9 @@ from config import *
 from PyQt6.QSwitch import *
 from PyQt6.QHEXTextEditSplitter import *
 
-
+from targetWorker import *
+from execCommandWorker import *
+from historyLineEdit import *
 
 APP_NAME = "LLDB-GUI"
 WINDOW_SIZE = 620
@@ -59,470 +62,61 @@ target = None
 global thread
 thread = None
 
-interruptExecCommand = False
+#interruptExecCommand = False
 
         
-class ExecCommandReceiver(QObject):
-    interruptExecCommand = pyqtSignal()
-    
-class ExecCommandWorkerSignals(QObject):
-    finished = pyqtSignal(object)
-    
-class ExecCommandWorker(QRunnable):
-    
-    def __init__(self, command):
-        super(ExecCommandWorker, self).__init__()
-        self.isExecCommandActive = False
-        self.command = command
-        self.signals = ExecCommandWorkerSignals()
-        
-    def run(self):
-        self.runExecCommand()
-        
-    def runExecCommand(self):
-        if self.isExecCommandActive:
-            interruptExecCommand = True
-            return
-        else:
-            interruptExecCommand = False
-        QCoreApplication.processEvents()
-        self.isExecCommandActive = True
-        
-        global debugger
-        res = lldb.SBCommandReturnObject()
-        
-        # Get the command interpreter
-        command_interpreter = debugger.GetCommandInterpreter()
-        
-        # Execute the 'frame variable' command
-        command_interpreter.HandleCommand(self.command, res)
-#       print(f'{res}')
-#       for i in dir(res):
-#           print(i)
-#       print(res.Succeeded())
-#       print(res.GetError())
-        
-        self.isExecCommandActive = False
-        self.signals.finished.emit(res)
-        QCoreApplication.processEvents()
-    
-    def handle_interruptExecCommand(self):
-#		print(f"Received interrupt in the sysLog worker thread")
-#		self.isSysLogActive = False
-        pass
-        
-interruptTargetLoad = False
-
-#class UserInputListener:
-#   def __init__(self, process, queue):
-##       super(UserInputListener, self).__init__()
-#       self.process = process
-#       self.queue = queue
-#       
-#   def input_received(self, data):
-#       # Process user input data
-#       # Update the program state based on the input
-#       # Send commands to LLDB to continue execution or interact with the program
-#       self.queue.put(data)
-        
-
-#class ProcessThreadObject(QObject):
-#   process = None
-#   threads = []
+#class ExecCommandReceiver(QObject):
+#   interruptExecCommand = pyqtSignal()
 #   
-#   def __init__(self, process):
-#       super(ProcessThreadObject, self).__init__()
-#       self.process = process
-##       self.threads = threads
+#class ExecCommandWorkerSignals(QObject):
+#   finished = pyqtSignal(object)
+#   
+#class ExecCommandWorker(QRunnable):
+#   
+#   def __init__(self, command):
+#       super(ExecCommandWorker, self).__init__()
+#       self.isExecCommandActive = False
+#       self.command = command
+#       self.signals = ExecCommandWorkerSignals()
 #       
-#   def addThread(self, thread):
-#       self.threads.append(thread)
-
-class TargetLoadReceiver(QObject):
-    interruptTargetLoad = pyqtSignal()
-    
-class TargetLoadWorkerSignals(QObject):
-    finished = pyqtSignal()
-    sendProgressUpdate = pyqtSignal(int)
-    loadRegister = pyqtSignal(str)
-    loadRegisterValue = pyqtSignal(int, str, str, str)
-    loadProcess = pyqtSignal(object)
-    loadThread = pyqtSignal(int, object)
-    addInstruction = pyqtSignal(str, bool, bool, bool, str)
-    
-    addInstructionNG = pyqtSignal(str, str, str, str, bool, bool, bool, str, str)
-    
-    setTextColor = pyqtSignal(str, bool)
-
-class TargetLoadWorker(QRunnable):
-    
-    targetPath = "/Users/dave/Downloads/hello_world/hello_world_test"
-    window = None
-    inputHandler = None
-    
-    def inputCallback(self, data):
-        print(data)
-        
-    def __init__(self, window_obj, target = "/Users/dave/Downloads/hello_world/hello_world_test"):
-        super(TargetLoadWorker, self).__init__()
-        self.isTargetLoadActive = False
-        self.window = window_obj
-        self.targetPath = target
-        self.signals = TargetLoadWorkerSignals()
-        
-    def run(self):
-        QCoreApplication.processEvents()
-        self.runTargetLoad()
-        
-    def convert_address(self, address):
-        # Get the address to be converted
-#       address = "0x0000000100003f5f"
-        
-        # Convert the address to hex
-        converted_address = int(address, 16)
-        
-        # Print the converted address
-#       print("Converted address:", hex(converted_address))
-        return hex(converted_address)
-    
-    def handle_readMemory(self, debugger, address = 0xdeadbeef, data_size = 0x1000):
-#       my_address = 0xdeadbeef  # change for some real address
-#       my_data_size = 0x1000  # change for some real memory size
-        
-        error_ref = lldb.SBError()
-        process = debugger.GetSelectedTarget().GetProcess()
-        memory = process.ReadMemory(address, data_size, error_ref)
-        if error_ref.Success():
-            # `memory` is a regular byte string
-            print(f'{memory}')
-            pass
-        else:
-            print(str(error_ref))
-            
-    def runTargetLoad(self):
-        if self.isTargetLoadActive:
-            interruptTargetLoad = True
-            return
-        else:
-            interruptTargetLoad = False
-        QCoreApplication.processEvents()
-        self.isTargetLoadActive = True
-        
-        self.sendProgressUpdate(5)
-        
-        global debugger
-        # Create a new debugger instance
-        debugger = lldb.SBDebugger.Create()
-        
-        # When we step or continue, don't return from the function until the process
-        # stops. We do this by setting the async mode to false.
-        debugger.SetAsync(False)
-        
-        for i in dir(debugger):
-            print(i)
-#       {lldb.getVersion()}
-        print(f"VEARSION: {sys.modules['lldb'].__file__} / {debugger.GetVersionString()}")
-        
-#       print(lldb)
-        
-        for i in dir(lldb):
-            print(i)
-#       self.inputHandler = FBInputHandler(debugger, self.inputCallback)
-        
-        print(f'debugger: {debugger}')
-        # Create a target from a file and arch
-        print("Creating a target for '%s'" % self.targetPath)
-        
-        global target
-        target = debugger.CreateTargetWithFileAndArch(self.targetPath, None) # lldb.LLDB_ARCH_DEFAULT)
-        
-        if target:
-            self.sendProgressUpdate(10)
-            print("Has target")
-            
-            # If the target is valid set a breakpoint at main
-            main_bp = target.BreakpointCreateByName(fname, target.GetExecutable().GetFilename())
-            error = main_bp.SetScriptCallbackBody("\
-            print 'Hit breakpoint callback'")
-#           main_bp.SetScriptCallbackFunction('disasm_ui.breakpoint_cb')
-#           main_bp.SetAutoContinue(auto_continue=True)
-            print(main_bp)
-            
-            # Launch the process. Since we specified synchronous mode, we won't return
-            # from this function until we hit the breakpoint at main
-            global process
-            process = target.LaunchSimple(None, None, os.getcwd())
-#           process.Stop()
-#           self.inputHandler.start()
-            print(process)
-            
-            # Make sure the launch went ok
-            if process:
-                self.executeCmd()
-                self.handle_readMemory(debugger, 0x108a01b90, 0x100)
-                
-                for fun in dir(process):
-                    print(fun)
-#               for module in process.GetLoadedModules():
-#                   for symbol in module.GetSymbols():
-#                       if symbol.GetType() == lldb.SBSymbolType.ST_Import:
-#                           print(symbol.GetName())
-                
-                
-                self.signals.loadProcess.emit(process)
-                QCoreApplication.processEvents()
-                self.sendProgressUpdate(15)
-                print("Process launched OK")
-                # Print some simple process info
-                state = process.GetState()
-                print(process)
-                if state == lldb.eStateStopped:
-                    print("state == lldb.eStateStopped")
-                    
-                    
-                    print(f'GetNumQueues: {process.GetNumQueues()}')
-                    for que in range(process.GetNumQueues()):
-                        print(f'process.GetQueueAtIndex({que}) {process.GetQueueAtIndex(que)}')
-                        
-                    print(f'GetNumThreads: {process.GetNumThreads()}')
-                    # Get the first thread
-                    for thrd in range(process.GetNumThreads()):
-                        print(f'process.GetThreadAtIndex({thrd}) {process.GetThreadAtIndex(thrd).GetIndexID()}')
-                    
-                    idxThread = 0
-                    
-                    global thread
-                    thread = process.GetThreadAtIndex(0)
-                    
-                    if thread:
-                        
-                        
-                         
-#                       # Get the current register state
-#                       register_state = thread.GetThreadState()
-#                   
-#                       # Get the RIP register value
-#                       rip_value = register_state.GetRegisterValue("rip")
-#                   
-#                       # Print the RIP value
-#                       print("Current RIP:", hex(rip_value))
-                            
-#                       # Get the current instruction address
-#                       instruction_address = thread.GetInstructionAddress()
-#                   
-#                       # Get the current instruction location
-#                       instruction_location = lldb.SBInstructionLocation(process, instruction_address)
-#                   
-#                       # Get the file and line number where the instruction is located
-#                       file_name, line_number = instruction_location.GetLineEntry().GetFileNameAndLine()
-#                   
-#                       # Print the file and line number
-#                       print("Current instruction location:", file_name, line_number)
-                            
-                        self.signals.loadThread.emit(idxThread, thread)
-                        QCoreApplication.processEvents()
-                        idxThread += 1
-                        self.sendProgressUpdate(20)
-                        # Print some simple thread info
-                        print(thread)
-                        print_stacktrace(thread)
-                        print(f'GetNumFrames: {thread.GetNumFrames()}')
-                        
-                        for idx2 in range(thread.GetNumFrames()):
-                            
-                            # Get the first frame
-                            frame = thread.GetFrameAtIndex(idx2)
-                            if frame:
-                                self.sendProgressUpdate(25)
-                                # Print some simple frame info
-                                print(frame)
-                                
-                                print(f'AAAAA >>>> {hex(frame.GetPC())}')
-                                
-                                if idx2 == 0:
-                                    rip = self.convert_address(frame.register["rip"].value)
-                                    print(rip)
-                                    function = frame.GetFunction()
-                                    # See if we have debug info (a function)
-                                    if function:
-                                        # We do have a function, print some info for the
-                                        # function
-                                        print(function)
-                                        
-        #                               for functionNG2 in dir(function):
-        #                                   print(functionNG2)
-                                            
-                                        # Now get all instructions for this function and print
-                                        # them
-                                        insts = function.GetInstructions(target)
-                                        self.disassemble_instructions(insts, rip)
-                                    else:
-                                        # See if we have a symbol in the symbol table for where
-                                        # we stopped
-                                        symbol = frame.GetSymbol()
-                                        if symbol:
-                                            # We do have a symbol, print some info for the
-                                            # symbol
-                                            print(symbol)
-                                            
-        #                                   print(f'DisplayName: {symbol.GetName()}')
-                                            # Now get all instructions for this symbol and
-                                            # print them
-                                            insts = symbol.GetInstructions(target)
-                                            self.disassemble_instructions(insts, rip)
-                                            
-        #                                   for functionNG2 in dir(symbol):
-        #   #                                   if functionNG2.startswith("__"):
-        #   #                                       continue
-        #                                       print(functionNG2)
-                                                    
-                                    registerList = frame.GetRegisters()
-                                    print(
-                                        "Frame registers (size of register set = %d):"
-                                        % registerList.GetSize()
-                                    )
-                                    self.sendProgressUpdate(30)
-                                    currReg = 0
-                                    for value in registerList:
-                                        # print value
-                                        print(
-                                            "%s (number of children = %d):"
-                                            % (value.GetName(), value.GetNumChildren())
-                                        )
-                                        self.signals.loadRegister.emit(value.GetName())
-        #                               continue
-        #                               registerNode = QTreeWidgetItem(self.treRegister, [value.GetName() + " (" + str(value.GetNumChildren()) + ")", '', ''])
-        #                               QTreeWidgetItem(self.treRegister, ['Floating point register', 'eax', '0x5'])
-                                        for child in value:
-        #                                   print(
-        #                                       "Name: ", child.GetName(), " Value: ", child.GetValue()
-        #                                   )
-                                            
-        #                                   variable_type = type(child.GetValue())
-                                            
-        #                                   print(f"The type of child.GetValue() is: {variable_type}")
-                                            
-                                            memoryValue = ""
-                                            try:
-                                                
-                                                # Specify the memory address and size you want to read
-                                                size = 32  # Adjust the size based on your data type (e.g., int, float)
-                                                
-                                                # Read memory and print the result
-                                                data = self.read_memory(process, target.ResolveLoadAddress(int(child.GetValue(), 16)), size)
-                                                
-                                                hex_string = ''.join("%02x" % byte for byte in data)
-                                                
-                                                formatted_hex_string = ' '.join(re.findall(r'.{2}', hex_string))
-                                                memoryValue = formatted_hex_string
-        #                                       if data:
-        #                                           print(f"Data at address {hex(address)}: {data}\n{formatted_hex_string}")
-                                            except Exception as e:
-        #                                       print(f"Error getting memory for addr: {e}")
-                                                pass
-                                                
-                                            self.signals.loadRegisterValue.emit(currReg, child.GetName(), child.GetValue(), memoryValue)
-                                            QCoreApplication.processEvents()
-                                            
-                                        currProg = (registerList.GetSize() - currReg)
-                                        self.sendProgressUpdate(30 + (70 / currProg))
-                                        currReg += 1
-                            
-            else:
-                print("Process NOT launched!!!")
-        else:
-            print("Has NO target")
-            
-        self.isTargetLoadActive = False
-#       self.treeWidget.setEnabled(True)
+#   def run(self):
+#       self.runExecCommand()
+#       
+#   def runExecCommand(self):
+#       if self.isExecCommandActive:
+#           interruptExecCommand = True
+#           return
+#       else:
+#           interruptExecCommand = False
 #       QCoreApplication.processEvents()
-        self.signals.finished.emit()
-        QCoreApplication.processEvents()
+#       self.isExecCommandActive = True
+#       
+#       global debugger
+#       res = lldb.SBCommandReturnObject()
+#       
+#       
+#       # Get the command interpreter
+#       command_interpreter = pymobiledevice3GUIWindow.workerLoadTarget.debugger.GetCommandInterpreter()
+#       
+#       # Execute the 'frame variable' command
+#       command_interpreter.HandleCommand(self.command, res)
+##       print(f'{res}')
+##       for i in dir(res):
+##           print(i)
+##       print(res.Succeeded())
+##       print(res.GetError())
+#       
+#       self.isExecCommandActive = False
+#       self.signals.finished.emit(res)
+#       QCoreApplication.processEvents()
+#   
+#   def handle_interruptExecCommand(self):
+##		print(f"Received interrupt in the sysLog worker thread")
+##		self.isSysLogActive = False
+#       pass
+        
+#interruptTargetLoad = False
     
-    def executeCmd(self):
-        # This causes an error and the callback is never called.
-        opt = lldb.SBExpressionOptions()
-        opt.SetIgnoreBreakpoints(False)
-        
-        global target
-        print("EXECUTING COMMAND:")
-        # Execute the "re read" command
-        result = target.EvaluateExpression("re read", opt)
-        
-        # Print the result
-        print(result.GetSummary())
-        
-    def sendProgressUpdate(self, progress):
-        self.signals.sendProgressUpdate.emit(int(progress))
-        QCoreApplication.processEvents()
-        
-    def handle_interruptTargetLoad(self):
-#		print(f"Received interrupt in the sysLog worker thread")
-#		self.isSysLogActive = False
-        pass
-        
-    def extract_address(self, string):
-        pattern = r'\[0x([0-9a-fA-F]+)\]'
-        
-        # Use re.search to find the match
-        match = re.search(pattern, string)
-        
-        if match:
-            hex_value = match.group(1)
-            return hex_value
-        else:
-            print("No hex value found in the string.")
-            return ""
-
-    def read_memory(self, process, address, size):
-        error = lldb.SBError()
-        target = process.GetTarget()
-        
-        # Read memory using ReadMemory function
-        data = target.ReadMemory(address, size, error)
-        
-        if error.Success():
-            return data
-        else:
-            print("Error reading memory:", error)
-            return None
-        
-    def disassemble_instructions(self, insts, rip):
-        global target
-        for i in insts:
-            address = self.extract_address(f'{i}')
-#           self.signals.addInstruction(.emit(f'0x{address}:\t{i.GetMnemonic(target)}\t{i.GetOperands(target)}', True, True, False, "black")
-            self.signals.addInstructionNG.emit(f'0x{address}', f'{i.GetMnemonic(target)}\t{i.GetOperands(target)}', f'{i.GetComment(target)}', f'{i.GetData(target)}', True, True, False, "black", rip)
-            
-            QCoreApplication.processEvents()
-        
-def breakpoint_cb(frame, bpno, err):
-    print('>>> breakpoint callback')
-    
-class HistoryLineEdit(QLineEdit):
-    
-    lstCommands = []
-    currCmd = 0
-    
-    def __init__(self):
-        super().__init__()
-        
-    def keyPressEvent(self, event):
-        
-        if event.key() in (Qt.Key.Key_Up, Qt.Key.Key_Down):
-            print("Up or down key pressed")
-            if event.key() == Qt.Key.Key_Up:
-                if self.currCmd > 0:
-                    self.currCmd -= 1
-                    if self.currCmd < len(self.lstCommands):
-                        self.setText(self.lstCommands[self.currCmd])
-            else:
-                if self.currCmd < len(self.lstCommands) - 1:
-                    self.currCmd += 1
-                    self.setText(self.lstCommands[self.currCmd])
-            event.accept()  # Prevent event from being passed to QLineEdit for default behavior
-        else:
-            super(HistoryLineEdit, self).keyPressEvent(event)
         
 class Pymobiledevice3GUIWindow(QMainWindow):
     """PyMobiledevice3GUI's main window (GUI or view)."""
@@ -577,12 +171,14 @@ class Pymobiledevice3GUIWindow(QMainWindow):
 #       file_menu.addAction(new_action)
         self.toolbar.addAction(load_action)
         
-        run_action = QAction(QIcon(os.path.join("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/resources/", 'play.png')), '&Run', self)
-        run_action.setStatusTip('Run Debugging')
-        run_action.setShortcut('Ctrl+P')
-#       new_action.triggered.connect(self.new_document)
+#       self.run_action.setIcon(ConfigClass.iconPause)
+        
+        self.run_action = QAction(ConfigClass.iconPause, '&Run', self)
+        self.run_action.setStatusTip('Run Debugging')
+        self.run_action.setShortcut('Ctrl+P')
+        self.run_action.triggered.connect(self.handle_runProcess)
 #       file_menu.addAction(new_action)
-        self.toolbar.addAction(run_action)
+        self.toolbar.addAction(self.run_action)
         
         step_over_action = QAction(QIcon(os.path.join("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/resources/", 'step_over_ng2.png')), '&Step Over', self)
         step_over_action.setStatusTip('Step over')
@@ -654,6 +250,12 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.tabThreads.setLayout(QVBoxLayout())
         self.tabThreads.layout().addWidget(self.treThreads)
         self.tabWidget.addTab(self.tabThreads, "Threads")
+        
+        self.tblBPs = BreakpointsTableWidget()
+        self.tabBPs = QWidget()
+        self.tabBPs.setLayout(QVBoxLayout())
+        self.tabBPs.layout().addWidget(self.tblBPs)
+        self.tabWidget.addTab(self.tabBPs, "Breakpoints")
         
 #       self.tabFrames = QWidget()
 #       self.tabFrames.setLayout(QVBoxLayout())
@@ -801,17 +403,17 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.regTreeList.clear()
         self.tabRegisters.clear()
         
-        workerLoadTarget = TargetLoadWorker(self, target)
-        workerLoadTarget.signals.sendProgressUpdate.connect(self.handle_progressUpdate)
-        workerLoadTarget.signals.finished.connect(self.handle_progressFinished)
-        workerLoadTarget.signals.loadRegister.connect(self.handle_loadRegister)
-        workerLoadTarget.signals.loadRegisterValue.connect(self.handle_loadRegisterValue)
-        workerLoadTarget.signals.loadProcess.connect(self.handle_loadProcess)
-        workerLoadTarget.signals.loadThread.connect(self.handle_loadThread)
-        workerLoadTarget.signals.addInstructionNG.connect(self.handle_addInstructionNG)
-        workerLoadTarget.signals.setTextColor.connect(self.handle_setTextColor)
+        self.workerLoadTarget = TargetLoadWorker(self, target)
+        self.workerLoadTarget.signals.sendProgressUpdate.connect(self.handle_progressUpdate)
+        self.workerLoadTarget.signals.finished.connect(self.handle_progressFinished)
+        self.workerLoadTarget.signals.loadRegister.connect(self.handle_loadRegister)
+        self.workerLoadTarget.signals.loadRegisterValue.connect(self.handle_loadRegisterValue)
+        self.workerLoadTarget.signals.loadProcess.connect(self.handle_loadProcess)
+        self.workerLoadTarget.signals.loadThread.connect(self.handle_loadThread)
+        self.workerLoadTarget.signals.addInstructionNG.connect(self.handle_addInstructionNG)
+        self.workerLoadTarget.signals.setTextColor.connect(self.handle_setTextColor)
         
-        self.threadpool.start(workerLoadTarget)
+        self.threadpool.start(self.workerLoadTarget)
     
     def handle_setTextColor(self, color = "black", lineNum = False):
         self.txtMultiline.setTextColor(color, lineNum)
@@ -833,7 +435,7 @@ class Pymobiledevice3GUIWindow(QMainWindow):
 #       print(thread.GetNumFrames())
         for idx2 in range(thread.GetNumFrames()):
             frame = thread.GetFrameAtIndex(idx2)
-            print(dir(frame))
+#           print(dir(frame))
             frameNode = QTreeWidgetItem(self.threadNode, ["", "", "#" + str(frame.GetFrameID()) + " " + str(frame.GetPCAddress())]) # + " " + str(thread.GetThreadID()) + " (0x" + hex(thread.GetThreadID()) + ")", thread.GetQueueName()])
             
         self.processNode.setExpanded(True)
@@ -881,30 +483,10 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         
     def updateStatusBar(self, msg):
         self.statusBar.showMessage(msg)
-        
-#   def show_hourglass_cursor(self, timeout):
-#       watch = Gdk.Cursor(Gdk.CursorType.WATCH)
-#       gdk_window = self.get_root_window()
-#       gdk_window.set_cursor(watch)
-##       # Set the hourglass cursor
-##       set_cursor()
-##       
-##       # Start the timer
-##       start_time = time.time()
-##       
-##       # Wait for the specified timeout
-##       while time.time() - start_time < timeout:
-##           time.sleep(0.1)
-##           
-##       # Reset the cursor to the default
-##       set_cursor()
     
     def handle_readMemory(self, debugger, address, data_size = 0x100):
-#       my_address = 0xdeadbeef  # change for some real address
-#       my_data_size = 0x1000  # change for some real memory size
-        
         error_ref = lldb.SBError()
-        process = debugger.GetSelectedTarget().GetProcess()
+        process = self.workerLoadTarget.debugger.GetSelectedTarget().GetProcess()
         memory = process.ReadMemory(address, data_size, error_ref)
         if error_ref.Success():
             hex_string = binascii.hexlify(memory)
@@ -913,13 +495,85 @@ class Pymobiledevice3GUIWindow(QMainWindow):
             self.hxtMemory.setTxtHexNG(memory, True, int(self.txtMemoryAddr.text(), 16))
         else:
             print(str(error_ref))
+    
+    def get_running_processes(self):
+        # Get a list of all running processes
+        processes = [proc.info for proc in psutil.process_iter(['pid', 'name', 'status'])]
+        return processes
+    
+    def print_running_processes(self):
+        processes = self.get_running_processes()
+        
+#       # Print process information
+#       for processNG in processes:
+#           print(f"PID: {processNG['pid']}, Name: {processNG['name']}, Status: {processNG['status']}")
             
+    def handle_runProcess(self):
+        self.run_action.setIcon(ConfigClass.iconPlay)
+#       # Set the hourglass cursor
+#       self.waitCursor = QCursor(Qt.CursorShape.WaitCursor)
+#       QApplication.setOverrideCursor(self.waitCursor)
+#       QApplication.changeOverrideCursor(self.waitCursor)
+#
+##       QApplication.restoreOverrideCursor()
+##       QApplication.changeOverrideCursor(QCursor(Qt.CursorShape.WaitCursor))
+#       
+#       # Simulate some lengthy task
+#       time.sleep(5)
+##       
+##       # Restore the default cursor
+##       QApplication.setOverrideCursor(QCursor(Qt.CursorShape.ArrowCursor))
+
+        
+        processes = self.get_running_processes()
+
+        # Create a QInputDialog to select a process name
+        title = 'Select a running Process'
+        label = 'Select the process you want to debug:'
+        
+        dialog = QInputDialog()
+        dialog.setWindowTitle(title)
+        dialog.setLabelText(label)
+        
+        my_list = []
+        for processNG in processes:
+            my_list.append(processNG["name"] + " - PID: " + str(processNG["pid"]) + "")
+            
+        dialog.textValueSelected.connect(self.handle_procSelected)
+        # Set the possible choices to the list of process names
+        dialog.setComboBoxItems(my_list)
+        
+        # Show the dialog and get the selected process name
+        if dialog.exec():
+            pass
+        
+#       if selected_daemon_process:
+#           # Use QProcess to kill the selected process
+#           process = QProcess()
+#           process.start('kill -9 {}'.format(daemon_processes[selected_daemon_process]))
+#           process.waitForFinished()
+
+        
+    def handle_procSelected(self, procName):
+        print(procName)
+        # Extract the substring using a regular expression
+        regex = r"PID: (.*)"
+        pattern = re.compile(regex)
+        match = pattern.search(procName)
+        
+        if match:
+            substring = match.group(1)
+        else:
+            substring = None
+            
+        print(substring)
+        
     def handle_stepNext(self):
-        global thread
-        output_stream = thread.GetOutput()
-        thread.StepInstruction(True)
-        for line in output_stream.readlines():
-            print(f'>>>>>>> OUTPUT OF STEP: {line}')
+#       global thread
+#       output_stream = thread.GetOutput()
+        self.workerLoadTarget.thread.StepInstruction(True)
+#       for line in output_stream.readlines():
+#           print(f'>>>>>>> OUTPUT OF STEP: {line}')
             
         frame = thread.GetFrameAtIndex(0)
         print(f'NEXT STEP {frame.register["rip"].value}')
@@ -978,11 +632,11 @@ class Pymobiledevice3GUIWindow(QMainWindow):
     
         
 def close_application():
-    global process
+#   global process
     # Stop all running tasks in the thread pool
-    if process:
+    if pymobiledevice3GUIWindow.workerLoadTarget.process:
         print("KILLING PROCESS")
-        process.Kill()
+        pymobiledevice3GUIWindow.workerLoadTarget.process.Kill()
     else:
         print("NO PROCESS TO KILL!!!")
 #   global pymobiledevice3GUIApp
