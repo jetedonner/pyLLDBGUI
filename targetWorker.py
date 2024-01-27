@@ -22,20 +22,22 @@ from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
 from PyQt6 import uic, QtWidgets
 
+import lldbHelper
+
 fname = "main"
 exe = "/Users/dave/Downloads/hello_world/hello_world_test"
 
-global debugger
-debugger = None
+#global debugger
+#debugger = None
 
-global process
-process = None
-
-global target
-target = None
-
-global thread
-thread = None
+#global process
+#lldbHelper.process = None
+#
+#global target
+#target = None
+#
+#global thread
+#thread = None
 
 interruptTargetLoad = False
 
@@ -61,10 +63,10 @@ class TargetLoadWorker(QRunnable):
 	window = None
 	inputHandler = None
 	
-	debugger = None
-	target = None
-	process = None
-	thread = None
+#	debugger = None
+#	target = None
+#	process = None
+#	thread = None
 	
 	def inputCallback(self, data):
 		print(data)
@@ -118,19 +120,19 @@ class TargetLoadWorker(QRunnable):
 		
 		
 		# Create a new debugger instance
-		self.debugger = lldb.SBDebugger.Create()
+		lldbHelper.debugger = lldb.SBDebugger.Create()
 		
-		global debugger
-		debugger = self.debugger
+#		global debugger
+#		debugger = self.debugger
 		
 		# When we step or continue, don't return from the function until the process
 		# stops. We do this by setting the async mode to false.
-		debugger.SetAsync(False)
+		lldbHelper.debugger.SetAsync(False)
 		
 #       for i in dir(debugger):
 #           print(i)
 #       {lldb.getVersion()}
-		print(f"VEARSION: {sys.modules['lldb'].__file__} / {debugger.GetVersionString()}")
+		print(f"VEARSION: {sys.modules['lldb'].__file__} / {lldbHelper.debugger.GetVersionString()}")
 		
 #       print(lldb)
 		
@@ -138,12 +140,12 @@ class TargetLoadWorker(QRunnable):
 #           print(i)
 #       self.inputHandler = FBInputHandler(debugger, self.inputCallback)
 		
-		print(f'debugger: {debugger}')
+		print(f'debugger: {lldbHelper.debugger}')
 		# Create a target from a file and arch
 		print("Creating a target for '%s'" % self.targetPath)
 		
 		
-		self.target = debugger.CreateTargetWithFileAndArch(self.targetPath, None) # lldb.LLDB_ARCH_DEFAULT)
+		self.target = lldbHelper.debugger.CreateTargetWithFileAndArch(self.targetPath, None) # lldb.LLDB_ARCH_DEFAULT)
 		global target
 		target = self.target
 		
@@ -162,15 +164,15 @@ class TargetLoadWorker(QRunnable):
 			# Launch the process. Since we specified synchronous mode, we won't return
 			# from this function until we hit the breakpoint at main
 			
-			self.process = target.LaunchSimple(None, None, os.getcwd())
-			global process
-			process = self.process
+			lldbHelper.process = target.LaunchSimple(None, None, os.getcwd())
+#			global process
+#			process = self.process
 #           process.Stop()
 #           self.inputHandler.start()
 #			print(self.process)
 			
 			# Make sure the launch went ok
-			if self.process:
+			if lldbHelper.process:
 #				self.executeCmd()
 #				self.handle_readMemory(self.debugger, 0x108a01b90, 0x100)
 				
@@ -182,12 +184,12 @@ class TargetLoadWorker(QRunnable):
 #                           print(symbol.GetName())
 					
 					
-				self.signals.loadProcess.emit(self.process)
+				self.signals.loadProcess.emit(lldbHelper.process)
 				QCoreApplication.processEvents()
 				self.sendProgressUpdate(15)
 #				print("Process launched OK")
 				# Print some simple process info
-				state = self.process.GetState()
+				state = lldbHelper.process.GetState()
 #				print(self.process)
 				if state == lldb.eStateStopped:
 					print("state == lldb.eStateStopped")
@@ -205,10 +207,10 @@ class TargetLoadWorker(QRunnable):
 					idxThread = 0
 					
 					
-					self.thread = self.process.GetThreadAtIndex(0)
-					global thread
-					thread = self.thread
-					if self.thread:
+					lldbHelper.thread = lldbHelper.process.GetThreadAtIndex(0)
+#					global thread
+#					thread = self.thread
+					if lldbHelper.thread:
 						
 						
 						
@@ -233,19 +235,19 @@ class TargetLoadWorker(QRunnable):
 #                       # Print the file and line number
 #                       print("Current instruction location:", file_name, line_number)
 						
-						self.signals.loadThread.emit(idxThread, self.thread)
+						self.signals.loadThread.emit(idxThread, lldbHelper.thread)
 						QCoreApplication.processEvents()
 						idxThread += 1
 						self.sendProgressUpdate(20)
 						# Print some simple thread info
 #						print(self.thread)
-						print_stacktrace(self.thread)
-						print(f'GetNumFrames: {self.thread.GetNumFrames()}')
+						print_stacktrace(lldbHelper.thread)
+						print(f'GetNumFrames: {lldbHelper.thread.GetNumFrames()}')
 						
-						for idx2 in range(self.thread.GetNumFrames()):
+						for idx2 in range(lldbHelper.thread.GetNumFrames()):
 							
 							# Get the first frame
-							frame = self.thread.GetFrameAtIndex(idx2)
+							frame = lldbHelper.thread.GetFrameAtIndex(idx2)
 							if frame:
 								self.sendProgressUpdate(25)
 								# Print some simple frame info

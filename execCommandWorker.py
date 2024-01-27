@@ -19,6 +19,8 @@ from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
 from PyQt6 import uic, QtWidgets
 
+import lldbHelper
+
 interruptExecCommand = False
 
 class ExecCommandReceiver(QObject):
@@ -52,7 +54,7 @@ class ExecCommandWorker(QRunnable):
 		
 		
 		# Get the command interpreter
-		command_interpreter = pymobiledevice3GUIWindow.workerLoadTarget.debugger.GetCommandInterpreter()
+		command_interpreter = lldbHelper.debugger.GetCommandInterpreter()
 		
 		# Execute the 'frame variable' command
 		command_interpreter.HandleCommand(self.command, res)

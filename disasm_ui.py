@@ -38,6 +38,7 @@ from config import *
 from PyQt6.QSwitch import *
 from PyQt6.QHEXTextEditSplitter import *
 
+import lldbHelper
 from targetWorker import *
 from execCommandWorker import *
 from historyLineEdit import *
@@ -50,8 +51,8 @@ APP_VERSION = "v0.0.1"
 fname = "main"
 exe = "/Users/dave/Downloads/hello_world/hello_world_test"
 
-global debugger
-debugger = None
+#global debugger
+#debugger = None
 
 global process
 process = None
@@ -354,8 +355,8 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         
     def readMemory_click(self):
         try:
-            global debugger
-            self.handle_readMemory(debugger, int(self.txtMemoryAddr.text(), 16), int(self.txtMemorySize.text(), 16))
+#           global debugger
+            self.handle_readMemory(lldbHelper.debugger, int(self.txtMemoryAddr.text(), 16), int(self.txtMemorySize.text(), 16))
         except Exception as e:
             print(f"Error while reading memory from process: {e}")
         
@@ -486,7 +487,7 @@ class Pymobiledevice3GUIWindow(QMainWindow):
     
     def handle_readMemory(self, debugger, address, data_size = 0x100):
         error_ref = lldb.SBError()
-        process = self.workerLoadTarget.debugger.GetSelectedTarget().GetProcess()
+        process = debugger.GetSelectedTarget().GetProcess()
         memory = process.ReadMemory(address, data_size, error_ref)
         if error_ref.Success():
             hex_string = binascii.hexlify(memory)
