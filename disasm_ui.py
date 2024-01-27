@@ -35,6 +35,9 @@ from registerTreeView import *
 from config import *
 
 from PyQt6.QSwitch import *
+from PyQt6.QHEXTextEditSplitter import *
+
+
 
 APP_NAME = "LLDB-GUI"
 WINDOW_SIZE = 620
@@ -181,7 +184,21 @@ class TargetLoadWorker(QRunnable):
         # Print the converted address
 #       print("Converted address:", hex(converted_address))
         return hex(converted_address)
+    
+    def handle_readMemory(self, debugger, address = 0xdeadbeef, data_size = 0x1000):
+#       my_address = 0xdeadbeef  # change for some real address
+#       my_data_size = 0x1000  # change for some real memory size
         
+        error_ref = lldb.SBError()
+        process = debugger.GetSelectedTarget().GetProcess()
+        memory = process.ReadMemory(address, data_size, error_ref)
+        if error_ref.Success():
+            # `memory` is a regular byte string
+            print(f'{memory}')
+            pass
+        else:
+            print(str(error_ref))
+            
     def runTargetLoad(self):
         if self.isTargetLoadActive:
             interruptTargetLoad = True
@@ -242,6 +259,7 @@ class TargetLoadWorker(QRunnable):
             # Make sure the launch went ok
             if process:
                 self.executeCmd()
+                self.handle_readMemory(debugger, 0x108a01b90, 0x100)
                 
                 for fun in dir(process):
                     print(fun)
@@ -607,6 +625,8 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.layout = QVBoxLayout()
         
         self.txtMultiline = AssemblerTextEdit()
+        self.txtMultiline.table.actionShowMemory.triggered.connect(self.handle_showMemory)
+        
         self.txtMultiline.setContentsMargins(0, 0, 0, 0)
         self.splitter.setContentsMargins(0, 0, 0, 0)
         
@@ -640,10 +660,27 @@ class Pymobiledevice3GUIWindow(QMainWindow):
 ##       tabDet.layout().addWidget(treDet)
 #       self.tabWidget.addTab(self.tabFrames, "Frames")
         
+        self.hxtMemory = QHEXTextEditSplitter()
+        self.txtMemoryAddr = QLineEdit("0x100003f50")
+        self.txtMemorySize = QLineEdit("0x100")
+        self.hxtMemory.layoutTopPlaceholer.addWidget(QLabel("Address:"))
+        self.hxtMemory.layoutTopPlaceholer.addWidget(self.txtMemoryAddr)
+        self.hxtMemory.layoutTopPlaceholer.addWidget(QLabel("Size:"))
+        self.hxtMemory.layoutTopPlaceholer.addWidget(self.txtMemorySize)
+        self.cmdReadMemory = QPushButton("Read memory")
+        self.cmdReadMemory.clicked.connect(self.readMemory_click)
+        self.hxtMemory.layoutTopPlaceholer.addWidget(self.cmdReadMemory)
+        self.hxtMemory.txtMultiline.setFont(ConfigClass.font)
+        self.hxtMemory.txtMultilineHex.setFont(ConfigClass.font)
+        self.hxtMemory.txtMultilineHex.hexGrouping = HexGrouping.TwoChars
+        
         self.tabMemory = QWidget()
         self.tabMemory.setLayout(QVBoxLayout())
 #       tabDet.layout().addWidget(treDet)
+        self.tabMemory.layout().addWidget(self.hxtMemory)
+        
         self.tabWidget.addTab(self.tabMemory, "Memory")
+#       self.tabMemory.show()
         
         self.tabConsole = QWidget()
         self.tabConsole.setLayout(QVBoxLayout())
@@ -699,18 +736,29 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         
         self.tabConsole.layout().addWidget(self.wdgConsole)
         
-        centralWidget = QWidget(self)
-        centralWidget.setLayout(self.layout)
         
-        self.setCentralWidget(centralWidget)
+        self.centralWidget = QWidget(self)
+        self.centralWidget.setLayout(self.layout)        
+        self.setCentralWidget(self.centralWidget)
         
         self.threadpool = QThreadPool()
         
         self.start_workerLoadTarget(exe)
     
+    def handle_showMemory(self):
+        self.tabWidget.setCurrentWidget(self.tabMemory)
+        print(self.txtMultiline.table.item(self.txtMultiline.table.selectedItems()[0].row(), 3).text())
+        self.txtMemoryAddr.setText(self.txtMultiline.table.item(self.txtMultiline.table.selectedItems()[0].row(), 3).text())
+        
+    def readMemory_click(self):
+        try:
+            global debugger
+            self.handle_readMemory(debugger, int(self.txtMemoryAddr.text(), 16), int(self.txtMemorySize.text(), 16))
+        except Exception as e:
+            print(f"Error while reading memory from process: {e}")
+        
     def clear_clicked(self):
         self.txtConsole.setText("")
-        pass
         
     def click_execCommand(self):
         newCommand = self.txtCmd.text()
@@ -834,26 +882,45 @@ class Pymobiledevice3GUIWindow(QMainWindow):
     def updateStatusBar(self, msg):
         self.statusBar.showMessage(msg)
         
-    def show_hourglass_cursor(self, timeout):
-        watch = Gdk.Cursor(Gdk.CursorType.WATCH)
-        gdk_window = self.get_root_window()
-        gdk_window.set_cursor(watch)
-#       # Set the hourglass cursor
-#       set_cursor()
-#       
-#       # Start the timer
-#       start_time = time.time()
-#       
-#       # Wait for the specified timeout
-#       while time.time() - start_time < timeout:
-#           time.sleep(0.1)
-#           
-#       # Reset the cursor to the default
-#       set_cursor()
+#   def show_hourglass_cursor(self, timeout):
+#       watch = Gdk.Cursor(Gdk.CursorType.WATCH)
+#       gdk_window = self.get_root_window()
+#       gdk_window.set_cursor(watch)
+##       # Set the hourglass cursor
+##       set_cursor()
+##       
+##       # Start the timer
+##       start_time = time.time()
+##       
+##       # Wait for the specified timeout
+##       while time.time() - start_time < timeout:
+##           time.sleep(0.1)
+##           
+##       # Reset the cursor to the default
+##       set_cursor()
+    
+    def handle_readMemory(self, debugger, address, data_size = 0x100):
+#       my_address = 0xdeadbeef  # change for some real address
+#       my_data_size = 0x1000  # change for some real memory size
         
+        error_ref = lldb.SBError()
+        process = debugger.GetSelectedTarget().GetProcess()
+        memory = process.ReadMemory(address, data_size, error_ref)
+        if error_ref.Success():
+            hex_string = binascii.hexlify(memory)
+            # `memory` is a regular byte string
+            print(f'BYTES:\n{memory}\nHEX:\n{hex_string}')
+            self.hxtMemory.setTxtHexNG(memory, True, int(self.txtMemoryAddr.text(), 16))
+        else:
+            print(str(error_ref))
+            
     def handle_stepNext(self):
         global thread
+        output_stream = thread.GetOutput()
         thread.StepInstruction(True)
+        for line in output_stream.readlines():
+            print(f'>>>>>>> OUTPUT OF STEP: {line}')
+            
         frame = thread.GetFrameAtIndex(0)
         print(f'NEXT STEP {frame.register["rip"].value}')
         

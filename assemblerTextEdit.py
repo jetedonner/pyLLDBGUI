@@ -51,6 +51,8 @@ class DisassemblyImageTableWidgetItem(QTableWidgetItem):
 		
 class DisassemblyTableWidget(QTableWidget):
 	
+	actionShowMemory = None
+	
 	def handle_toggleBP(self):
 		item = self.item(self.selectedItems()[0].row(), 1)
 		item.toggleBPOn()
@@ -75,6 +77,7 @@ class DisassemblyTableWidget(QTableWidget):
 		actionCopyHex = self.context_menu.addAction("Copy hex value")
 		self.context_menu.addSeparator()
 		actionFindReferences = self.context_menu.addAction("Find references")
+		self.actionShowMemory = self.context_menu.addAction("Show memory")
 		
 		self.setColumnCount(7)
 		self.setColumnWidth(0, 24)
@@ -146,6 +149,7 @@ class DisassemblyTableWidget(QTableWidget):
 class AssemblerTextEdit(QWidget):
 	
 	lineCountNG = 0
+	table = None
 	
 	def clear(self):
 		self.lineCountNG = 0
