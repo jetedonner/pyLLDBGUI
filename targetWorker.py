@@ -27,18 +27,6 @@ import lldbHelper
 fname = "main"
 exe = "/Users/dave/Downloads/hello_world/hello_world"
 
-#global debugger
-#debugger = None
-
-#global process
-#lldbHelper.process = None
-#
-#global target
-#target = None
-#
-#global thread
-#thread = None
-
 interruptTargetLoad = False
 
 class TargetLoadReceiver(QObject):
@@ -326,7 +314,7 @@ class TargetLoadWorker(QRunnable):
 												size = 32  # Adjust the size based on your data type (e.g., int, float)
 												
 												# Read memory and print the result
-												data = self.read_memory(self.process, lldbHelper.target.ResolveLoadAddress(int(child.GetValue(), 16)), size)
+												data = self.read_memory(lldbHelper.process, lldbHelper.target.ResolveLoadAddress(int(child.GetValue(), 16)), size)
 												
 												hex_string = ''.join("%02x" % byte for byte in data)
 												

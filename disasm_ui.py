@@ -22,17 +22,16 @@ import webbrowser
 import ctypes
 import time
 
-#import time
-#from gi.repository import Gdk, Gtk, GObject
-
 from PyQt6.QtGui import *
 from PyQt6.QtCore import *
 
 from PyQt6.QtWidgets import *
 from PyQt6 import uic, QtWidgets
 
-from assemblerTextEdit import *
-from registerTreeView import *
+from ui.assemblerTextEdit import *
+from ui.registerTreeView import *
+from ui.historyLineEdit import *
+                
 from config import *
 
 from PyQt6.QSwitch import *
@@ -41,83 +40,12 @@ from PyQt6.QHEXTextEditSplitter import *
 import lldbHelper
 from targetWorker import *
 from execCommandWorker import *
-from historyLineEdit import *
+
 
 APP_NAME = "LLDB-GUI"
 WINDOW_SIZE = 620
 
 APP_VERSION = "v0.0.1"
-
-fname = "main"
-exe = "/Users/dave/Downloads/hello_world/hello_world"
-
-#global debugger
-#debugger = None
-
-global process
-process = None
-
-global target
-target = None
-
-global thread
-thread = None
-
-#interruptExecCommand = False
-
-        
-#class ExecCommandReceiver(QObject):
-#   interruptExecCommand = pyqtSignal()
-#   
-#class ExecCommandWorkerSignals(QObject):
-#   finished = pyqtSignal(object)
-#   
-#class ExecCommandWorker(QRunnable):
-#   
-#   def __init__(self, command):
-#       super(ExecCommandWorker, self).__init__()
-#       self.isExecCommandActive = False
-#       self.command = command
-#       self.signals = ExecCommandWorkerSignals()
-#       
-#   def run(self):
-#       self.runExecCommand()
-#       
-#   def runExecCommand(self):
-#       if self.isExecCommandActive:
-#           interruptExecCommand = True
-#           return
-#       else:
-#           interruptExecCommand = False
-#       QCoreApplication.processEvents()
-#       self.isExecCommandActive = True
-#       
-#       global debugger
-#       res = lldb.SBCommandReturnObject()
-#       
-#       
-#       # Get the command interpreter
-#       command_interpreter = pymobiledevice3GUIWindow.workerLoadTarget.debugger.GetCommandInterpreter()
-#       
-#       # Execute the 'frame variable' command
-#       command_interpreter.HandleCommand(self.command, res)
-##       print(f'{res}')
-##       for i in dir(res):
-##           print(i)
-##       print(res.Succeeded())
-##       print(res.GetError())
-#       
-#       self.isExecCommandActive = False
-#       self.signals.finished.emit(res)
-#       QCoreApplication.processEvents()
-#   
-#   def handle_interruptExecCommand(self):
-##		print(f"Received interrupt in the sysLog worker thread")
-##		self.isSysLogActive = False
-#       pass
-        
-#interruptTargetLoad = False
-    
         
 class Pymobiledevice3GUIWindow(QMainWindow):
     """PyMobiledevice3GUI's main window (GUI or view)."""
@@ -127,7 +55,6 @@ class Pymobiledevice3GUIWindow(QMainWindow):
     def githubURL_click(self, s):
         url = ConfigClass.githubURL
         webbrowser.open(url)
-        
         
     def load_clicked(self, s):
         dialog = QFileDialog(None, "Select executable or library", "", "All Files (*.*)")
@@ -403,6 +330,8 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.txtMultiline.clear()
         self.regTreeList.clear()
         self.tabRegisters.clear()
+        self.tblBPs.resetContent()
+#       self.tblBPs.setRowCount(0)
         
         self.workerLoadTarget = TargetLoadWorker(self, target)
         self.workerLoadTarget.signals.sendProgressUpdate.connect(self.handle_progressUpdate)
@@ -498,7 +427,9 @@ class Pymobiledevice3GUIWindow(QMainWindow):
                 print(bl.GetQueueName())
                 print(get_description(bp_cur))
                 print(dir(get_description(bp_cur)))
-                self.tblBPs.addRow(bp_cur.GetID(), idx, hex(bl.GetLoadAddress()), name, str(bp_cur.GetHitCount()))
+                self.tblBPs.addRow(bp_cur.GetID(), idx, hex(bl.GetLoadAddress()), name, str(bp_cur.GetHitCount()), bp_cur.GetCondition())
+#               print(f'LOADING BREAKPOINT AT ADDRESS: {hex(bl.GetLoadAddress())}')
+                self.txtMultiline.table.toggleBPAtAddress(hex(bl.GetLoadAddress()))
         pass
         
     def updateProgress(self, newValue, finished = False):
