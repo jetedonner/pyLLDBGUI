@@ -43,7 +43,7 @@ from execCommandWorker import *
 
 
 APP_NAME = "LLDB-GUI"
-WINDOW_SIZE = 620
+WINDOW_SIZE = 720
 
 APP_VERSION = "v0.0.1"
         
@@ -73,7 +73,7 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.processNode = None
         self.setWindowTitle(APP_NAME + " " + APP_VERSION)
         self.setBaseSize(WINDOW_SIZE * 2, WINDOW_SIZE)
-        self.setMinimumSize(WINDOW_SIZE * 2, WINDOW_SIZE)
+        self.setMinimumSize(WINDOW_SIZE * 2, WINDOW_SIZE + 72)
 
         self.toolbar = QToolBar('Main ToolBar')
         self.addToolBar(Qt.ToolBarArea.LeftToolBarArea, self.toolbar)
@@ -91,56 +91,48 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.statusBar.addPermanentWidget(self.progressbar)
         
         # new menu item
-        load_action = QAction(QIcon(os.path.join("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/resources/", 'bug.png')), '&Load Target', self)
-        load_action.setStatusTip('Load Target')
-        load_action.setShortcut('Ctrl+L')
-        load_action.triggered.connect(self.load_clicked)
-        
-#       file_menu.addAction(new_action)
-        self.toolbar.addAction(load_action)
-        
-#       self.run_action.setIcon(ConfigClass.iconPause)
+        self.load_action = QAction(ConfigClass.iconBug, '&Load Target', self)
+        self.load_action.setStatusTip('Load Target')
+        self.load_action.setShortcut('Ctrl+L')
+        self.load_action.triggered.connect(self.load_clicked)
+        self.toolbar.addAction(self.load_action)
         
         self.run_action = QAction(ConfigClass.iconPause, '&Run', self)
         self.run_action.setStatusTip('Run Debugging')
         self.run_action.setShortcut('Ctrl+P')
         self.run_action.triggered.connect(self.handle_runProcess)
-#       file_menu.addAction(new_action)
         self.toolbar.addAction(self.run_action)
         
-        step_over_action = QAction(QIcon(os.path.join("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/resources/", 'step_over_ng2.png')), '&Step Over', self)
-        step_over_action.setStatusTip('Step over')
-        step_over_action.setShortcut('Ctrl+T')
-        step_over_action.triggered.connect(self.handle_stepNext)
-#       file_menu.addAction(new_action)
-        self.toolbar.addAction(step_over_action)
+        self.step_over_action = QAction(ConfigClass.iconStepOver, '&Step Over', self)
+        self.step_over_action.setStatusTip('Step over')
+        self.step_over_action.setShortcut('Ctrl+T')
+        self.step_over_action.triggered.connect(self.handle_stepNext)
+        self.toolbar.addAction(self.step_over_action)
         
-        step_into_action = QAction(QIcon(os.path.join("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/resources/", 'step_into.png')), '&Step Into', self)
-        step_into_action.setStatusTip('Step Into')
-        step_into_action.setShortcut('Ctrl+I')
-        step_into_action.triggered.connect(self.handle_stepInto)
-#       file_menu.addAction(new_action)
-        self.toolbar.addAction(step_into_action)
+        self.step_into_action = QAction(ConfigClass.iconStepInto, '&Step Into', self)
+        self.step_into_action.setStatusTip('Step Into')
+        self.step_into_action.setShortcut('Ctrl+I')
+        self.step_into_action.triggered.connect(self.handle_stepInto)
+        self.toolbar.addAction(self.step_into_action)
         
-        step_out_action = QAction(QIcon(os.path.join("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/resources/", 'step_out_ng.png')), '&Step Out', self)
-        step_out_action.setStatusTip('Step out')
-        step_out_action.setShortcut('Ctrl+O')
-#       new_action.triggered.connect(self.new_document)
-#       file_menu.addAction(new_action)
-        self.toolbar.addAction(step_out_action)
+        self.step_out_action = QAction(ConfigClass.iconStepOut, '&Step Out', self)
+        self.step_out_action.setStatusTip('Step out')
+        self.step_out_action.setShortcut('Ctrl+O')
+        self.step_out_action.triggered.connect(self.handle_stepOut)
+        self.toolbar.addAction(self.step_out_action)
         
-        githubURL_action = QAction(QIcon(os.path.join("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/resources/", 'github.png')), 'Github &repo', self)
-        githubURL_action.setStatusTip('Github repo')
-        githubURL_action.triggered.connect(self.githubURL_click)
-        self.toolbar.addAction(githubURL_action)
+        self.githubURL_action = QAction(ConfigClass.iconGithub, 'Github &repo', self)
+        self.githubURL_action.setStatusTip('Github repo')
+        self.githubURL_action.triggered.connect(self.githubURL_click)
+        self.toolbar.addAction(self.githubURL_action)
         
         menu = self.menuBar()
         
         main_menu = QtWidgets.QMenu('pyLLDBGUI', menu)
         menu.addMenu(main_menu)
         
-        main_menu.addAction(load_action)
-        main_menu.addAction(githubURL_action)
+        main_menu.addAction(self.load_action)
+        main_menu.addAction(self.githubURL_action)
         
         self.splitter = QSplitter()
         self.splitter.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
@@ -154,7 +146,21 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.txtMultiline.setContentsMargins(0, 0, 0, 0)
         self.splitter.setContentsMargins(0, 0, 0, 0)
         
-        self.splitter.addWidget(self.txtMultiline)
+        self.tabWidgetTop = QTabWidget()
+        self.tabWidgetTop.addTab(self.txtMultiline, "Debugger")
+        
+        self.treFile = QTreeWidget()
+        self.treFile.setFont(ConfigClass.font)
+        self.treFile.setHeaderLabels(['Section/SubSection', 'Address'])
+        self.treFile.header().resizeSection(0, 256)
+        self.treFile.header().resizeSection(1, 256)
+        
+        self.tabWidgetFile = QWidget()
+        self.tabWidgetFile.setLayout(QVBoxLayout())
+        self.tabWidgetFile.layout().addWidget(self.treFile)
+        self.tabWidgetTop.addTab(self.tabWidgetFile, "File Structure")
+        
+        self.splitter.addWidget(self.tabWidgetTop)
         
         self.tabWidget = QTabWidget()
         
@@ -177,7 +183,7 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.tabThreads = QWidget()
         self.tabThreads.setLayout(QVBoxLayout())
         self.tabThreads.layout().addWidget(self.treThreads)
-        self.tabWidget.addTab(self.tabThreads, "Threads")
+        self.tabWidget.addTab(self.tabThreads, "Threads/Frames")
         
         self.tblBPs = BreakpointsTableWidget()
         self.tabBPs = QWidget()
@@ -185,10 +191,10 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.tabBPs.layout().addWidget(self.tblBPs)
         self.tabWidget.addTab(self.tabBPs, "Breakpoints")
         
-#       self.tabFrames = QWidget()
-#       self.tabFrames.setLayout(QVBoxLayout())
-##       tabDet.layout().addWidget(treDet)
-#       self.tabWidget.addTab(self.tabFrames, "Frames")
+        self.tabModules = QWidget()
+        self.tabModules.setLayout(QVBoxLayout())
+        #       tabDet.layout().addWidget(treDet)
+        self.tabWidget.addTab(self.tabModules, "Modules/Symbols")
         
         self.hxtMemory = QHEXTextEditSplitter()
         self.txtMemoryAddr = QLineEdit("0x100003f50")
@@ -339,12 +345,26 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.workerLoadTarget.signals.loadRegister.connect(self.handle_loadRegister)
         self.workerLoadTarget.signals.loadRegisterValue.connect(self.handle_loadRegisterValue)
         self.workerLoadTarget.signals.loadProcess.connect(self.handle_loadProcess)
+        self.workerLoadTarget.signals.loadSections.connect(self.handle_loadSections)
         self.workerLoadTarget.signals.loadThread.connect(self.handle_loadThread)
         self.workerLoadTarget.signals.addInstructionNG.connect(self.handle_addInstructionNG)
         self.workerLoadTarget.signals.setTextColor.connect(self.handle_setTextColor)
         
         self.threadpool.start(self.workerLoadTarget)
     
+    def handle_loadSections(self, module):
+        print('Number of sections: %d' % module.GetNumSections())
+        for sec in module.section_iter():
+            print(sec)
+            print(sec.GetName())
+            sectionNode = QTreeWidgetItem(self.treFile, [sec.GetName(), str(hex(sec.GetFileAddress()))])
+#           for jete in dir(sec):
+#               print(jete)
+            for jete2 in range(sec.GetNumSubSections()):
+                print(sec.GetSubSectionAtIndex(jete2).GetName())
+                subSectionNode = QTreeWidgetItem(sectionNode, [sec.GetSubSectionAtIndex(jete2).GetName(), str(hex(sec.GetSubSectionAtIndex(jete2).GetFileAddress()))])
+        pass
+        
     def handle_setTextColor(self, color = "black", lineNum = False):
         self.txtMultiline.setTextColor(color, lineNum)
         pass
@@ -591,6 +611,9 @@ class Pymobiledevice3GUIWindow(QMainWindow):
 #       instruction = frame
         print(f'NEXT INTO INSTRUCTION {hex(frame.GetPC())}')
         self.txtMultiline.setPC(frame.GetPC())
+        
+    def handle_stepOut(self):
+        pass
         
 def close_application():
 #   global process

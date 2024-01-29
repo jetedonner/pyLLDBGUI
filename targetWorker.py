@@ -25,7 +25,7 @@ from PyQt6 import uic, QtWidgets
 import lldbHelper
 
 fname = "main"
-exe = "/Users/dave/Downloads/hello_world/hello_world"
+exe = "./hello_world_test"
 
 interruptTargetLoad = False
 
@@ -36,6 +36,7 @@ class TargetLoadWorkerSignals(QObject):
 	finished = pyqtSignal()
 	sendProgressUpdate = pyqtSignal(int)
 	loadRegister = pyqtSignal(str)
+	loadSections = pyqtSignal(object)
 	loadRegisterValue = pyqtSignal(int, str, str, str)
 	loadProcess = pyqtSignal(object)
 	loadThread = pyqtSignal(int, object)
@@ -243,8 +244,30 @@ class TargetLoadWorker(QRunnable):
 								print(frame)
 								
 								print(f'AAAAA >>>> {hex(frame.GetPC())}')
+								print(f'LANGUAGE >>>> {lldbHelper.GuessLanguage(frame)}')
 								
 								if idx2 == 0:
+									
+									print(f'11111 >>>> {frame.GetModule()}')
+									
+									for symbol in frame.GetModule():
+										name = symbol.GetName()
+										saddr = symbol.GetStartAddress()
+										eaddr = symbol.GetEndAddress()
+										print(f'- SYM: {name} => {saddr} - {eaddr}')
+									
+									
+									self.signals.loadSections.emit(frame.GetModule())
+									QCoreApplication.processEvents()
+									
+									print('Number of sections: %d' % frame.GetModule().GetNumSections())
+									for sec in frame.GetModule().section_iter():
+										print(sec.GetName())
+#										for jete in dir(sec):
+#											print(jete)
+										for jete2 in range(sec.GetNumSubSections()):
+											print(sec.GetSubSectionAtIndex(jete2).GetName())
+										
 									rip = self.convert_address(frame.register["rip"].value)
 #									print(rip)
 									function = frame.GetFunction()
