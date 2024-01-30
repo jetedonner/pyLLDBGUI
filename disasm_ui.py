@@ -151,8 +151,8 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         
         self.treFile = QTreeWidget()
         self.treFile.setFont(ConfigClass.font)
-        self.treFile.setHeaderLabels(['Section/SubSection', 'Address'])
-        self.treFile.header().resizeSection(0, 256)
+        self.treFile.setHeaderLabels(['Sections', 'Address', 'Type'])
+        self.treFile.header().resizeSection(0, 196)
         self.treFile.header().resizeSection(1, 256)
         
         self.tabWidgetFile = QWidget()
@@ -357,12 +357,21 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         for sec in module.section_iter():
             print(sec)
             print(sec.GetName())
-            sectionNode = QTreeWidgetItem(self.treFile, [sec.GetName(), str(hex(sec.GetFileAddress()))])
+            print(f'GetFileByteSize() == {hex(sec.GetFileByteSize())}')
+            print(f'GetByteSize() == {hex(sec.GetByteSize())}')
+            
+            print(f'GetSectionType: {sec.GetSectionType()} / {lldbHelper.SectionTypeString(sec.GetSectionType())}')
+            
+            for inin in dir(sec):
+                print(inin)
+                
+            sectionNode = QTreeWidgetItem(self.treFile, [sec.GetName(), str(hex(sec.GetFileAddress())) + " - " + str(hex(sec.GetFileAddress() + sec.GetByteSize())), lldbHelper.SectionTypeString(sec.GetSectionType()) + " (" + str(sec.GetSectionType()) + ")"])
 #           for jete in dir(sec):
 #               print(jete)
             for jete2 in range(sec.GetNumSubSections()):
                 print(sec.GetSubSectionAtIndex(jete2).GetName())
-                subSectionNode = QTreeWidgetItem(sectionNode, [sec.GetSubSectionAtIndex(jete2).GetName(), str(hex(sec.GetSubSectionAtIndex(jete2).GetFileAddress()))])
+                subSec = sec.GetSubSectionAtIndex(jete2)
+                subSectionNode = QTreeWidgetItem(sectionNode, [subSec.GetName(), str(hex(subSec.GetFileAddress())) + " - " + str(hex(subSec.GetFileAddress() + subSec.GetByteSize())), lldbHelper.SectionTypeString(subSec.GetSectionType()) + " (" + str(subSec.GetSectionType()) + ")"])
         pass
         
     def handle_setTextColor(self, color = "black", lineNum = False):
