@@ -142,6 +142,7 @@ class TargetLoadWorker(QRunnable):
 			self.sendProgressUpdate(10)
 #			print("Has target")
 			
+			print(lldbHelper.target.GetLaunchInfo())
 			# If the target is valid set a breakpoint at main
 			main_bp = lldbHelper.target.BreakpointCreateByName(fname, lldbHelper.target.GetExecutable().GetFilename())
 			main_bp.AddName(fname)
@@ -163,6 +164,8 @@ class TargetLoadWorker(QRunnable):
 			
 			# Make sure the launch went ok
 			if lldbHelper.process:
+				
+#				executable = lldbHelper.process.GetExecutable()
 #				self.executeCmd()
 #				self.handle_readMemory(self.debugger, 0x108a01b90, 0x100)
 				
