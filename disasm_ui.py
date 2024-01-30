@@ -142,6 +142,10 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         
         self.txtMultiline = AssemblerTextEdit()
         self.txtMultiline.table.actionShowMemory.triggered.connect(self.handle_showMemory)
+        self.txtMultiline.table.sigEnableBP.connect(self.handle_enableBP)
+        self.txtMultiline.table.sigBPOn.connect(self.handle_BPOn)
+        
+        
         
         self.txtMultiline.setContentsMargins(0, 0, 0, 0)
         self.splitter.setContentsMargins(0, 0, 0, 0)
@@ -151,9 +155,10 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         
         self.treFile = QTreeWidget()
         self.treFile.setFont(ConfigClass.font)
-        self.treFile.setHeaderLabels(['Sections', 'Address', 'Type'])
+        self.treFile.setHeaderLabels(['Sections', 'Address', 'File- / Byte-Size', 'Type'])
         self.treFile.header().resizeSection(0, 196)
         self.treFile.header().resizeSection(1, 256)
+        self.treFile.header().resizeSection(2, 256)
         
         self.tabWidgetFile = QWidget()
         self.tabWidgetFile.setLayout(QVBoxLayout())
@@ -281,6 +286,14 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         
         self.start_workerLoadTarget(exe)
     
+    def handle_BPOn(self, address, on):
+        self.tblBPs.doBPOn(address, on)
+        pass
+        
+    def handle_enableBP(self, address, enable):
+        self.tblBPs.doEnableBP(address, enable)
+        pass
+        
     def handle_showMemory(self):
         self.tabWidget.setCurrentWidget(self.tabMemory)
         print(self.txtMultiline.table.item(self.txtMultiline.table.selectedItems()[0].row(), 3).text())
@@ -365,13 +378,25 @@ class Pymobiledevice3GUIWindow(QMainWindow):
             for inin in dir(sec):
                 print(inin)
                 
-            sectionNode = QTreeWidgetItem(self.treFile, [sec.GetName(), str(hex(sec.GetFileAddress())) + " - " + str(hex(sec.GetFileAddress() + sec.GetByteSize())), lldbHelper.SectionTypeString(sec.GetSectionType()) + " (" + str(sec.GetSectionType()) + ")"])
+            sectionNode = QTreeWidgetItem(self.treFile, [sec.GetName(), str(hex(sec.GetFileAddress())) + " - " + str(hex(sec.GetFileAddress() + sec.GetByteSize())), hex(sec.GetFileByteSize()) + " / " + hex(sec.GetByteSize()), lldbHelper.SectionTypeString(sec.GetSectionType()) + " (" + str(sec.GetSectionType()) + ")"])
 #           for jete in dir(sec):
 #               print(jete)
+            INDENT = "\t"
+            INDENT2 = "\t\t"
+            if sec.GetName() == "__TEXT":
+                # Iterates the text section and prints each symbols within each sub-section.
+                for subsec2 in sec:
+                    print(INDENT + repr(subsec2))
+                    for sym in module.symbol_in_section_iter(subsec2):
+                        print(INDENT2 + repr(sym))
+                        print(INDENT2 + 'symbol type: %s' % str(sym.GetType())) # symbol_type_to_str
+                        
             for jete2 in range(sec.GetNumSubSections()):
                 print(sec.GetSubSectionAtIndex(jete2).GetName())
+                
                 subSec = sec.GetSubSectionAtIndex(jete2)
-                subSectionNode = QTreeWidgetItem(sectionNode, [subSec.GetName(), str(hex(subSec.GetFileAddress())) + " - " + str(hex(subSec.GetFileAddress() + subSec.GetByteSize())), lldbHelper.SectionTypeString(subSec.GetSectionType()) + " (" + str(subSec.GetSectionType()) + ")"])
+                
+                subSectionNode = QTreeWidgetItem(sectionNode, [subSec.GetName(), str(hex(subSec.GetFileAddress())) + " - " + str(hex(subSec.GetFileAddress() + subSec.GetByteSize())), hex(subSec.GetFileByteSize()) + " / " + hex(subSec.GetByteSize()), lldbHelper.SectionTypeString(subSec.GetSectionType()) + " (" + str(subSec.GetSectionType()) + ")"])
         pass
         
     def handle_setTextColor(self, color = "black", lineNum = False):
@@ -456,9 +481,21 @@ class Pymobiledevice3GUIWindow(QMainWindow):
                 print(bl.GetQueueName())
                 print(get_description(bp_cur))
                 print(dir(get_description(bp_cur)))
+                self.txtMultiline.table.toggleBPAtAddress(hex(bl.GetLoadAddress()))
+                self.tblBPs.resetContent()
                 self.tblBPs.addRow(bp_cur.GetID(), idx, hex(bl.GetLoadAddress()), name, str(bp_cur.GetHitCount()), bp_cur.GetCondition())
 #               print(f'LOADING BREAKPOINT AT ADDRESS: {hex(bl.GetLoadAddress())}')
-                self.txtMultiline.table.toggleBPAtAddress(hex(bl.GetLoadAddress()))
+                
+                
+        print(f'get_caller_symbol: {get_caller_symbol(lldbHelper.thread)}')
+        print(f'get_function_names: {get_function_names(lldbHelper.thread)}')
+        print(f'get_symbol_names: {get_symbol_names(lldbHelper.thread)}')
+        print(f'get_pc_addresses: {get_pc_addresses(lldbHelper.thread)}')
+        print(f'get_filenames: {get_filenames(lldbHelper.thread)}')
+        print(f'get_line_numbers: {get_line_numbers(lldbHelper.thread)}')
+        print(f'get_module_names: {get_module_names(lldbHelper.thread)}')
+        print(f'get_stack_frames: {get_stack_frames(lldbHelper.thread)}')
+        
         pass
         
     def updateProgress(self, newValue, finished = False):

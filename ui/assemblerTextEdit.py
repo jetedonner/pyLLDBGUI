@@ -52,6 +52,9 @@ class DisassemblyImageTableWidgetItem(QTableWidgetItem):
 		
 class DisassemblyTableWidget(QTableWidget):
 	
+	sigEnableBP = pyqtSignal(str, bool)
+	sigBPOn = pyqtSignal(str, bool)
+	
 	actionShowMemory = None
 	
 	def handle_copyHexValue(self):
@@ -72,11 +75,13 @@ class DisassemblyTableWidget(QTableWidget):
 	def handle_toggleBP(self):
 		item = self.item(self.selectedItems()[0].row(), 1)
 		item.toggleBPOn()
+		self.sigBPOn.emit(self.item(self.selectedItems()[0].row(), 3).text(), item.isBPOn)
 		pass
 		
 	def handle_disableBP(self):
 		item = self.item(self.selectedItems()[0].row(), 1)
 		item.toggleBPEnabled()
+		self.sigEnableBP.emit(self.item(self.selectedItems()[0].row(), 3).text(), not item.isBPEnabled)
 		pass
 		
 	def __init__(self):
@@ -128,6 +133,7 @@ class DisassemblyTableWidget(QTableWidget):
 	def on_double_click(self, row, col):
 		if col in range(3):
 			self.toggleBPOn(row)
+#			self.sigBPOn.emit(self.item(self.selectedItems()[0].row(), 3).text(), self.item(self.selectedItems()[0].row(), 1).isBPOn)
 		
 	def contextMenuEvent(self, event):
 		for i in dir(event):
@@ -138,8 +144,10 @@ class DisassemblyTableWidget(QTableWidget):
 		self.context_menu.exec(event.globalPos())
 	
 	def toggleBPOn(self, row):
+#		print(f'TOGGLE BP: {self.item(row, 3).text()}')
 		item = self.item(row, 1)
 		item.toggleBPOn()
+		self.sigBPOn.emit(self.item(row, 3).text(), item.isBPOn)
 		pass
 		
 	def toggleBPAtAddress(self, address):
@@ -255,9 +263,34 @@ class BreakpointsTableWidget(QTableWidget):
 		pass
 		
 	def handle_disableBP(self):
-#		item = self.item(self.selectedItems()[0].row(), 1)
-#		item.toggleBPEnabled()
+		item = self.item(self.selectedItems()[0].row(), 0)
+		item.toggleBPEnabled()
 		pass
+	
+	def doToggleBP(self, address, on):
+		for i in range(self.rowCount()):
+			if self.item(i, 2).text() == address:
+				itemCell = self.item(i, 0)
+				itemCell.toggleBPOn()
+				break
+			
+	def doEnableBP(self, address, enable):
+		for i in range(self.rowCount()):
+			if self.item(i, 2).text() == address:
+				itemCell = self.item(i, 0)
+				itemCell.toggleBPEnabled()
+				break
+						
+	def doBPOn(self, address, on):
+		bBPFound = False
+		for i in range(self.rowCount()):
+			if self.item(i, 2).text() == address:
+				bBPFound = True
+				itemCell = self.item(i, 0)
+				itemCell.toggleBPOn()
+				break
+		if on and not bBPFound:
+			self.addRow(on, self.rowCount() + 1, address, '', '0', '')
 		
 	def __init__(self):
 		super().__init__()
@@ -279,7 +312,7 @@ class BreakpointsTableWidget(QTableWidget):
 		
 	def initTable(self):
 		self.setColumnCount(6)
-		self.setColumnWidth(0, 24)
+		self.setColumnWidth(0, 48)
 		self.setColumnWidth(1, 32)
 		self.setColumnWidth(2, 96)
 		self.setColumnWidth(3, 108)
