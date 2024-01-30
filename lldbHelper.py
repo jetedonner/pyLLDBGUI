@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import lldb
 
+exec2Dbg = None
 debugger = None
 target = None
 process = None

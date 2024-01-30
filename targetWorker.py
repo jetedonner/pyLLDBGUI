@@ -35,6 +35,7 @@ class TargetLoadReceiver(QObject):
 class TargetLoadWorkerSignals(QObject):
 	finished = pyqtSignal()
 	sendProgressUpdate = pyqtSignal(int)
+	loadStats = pyqtSignal(str)
 	loadRegister = pyqtSignal(str)
 	loadSections = pyqtSignal(object)
 	loadRegisterValue = pyqtSignal(int, str, str, str)
@@ -65,6 +66,11 @@ class TargetLoadWorker(QRunnable):
 		self.isTargetLoadActive = False
 		self.window = window_obj
 		self.targetPath = target
+		
+		if lldbHelper.exec2Dbg is not None:
+			self.targetPath = lldbHelper.exec2Dbg
+			print(f'loading TARGETPATH: {self.targetPath}')
+			
 		self.signals = TargetLoadWorkerSignals()
 		
 	def run(self):
@@ -140,9 +146,8 @@ class TargetLoadWorker(QRunnable):
 		
 		if lldbHelper.target:
 			self.sendProgressUpdate(10)
-#			print("Has target")
 			
-			print(lldbHelper.target.GetLaunchInfo())
+			
 			# If the target is valid set a breakpoint at main
 			main_bp = lldbHelper.target.BreakpointCreateByName(fname, lldbHelper.target.GetExecutable().GetFilename())
 			main_bp.AddName(fname)
@@ -164,7 +169,19 @@ class TargetLoadWorker(QRunnable):
 			
 			# Make sure the launch went ok
 			if lldbHelper.process:
+				li = lldbHelper.target.GetLaunchInfo()
+				statistics = lldbHelper.target.GetStatistics()
+				stream = lldb.SBStream()
+				success = statistics.GetAsJSON(stream)
+				if success:
+					self.signals.loadStats.emit(str(stream.GetData()))
+					QCoreApplication.processEvents()
+#					print(stream.GetData())
 				
+#				print(li.GetProcessID())
+#				for info in dir(lldbHelper.target.GetStatistics()):
+#					print(info)
+					
 #				executable = lldbHelper.process.GetExecutable()
 #				self.executeCmd()
 #				self.handle_readMemory(self.debugger, 0x108a01b90, 0x100)
@@ -234,8 +251,8 @@ class TargetLoadWorker(QRunnable):
 						self.sendProgressUpdate(20)
 						# Print some simple thread info
 #						print(self.thread)
-						print_stacktrace(lldbHelper.thread)
-						print(f'GetNumFrames: {lldbHelper.thread.GetNumFrames()}')
+#						print_stacktrace(lldbHelper.thread)
+#						print(f'GetNumFrames: {lldbHelper.thread.GetNumFrames()}')
 						
 						for idx2 in range(lldbHelper.thread.GetNumFrames()):
 							
@@ -263,13 +280,13 @@ class TargetLoadWorker(QRunnable):
 									self.signals.loadSections.emit(frame.GetModule())
 									QCoreApplication.processEvents()
 									
-									print('Number of sections: %d' % frame.GetModule().GetNumSections())
-									for sec in frame.GetModule().section_iter():
-										print(sec.GetName())
-#										for jete in dir(sec):
-#											print(jete)
-										for jete2 in range(sec.GetNumSubSections()):
-											print(sec.GetSubSectionAtIndex(jete2).GetName())
+#									print('Number of sections: %d' % frame.GetModule().GetNumSections())
+#									for sec in frame.GetModule().section_iter():
+#										print(sec.GetName())
+##										for jete in dir(sec):
+##											print(jete)
+#										for jete2 in range(sec.GetNumSubSections()):
+#											print(sec.GetSubSectionAtIndex(jete2).GetName())
 										
 									rip = self.convert_address(frame.register["rip"].value)
 #									print(rip)

@@ -31,6 +31,7 @@ from PyQt6 import uic, QtWidgets
 from ui.assemblerTextEdit import *
 from ui.registerTreeView import *
 from ui.historyLineEdit import *
+from ui.statisticsTreeWidget import *
                 
 from config import *
 
@@ -164,6 +165,12 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.tabWidgetFile.setLayout(QVBoxLayout())
         self.tabWidgetFile.layout().addWidget(self.treFile)
         self.tabWidgetTop.addTab(self.tabWidgetFile, "File Structure")
+        
+        self.treStats = QStatisticsTreeWidget()
+        self.tabWidgetStats = QWidget()
+        self.tabWidgetStats.setLayout(QVBoxLayout())
+        self.tabWidgetStats.layout().addWidget(self.treStats)
+        self.tabWidgetTop.addTab(self.tabWidgetStats, "Statistics")
         
         self.splitter.addWidget(self.tabWidgetTop)
         
@@ -355,6 +362,7 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.workerLoadTarget = TargetLoadWorker(self, target)
         self.workerLoadTarget.signals.sendProgressUpdate.connect(self.handle_progressUpdate)
         self.workerLoadTarget.signals.finished.connect(self.handle_progressFinished)
+        self.workerLoadTarget.signals.loadStats.connect(self.handle_loadStats)
         self.workerLoadTarget.signals.loadRegister.connect(self.handle_loadRegister)
         self.workerLoadTarget.signals.loadRegisterValue.connect(self.handle_loadRegisterValue)
         self.workerLoadTarget.signals.loadProcess.connect(self.handle_loadProcess)
@@ -375,21 +383,23 @@ class Pymobiledevice3GUIWindow(QMainWindow):
             
             print(f'GetSectionType: {sec.GetSectionType()} / {lldbHelper.SectionTypeString(sec.GetSectionType())}')
             
-            for inin in dir(sec):
-                print(inin)
+#           for inin in dir(sec):
+#               print(inin)
                 
             sectionNode = QTreeWidgetItem(self.treFile, [sec.GetName(), str(hex(sec.GetFileAddress())) + " - " + str(hex(sec.GetFileAddress() + sec.GetByteSize())), hex(sec.GetFileByteSize()) + " / " + hex(sec.GetByteSize()), lldbHelper.SectionTypeString(sec.GetSectionType()) + " (" + str(sec.GetSectionType()) + ")"])
 #           for jete in dir(sec):
 #               print(jete)
             INDENT = "\t"
             INDENT2 = "\t\t"
-            if sec.GetName() == "__TEXT":
-                # Iterates the text section and prints each symbols within each sub-section.
-                for subsec2 in sec:
-                    print(INDENT + repr(subsec2))
-                    for sym in module.symbol_in_section_iter(subsec2):
-                        print(INDENT2 + repr(sym))
-                        print(INDENT2 + 'symbol type: %s' % str(sym.GetType())) # symbol_type_to_str
+#           if sec.GetName() == "__TEXT":
+            # Iterates the text section and prints each symbols within each sub-section.
+#           for subsec2 in sec:
+#               print(subsec2.GetName())
+#               print(INDENT + repr(subsec2))
+#               for sym in module.symbol_in_section_iter(subsec2):
+#                   print(sym.GetName())
+#                   print(INDENT2 + repr(sym))
+#                   print(INDENT2 + 'symbol type: %s' % str(sym.GetType())) # symbol_type_to_str
                         
             for jete2 in range(sec.GetNumSubSections()):
                 print(sec.GetSubSectionAtIndex(jete2).GetName())
@@ -397,6 +407,13 @@ class Pymobiledevice3GUIWindow(QMainWindow):
                 subSec = sec.GetSubSectionAtIndex(jete2)
                 
                 subSectionNode = QTreeWidgetItem(sectionNode, [subSec.GetName(), str(hex(subSec.GetFileAddress())) + " - " + str(hex(subSec.GetFileAddress() + subSec.GetByteSize())), hex(subSec.GetFileByteSize()) + " / " + hex(subSec.GetByteSize()), lldbHelper.SectionTypeString(subSec.GetSectionType()) + " (" + str(subSec.GetSectionType()) + ")"])
+                
+                for sym in module.symbol_in_section_iter(subSec):
+                    subSectionNode2 = QTreeWidgetItem(subSectionNode, [sym.GetName(), str(hex(sym.GetStartAddress().GetFileAddress()) + " - " + hex(sym.GetEndAddress().GetFileAddress())), hex(sym.GetSize()), ''])
+                    print(dir(sym))
+                    print(sym.GetName())
+                    print(INDENT2 + repr(sym))
+                    print(INDENT2 + 'symbol type: %s' % str(sym.GetType())) # symbol_type_to_str
         pass
         
     def handle_setTextColor(self, color = "black", lineNum = False):
@@ -409,6 +426,10 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         else:
 #           self.txtMultiline.insertText(txt, bold, color)
             pass
+        
+    def handle_loadStats(self, json_data):
+        self.treStats.loadJSON(json_data)
+        pass
         
     def handle_loadRegisterValue(self, regIdx, regName, regValue, regMemory):
         registerDetailNode = QTreeWidgetItem(self.regTreeList[regIdx], [regName, regValue, regMemory])
@@ -453,16 +474,16 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         idx = 0
         for i in range(lldbHelper.target.GetNumBreakpoints()):
             idx += 1
-            print(dir(lldbHelper.target.GetBreakpointAtIndex(i)))
+#           print(dir(lldbHelper.target.GetBreakpointAtIndex(i)))
             bp_cur = lldbHelper.target.GetBreakpointAtIndex(i)
             print(bp_cur)
             for bl in bp_cur:
                 # Make sure the name list has the remaining name:
                 name_list = lldb.SBStringList()
                 bp_cur.GetNames(name_list)
-                print(name_list)
-                print(len(name_list))
-                print(name_list.GetSize())
+#               print(name_list)
+#               print(len(name_list))
+#               print(name_list.GetSize())
                 num_names = name_list.GetSize()
 #               self.assertEquals(
 #                   num_names, 1, "Name list has %d items, expected 1." % (num_names)
@@ -476,25 +497,25 @@ class Pymobiledevice3GUIWindow(QMainWindow):
 #               )
 #               print(dir(bl))
 #               bp_cur = lldbHelper.target.GetBreakpointAtIndex(i)
-                print(bl)
-                print(dir(bl))
-                print(bl.GetQueueName())
-                print(get_description(bp_cur))
-                print(dir(get_description(bp_cur)))
+#               print(bl)
+#               print(dir(bl))
+#               print(bl.GetQueueName())
+#               print(get_description(bp_cur))
+#               print(dir(get_description(bp_cur)))
                 self.txtMultiline.table.toggleBPAtAddress(hex(bl.GetLoadAddress()))
                 self.tblBPs.resetContent()
                 self.tblBPs.addRow(bp_cur.GetID(), idx, hex(bl.GetLoadAddress()), name, str(bp_cur.GetHitCount()), bp_cur.GetCondition())
 #               print(f'LOADING BREAKPOINT AT ADDRESS: {hex(bl.GetLoadAddress())}')
                 
                 
-        print(f'get_caller_symbol: {get_caller_symbol(lldbHelper.thread)}')
-        print(f'get_function_names: {get_function_names(lldbHelper.thread)}')
-        print(f'get_symbol_names: {get_symbol_names(lldbHelper.thread)}')
-        print(f'get_pc_addresses: {get_pc_addresses(lldbHelper.thread)}')
-        print(f'get_filenames: {get_filenames(lldbHelper.thread)}')
-        print(f'get_line_numbers: {get_line_numbers(lldbHelper.thread)}')
-        print(f'get_module_names: {get_module_names(lldbHelper.thread)}')
-        print(f'get_stack_frames: {get_stack_frames(lldbHelper.thread)}')
+#       print(f'get_caller_symbol: {get_caller_symbol(lldbHelper.thread)}')
+#       print(f'get_function_names: {get_function_names(lldbHelper.thread)}')
+#       print(f'get_symbol_names: {get_symbol_names(lldbHelper.thread)}')
+#       print(f'get_pc_addresses: {get_pc_addresses(lldbHelper.thread)}')
+#       print(f'get_filenames: {get_filenames(lldbHelper.thread)}')
+#       print(f'get_line_numbers: {get_line_numbers(lldbHelper.thread)}')
+#       print(f'get_module_names: {get_module_names(lldbHelper.thread)}')
+#       print(f'get_stack_frames: {get_stack_frames(lldbHelper.thread)}')
         
         pass
         
@@ -671,6 +692,18 @@ def close_application():
         print("NO PROCESS TO KILL!!!")
 #   global pymobiledevice3GUIApp
 #   pymobiledevice3GUIApp.quit()
+
+#import sys
+
+# Get the number of run arguments
+num_args = len(sys.argv)
+if num_args >= 2: #2 and sys.argv[i]:
+    lldbHelper.exec2Dbg = sys.argv[1]
+    pass
+
+# Print the run arguments
+#for i in range(1, num_args):
+#   print(f"Argument {i}: {sys.argv[i]}")
     
 #def main():
 """PyMobiledevice3GUI's main function."""
