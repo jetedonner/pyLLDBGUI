@@ -29,6 +29,7 @@ class ConfigClass():
 	iconBin = None
 	iconPause = None
 	iconPlay = None
+	iconSettings = None
 	
 	iconStepOver = None
 	iconStepInto = None
@@ -48,6 +49,7 @@ class ConfigClass():
 		ConfigClass.iconBin = QIcon(os.path.join(resources_root, 'recyclebin.png'))
 		ConfigClass.iconPause = QIcon(os.path.join(resources_root, 'pause-circular-button.png'))
 		ConfigClass.iconPlay = QIcon(os.path.join(resources_root, 'play-circular-button.png'))
+		ConfigClass.iconSettings = QIcon(os.path.join(resources_root, 'settings.png'))
 		
 		ConfigClass.iconStepOver = QIcon(os.path.join(resources_root, 'step_over_ng2.png'))
 		ConfigClass.iconStepInto = QIcon(os.path.join(resources_root, 'step_into.png'))

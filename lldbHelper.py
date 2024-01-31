@@ -1,11 +1,35 @@
 #!/usr/bin/env python3
 import lldb
 
+from ctypes import *
+from struct import *
+from binascii import *
+
 exec2Dbg = None
 debugger = None
 target = None
 process = None
 thread = None
+
+# Thanks for MACH* part of the code - Jonathan Salwan
+class MACH_HEADER(Structure):
+	_fields_ = [
+				("magic",           c_uint),
+				("cputype",         c_uint),
+				("cpusubtype",      c_uint),
+				("filetype",        c_uint),
+				("ncmds",           c_uint),
+				("sizeofcmds",      c_uint),
+				("flags",           c_uint)
+				]
+				
+def GetFileHeader(exe):
+	with open(exe,'rb') as fopen:
+		data = bytearray(fopen.read())
+		mach_header = MACH_HEADER.from_buffer_copy(data)
+#		print(mach_header.magic)
+		return mach_header
+	return None
 
 def GuessLanguage(frame):
 	return lldb.SBLanguageRuntime.GetNameForLanguageType(frame.GuessLanguage())

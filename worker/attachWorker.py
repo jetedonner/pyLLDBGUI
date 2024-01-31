@@ -2,6 +2,7 @@
 
 import lldb
 from lldbutil import print_stacktrace
+from lldbutil import *
 from inputHelper import FBInputHandler
 import psutil
 import os
@@ -27,12 +28,12 @@ import lldbHelper
 fname = "main"
 exe = "./hello_world_test"
 
-interruptTargetLoad = False
+interruptAttachLoad = False
 
-class TargetLoadReceiver(QObject):
-	interruptTargetLoad = pyqtSignal()
+class AttachLoadReceiver(QObject):
+	interruptAttachLoad = pyqtSignal()
 	
-class TargetLoadWorkerSignals(QObject):
+class AttachLoadWorkerSignals(QObject):
 	finished = pyqtSignal()
 	sendProgressUpdate = pyqtSignal(int)
 	loadStats = pyqtSignal(str)
@@ -47,35 +48,43 @@ class TargetLoadWorkerSignals(QObject):
 	
 	setTextColor = pyqtSignal(str, bool)
 	
-class TargetLoadWorker(QRunnable):
+class AttachLoadWorker(QRunnable):
 	
 	targetPath = "/Users/dave/Downloads/hello_world/hello_world"
 	window = None
 	inputHandler = None
+	pid = None
 	
 #	debugger = None
 #	target = None
 #	process = None
 #	thread = None
 	
+	def assertSuccess(self, obj, msg=None):
+		if not obj.Success():
+			error = obj.GetCString()
+			self.fail(self._formatMessage(msg, "'{}' is not success".format(error)))
+	"""Assert that an lldb.SBError is in the "failure" state."""
+	
 	def inputCallback(self, data):
 		print(data)
 		
-	def __init__(self, window_obj, target = "/Users/dave/Downloads/hello_world/hello_world"):
-		super(TargetLoadWorker, self).__init__()
-		self.isTargetLoadActive = False
+	def __init__(self, window_obj, attachPID):
+		super(AttachLoadWorker, self).__init__()
+		self.isAttachLoadActive = False
 		self.window = window_obj
-		self.targetPath = target
+#		self.targetPath = target
+		self.pid = attachPID
 		
-		if lldbHelper.exec2Dbg is not None:
-			self.targetPath = lldbHelper.exec2Dbg
-			print(f'loading TARGETPATH: {self.targetPath}')
+#		if lldbHelper.exec2Dbg is not None:
+#			self.targetPath = lldbHelper.exec2Dbg
+#			print(f'loading TARGETPATH: {self.targetPath}')
 			
-		self.signals = TargetLoadWorkerSignals()
+		self.signals = AttachLoadWorkerSignals()
 		
 	def run(self):
 		QCoreApplication.processEvents()
-		self.runTargetLoad()
+		self.runAttachLoad()
 		
 	def convert_address(self, address):
 		# Get the address to be converted
@@ -102,14 +111,14 @@ class TargetLoadWorker(QRunnable):
 #		else:
 #			print(str(error_ref))
 			
-	def runTargetLoad(self):
-		if self.isTargetLoadActive:
-			interruptTargetLoad = True
+	def runAttachLoad(self):
+		if self.isAttachLoadActive:
+			interruptAttachLoad = True
 			return
 		else:
-			interruptTargetLoad = False
+			interruptAttachLoad = False
 		QCoreApplication.processEvents()
-		self.isTargetLoadActive = True
+		self.isAttachLoadActive = True
 		
 		self.sendProgressUpdate(5)
 		
@@ -137,16 +146,26 @@ class TargetLoadWorker(QRunnable):
 		
 		print(f'debugger: {lldbHelper.debugger}')
 		# Create a target from a file and arch
-		print("Creating a target for '%s'" % self.targetPath)
+#		print("Creating a target for '%s'" % self.targetPath)
 		
 		
-		lldbHelper.target = lldbHelper.debugger.CreateTargetWithFileAndArch(self.targetPath, None) # lldb.LLDB_ARCH_DEFAULT)
+		lldbHelper.target = lldbHelper.debugger.CreateTarget('')
+		
+#		lldbHelper.target = lldbHelper.debugger.CreateTargetWithFileAndArch(self.targetPath, None) # lldb.LLDB_ARCH_DEFAULT)
 #		global target
 #		target = self.target
 		
 		if lldbHelper.target:
 			self.sendProgressUpdate(10)
 			
+			
+			error = lldb.SBError()
+	#		lldbHelper.process = lldbHelper.target.AttachToProcessWithID(lldbHelper.debugger.GetListener(), self.pid, error)
+			lldbHelper.process = lldbHelper.target.AttachToProcessWithName(lldbHelper.debugger.GetListener(), "xyz_test", False, error)
+			print(f'ERROR WHILE ATTACHING: {error}')
+			
+#			self.assertSuccess(error)
+#			self.assertTrue(lldbHelper.process, PROCESS_IS_VALID)
 			
 			# If the target is valid set a breakpoint at main
 			main_bp = lldbHelper.target.BreakpointCreateByName(fname, lldbHelper.target.GetExecutable().GetFilename())
@@ -160,15 +179,29 @@ class TargetLoadWorker(QRunnable):
 			# Launch the process. Since we specified synchronous mode, we won't return
 			# from this function until we hit the breakpoint at main
 			
-			lldbHelper.process = lldbHelper.target.LaunchSimple(None, None, os.getcwd())
+#			lldbHelper.process = lldbHelper.target.LaunchSimple(None, None, os.getcwd())
+			
 #			global process
 #			process = self.process
 #           process.Stop()
 #           self.inputHandler.start()
 #			print(self.process)
-			
+			# Let's check the stack traces of the attached process.
+			stacktraces = print_stacktraces(lldbHelper.process, string_buffer=True)
+			print(stacktraces)
+			lldbHelper.process.Continue()
 			# Make sure the launch went ok
 			if lldbHelper.process:
+				lldbHelper.process.Continue()
+				print("GETPLATFORM:")
+				print(lldbHelper.target.GetPlatform().GetWorkingDirectory())
+				print(lldbHelper.target.GetPlatform().GetOSBuild())
+				print(lldbHelper.target.GetPlatform().GetHostname())
+				print(lldbHelper.target.GetTriple())
+				print(lldbHelper.target.GetPlatform().GetTriple())
+				print(lldbHelper.target.GetPlatform().GetOSDescription())
+				print(lldbHelper.target.GetPlatform().IsConnected())
+				
 				li = lldbHelper.target.GetLaunchInfo()
 				statistics = lldbHelper.target.GetStatistics()
 				stream = lldb.SBStream()
@@ -267,14 +300,15 @@ class TargetLoadWorker(QRunnable):
 								print(f'LANGUAGE >>>> {lldbHelper.GuessLanguage(frame)}')
 								
 								if idx2 == 0:
-									
 									print(f'11111 >>>> {frame.GetModule()}')
 									
 									for symbol in frame.GetModule():
 										name = symbol.GetName()
 										saddr = symbol.GetStartAddress()
 										eaddr = symbol.GetEndAddress()
-										print(f'- SYM: {name} => {saddr} - {eaddr}')
+										type = symbol.GetType()
+										
+										print(f'- SYM: {name} => {saddr} - {eaddr} ({type})')
 									
 									
 									self.signals.loadSections.emit(frame.GetModule())
@@ -381,7 +415,7 @@ class TargetLoadWorker(QRunnable):
 		else:
 			print("Has NO target")
 			
-		self.isTargetLoadActive = False
+		self.isAttachLoadActive = False
 #       self.treeWidget.setEnabled(True)
 #       QCoreApplication.processEvents()
 		self.signals.finished.emit()
@@ -404,7 +438,7 @@ class TargetLoadWorker(QRunnable):
 		self.signals.sendProgressUpdate.emit(int(progress))
 		QCoreApplication.processEvents()
 		
-	def handle_interruptTargetLoad(self):
+	def handle_interruptAttachLoad(self):
 #		print(f"Received interrupt in the sysLog worker thread")
 #		self.isSysLogActive = False
 		pass

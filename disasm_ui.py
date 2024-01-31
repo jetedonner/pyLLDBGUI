@@ -16,6 +16,7 @@ import psutil
 import os
 import os.path
 import sys
+import sre_constants
 import re
 import binascii
 import webbrowser
@@ -39,20 +40,32 @@ from PyQt6.QSwitch import *
 from PyQt6.QHEXTextEditSplitter import *
 
 import lldbHelper
-from targetWorker import *
-from execCommandWorker import *
+from worker.targetWorker import *
+from worker.attachWorker import *
+from worker.registerWorker import *
+from worker.execCommandWorker import *
+from worker.loadSourceWorker import *
 
+from ansi2html import Ansi2HTMLConverter
+
+#from ctypes import *
+#from struct import *
+#from binascii import *
 
 APP_NAME = "LLDB-GUI"
 WINDOW_SIZE = 720
 
 APP_VERSION = "v0.0.1"
-        
+                
 class Pymobiledevice3GUIWindow(QMainWindow):
     """PyMobiledevice3GUI's main window (GUI or view)."""
     
     regTreeList = []
     
+    def settings_click(self, s):
+        print("Settings clicked")
+        pass
+        
     def githubURL_click(self, s):
         url = ConfigClass.githubURL
         webbrowser.open(url)
@@ -122,6 +135,11 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.step_out_action.triggered.connect(self.handle_stepOut)
         self.toolbar.addAction(self.step_out_action)
         
+        self.settings_action = QAction(ConfigClass.iconSettings, '&Settings', self)
+        self.settings_action.setStatusTip('Settings')
+        self.settings_action.triggered.connect(self.settings_click)
+        self.toolbar.addAction(self.settings_action)
+        
         self.githubURL_action = QAction(ConfigClass.iconGithub, 'Github &repo', self)
         self.githubURL_action.setStatusTip('Github repo')
         self.githubURL_action.triggered.connect(self.githubURL_click)
@@ -156,10 +174,17 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         
         self.treFile = QTreeWidget()
         self.treFile.setFont(ConfigClass.font)
-        self.treFile.setHeaderLabels(['Sections', 'Address', 'File- / Byte-Size', 'Type'])
+        self.treFile.setHeaderLabels(['Sections / Symbols', 'Address', 'File- / Byte-Size', 'Type'])
         self.treFile.header().resizeSection(0, 196)
         self.treFile.header().resizeSection(1, 256)
         self.treFile.header().resizeSection(2, 256)
+        
+        self.txtSource = QTextEdit()
+        self.txtSource.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.tabWidgetSource = QWidget()
+        self.tabWidgetSource.setLayout(QVBoxLayout())
+        self.tabWidgetSource.layout().addWidget(self.txtSource)
+        self.tabWidgetTop.addTab(self.tabWidgetSource, "Source code")
         
         self.tabWidgetFile = QWidget()
         self.tabWidgetFile.setLayout(QVBoxLayout())
@@ -187,9 +212,10 @@ class Pymobiledevice3GUIWindow(QMainWindow):
 
         self.treThreads = QTreeWidget()
         self.treThreads.setFont(ConfigClass.font)
-        self.treThreads.setHeaderLabels(['Num / ID', 'Hex ID', 'Process / Threads / Frames'])
+        self.treThreads.setHeaderLabels(['Num / ID', 'Hex ID', 'Process / Threads / Frames', 'PC', 'Lang (guess)'])
         self.treThreads.header().resizeSection(0, 128)
         self.treThreads.header().resizeSection(1, 128)
+        self.treThreads.header().resizeSection(2, 512)
 #       self.tabRegisters.addTab(tabDet, regType)
         
         self.tabThreads = QWidget()
@@ -291,7 +317,11 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         
         self.threadpool = QThreadPool()
         
-        self.start_workerLoadTarget(exe)
+        if lldbHelper.exec2Dbg is not None:
+            self.start_workerLoadTarget(lldbHelper.exec2Dbg)
+#           self.start_loadSourceWorker('/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/hello_world/hello_world_test.c')
+        else:
+            self.start_workerAttachTarget(123)
     
     def handle_BPOn(self, address, on):
         self.tblBPs.doBPOn(address, on)
@@ -334,7 +364,7 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         workerExecCommand.signals.finished.connect(self.handle_commandFinished)
         
         self.threadpool.start(workerExecCommand)
-        
+    
     def handle_commandFinished(self, res):
 #       print(res.Succeeded())
 #       print(res.GetError())
@@ -347,10 +377,82 @@ class Pymobiledevice3GUIWindow(QMainWindow):
             self.sb = self.txtConsole.verticalScrollBar()
             self.sb.setValue(self.sb.maximum())
     
+    def start_loadSourceWorker(self, sourceFile):
+        workerLoadSource = LoadSourceCodeWorker(sourceFile)
+        workerLoadSource.signals.finished.connect(self.handle_loadSourceFinished)
+        
+        self.threadpool.start(workerLoadSource)
+    
+#   def extract_color_codes(self, text):
+#       pattern = r"\[\d{1,}[m]"
+#       matches = re.findall(pattern, text)
+#       return matches
+    
+    def handle_loadSourceFinished(self, sourceCode):
+        conv = Ansi2HTMLConverter()
+        ansi = "".join(sourceCode)
+        html = conv.convert(ansi)
+        print(html)
+        self.txtSource.setHtml(html)
+#       self.apply_colors(sourceCode, self.txtSource)
+#       pattern = r"\x1b\[1;3\d\m"
+#       replacement = "\u001b[{}m"
+#       
+#       text = "[33mThis is red text\n[35mThis is blue text\n[0mThis is normal text"
+#       colored_text = re.sub(pattern, replacement, text)
+#       print(colored_text)
+        
+#       pattern = r"\[3\d{2}\m"
+#       replacement = f"\x1b[{match[0]}m"
+#       
+#       text = "[31mThis is red text\n[32mThis is green text\n[33mThis is yellow text\n[34mThis is blue text\n[35mThis is magenta text\n[36mThis is cyan text\n[37mThis is white text\n[39mThis is normal text"
+#       colored_text = re.sub(pattern, replacement, text)
+#       print(colored_text)
+        
+#       pattern = r"\[\d{1,}[m]"
+#       
+#       text = "[33mThis is red text\n[35mThis is blue text\n[0mThis is normal text"
+#       match = re.search(pattern, text)
+#       
+#       if match:
+#           matched_color_code = match.group(1)
+#           print(f"Matched color code: {matched_color_code}")
+    
+#   def apply_colors(self, text, qtextedit):
+#       color_codes = self.extract_color_codes(text)
+#       for color_code in color_codes:
+#           print(f'color_code: {color_code}')
+#           start_index = text.find(color_code)
+#           end_index = start_index + len(color_code)
+#           
+#           print(f'start_index: {start_index}, end_index: {end_index}, len: {len(color_code)}')
+#           # Get the color code value
+#           color_value = color_code[1:-1]
+#           
+#           print(f'start_index: {start_index}, end_index: {end_index}, len: {len(color_code)}, color_value: {color_value}')
+#           
+#           # Convert the color value to a QColor object
+#           color = QColor(int(color_value))
+#           
+#           # Set the text color for the matched range
+##           qtextedit.setTextColor(color, start_index, end_index)
+    
+    
     def start_workerLoadTarget(self, target):
         
         self.setWindowTitle(APP_NAME + " " + APP_VERSION + " - " + os.path.basename(target))
         
+#       data = bytearray(open(target,'rb').read())
+#       mach_header = MACH_HEADER.from_buffer_copy(data)
+        mach_header = lldbHelper.GetFileHeader(target)
+        print(hex(mach_header.magic))
+#       print(dir(mach_header))
+#       print(repr(mach_header))
+        if mach_header.magic == 0xfeedface:
+            mode = 4
+        elif mach_header.magic == 0xfeedfacf:
+            mode = 8
+                    
         self.updateStatusBar("Loading target '%s' ..." % target)
         
         self.txtMultiline.clear()
@@ -372,6 +474,23 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.workerLoadTarget.signals.setTextColor.connect(self.handle_setTextColor)
         
         self.threadpool.start(self.workerLoadTarget)
+        
+    def start_workerAttachTarget(self, pid):
+        print(f'Attaching to PID: {pid}')
+        
+        self.workerAttachTarget = AttachLoadWorker(self, int(pid)) #substring))
+        self.workerAttachTarget.signals.sendProgressUpdate.connect(self.handle_progressUpdate)
+        self.workerAttachTarget.signals.finished.connect(self.handle_progressFinished)
+        self.workerAttachTarget.signals.loadStats.connect(self.handle_loadStats)
+        self.workerAttachTarget.signals.loadRegister.connect(self.handle_loadRegister)
+        self.workerAttachTarget.signals.loadRegisterValue.connect(self.handle_loadRegisterValue)
+        self.workerAttachTarget.signals.loadProcess.connect(self.handle_loadProcess)
+        self.workerAttachTarget.signals.loadSections.connect(self.handle_loadSections)
+        self.workerAttachTarget.signals.loadThread.connect(self.handle_loadThread)
+        self.workerAttachTarget.signals.addInstructionNG.connect(self.handle_addInstructionNG)
+        self.workerAttachTarget.signals.setTextColor.connect(self.handle_setTextColor)
+        
+        self.threadpool.start(self.workerAttachTarget)
     
     def handle_loadSections(self, module):
         print('Number of sections: %d' % module.GetNumSections())
@@ -409,7 +528,7 @@ class Pymobiledevice3GUIWindow(QMainWindow):
                 subSectionNode = QTreeWidgetItem(sectionNode, [subSec.GetName(), str(hex(subSec.GetFileAddress())) + " - " + str(hex(subSec.GetFileAddress() + subSec.GetByteSize())), hex(subSec.GetFileByteSize()) + " / " + hex(subSec.GetByteSize()), lldbHelper.SectionTypeString(subSec.GetSectionType()) + " (" + str(subSec.GetSectionType()) + ")"])
                 
                 for sym in module.symbol_in_section_iter(subSec):
-                    subSectionNode2 = QTreeWidgetItem(subSectionNode, [sym.GetName(), str(hex(sym.GetStartAddress().GetFileAddress()) + " - " + hex(sym.GetEndAddress().GetFileAddress())), hex(sym.GetSize()), ''])
+                    subSectionNode2 = QTreeWidgetItem(subSectionNode, [sym.GetName(), str(hex(sym.GetStartAddress().GetFileAddress()) + " - " + hex(sym.GetEndAddress().GetFileAddress())), hex(sym.GetSize()), 'Symbol'])
                     print(dir(sym))
                     print(sym.GetName())
                     print(INDENT2 + repr(sym))
@@ -435,13 +554,13 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         registerDetailNode = QTreeWidgetItem(self.regTreeList[regIdx], [regName, regValue, regMemory])
     
     def handle_loadThread(self, idx, thread):
-        self.threadNode = QTreeWidgetItem(self.processNode, ["#" + str(idx) + " " + str(thread.GetThreadID()), "0x" + hex(thread.GetThreadID()) + "", thread.GetQueueName()])
+        self.threadNode = QTreeWidgetItem(self.processNode, ["#" + str(idx) + " " + str(thread.GetThreadID()), "0x" + hex(thread.GetThreadID()) + "", thread.GetQueueName(), '', ''])
         
 #       print(thread.GetNumFrames())
         for idx2 in range(thread.GetNumFrames()):
             frame = thread.GetFrameAtIndex(idx2)
 #           print(dir(frame))
-            frameNode = QTreeWidgetItem(self.threadNode, ["", "", "#" + str(frame.GetFrameID()) + " " + str(frame.GetPCAddress())]) # + " " + str(thread.GetThreadID()) + " (0x" + hex(thread.GetThreadID()) + ")", thread.GetQueueName()])
+            frameNode = QTreeWidgetItem(self.threadNode, ["", "", "#" + str(frame.GetFrameID()) + " " + str(frame.GetPCAddress()), str(hex(frame.GetPC())), lldbHelper.GuessLanguage(frame)]) # + " " + str(thread.GetThreadID()) + " (0x" + hex(thread.GetThreadID()) + ")", thread.GetQueueName()])
             
         self.processNode.setExpanded(True)
         if self.threadNode:
@@ -450,7 +569,7 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         
     def handle_loadProcess(self, process):
         self.treThreads.clear()
-        self.processNode = QTreeWidgetItem(self.treThreads, ["#0 " + str(process.GetProcessID()), "0x" + hex(process.GetProcessID()) + "", process.GetTarget().GetExecutable().GetFilename()])
+        self.processNode = QTreeWidgetItem(self.treThreads, ["#0 " + str(process.GetProcessID()), "0x" + hex(process.GetProcessID()) + "", process.GetTarget().GetExecutable().GetFilename(), '', ''])
         pass
     
     def handle_loadRegister(self, regType):
@@ -516,7 +635,7 @@ class Pymobiledevice3GUIWindow(QMainWindow):
 #       print(f'get_line_numbers: {get_line_numbers(lldbHelper.thread)}')
 #       print(f'get_module_names: {get_module_names(lldbHelper.thread)}')
 #       print(f'get_stack_frames: {get_stack_frames(lldbHelper.thread)}')
-        
+        self.start_loadSourceWorker('/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/hello_world/hello_world_test.c')
         pass
         
     def updateProgress(self, newValue, finished = False):
@@ -617,7 +736,21 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         else:
             substring = None
             
-        print(substring)
+#       print(f'Attaching to PID: {substring}')
+#       
+#       self.workerAttachTarget = AttachLoadWorker(self, int(7300)) #substring))
+#       self.workerAttachTarget.signals.sendProgressUpdate.connect(self.handle_progressUpdate)
+#       self.workerAttachTarget.signals.finished.connect(self.handle_progressFinished)
+#       self.workerAttachTarget.signals.loadStats.connect(self.handle_loadStats)
+#       self.workerAttachTarget.signals.loadRegister.connect(self.handle_loadRegister)
+#       self.workerAttachTarget.signals.loadRegisterValue.connect(self.handle_loadRegisterValue)
+#       self.workerAttachTarget.signals.loadProcess.connect(self.handle_loadProcess)
+#       self.workerAttachTarget.signals.loadSections.connect(self.handle_loadSections)
+#       self.workerAttachTarget.signals.loadThread.connect(self.handle_loadThread)
+#       self.workerAttachTarget.signals.addInstructionNG.connect(self.handle_addInstructionNG)
+#       self.workerAttachTarget.signals.setTextColor.connect(self.handle_setTextColor)
+#       
+#       self.threadpool.start(self.workerAttachTarget)
         
     def handle_stepNext(self):
 #       global thread
@@ -633,6 +766,16 @@ class Pymobiledevice3GUIWindow(QMainWindow):
 #       instruction = frame
         print(f'NEXT INSTRUCTION {hex(frame.GetPC())}')
         self.txtMultiline.setPC(frame.GetPC())
+        
+#       self.regTreeList.clear()
+        for reg in self.regTreeList:
+            reg.clear()
+        
+        self.workerLoadRegister = RegisterLoadWorker(self, lldbHelper.target)
+        self.workerLoadRegister.signals.loadRegister.connect(self.handle_loadRegister)
+        self.workerLoadRegister.signals.loadRegisterValue.connect(self.handle_loadRegisterValue)
+        
+        self.threadpool.start(self.workerLoadRegister)
     
     def handle_stepInto(self):
 #       global thread
