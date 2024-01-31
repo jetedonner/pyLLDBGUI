@@ -323,7 +323,7 @@ def get_filenames(thread):
     Returns a sequence of file names from the stack frames of this thread.
     """
     def GetFilename(i):
-        return thread.GetFrameAtIndex(i).GetLineEntry().GetFileSpec().GetFilename()
+        return thread.GetFrameAtIndex(i).GetLineEntry().enu().GetFilename()
 
     return list(map(GetFilename, list(range(thread.GetNumFrames()))))
 

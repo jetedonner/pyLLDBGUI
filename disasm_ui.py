@@ -33,6 +33,7 @@ from ui.assemblerTextEdit import *
 from ui.registerTreeView import *
 from ui.historyLineEdit import *
 from ui.statisticsTreeWidget import *
+from ui.fileInfoTableWidget import *
                 
 from config import *
 
@@ -180,11 +181,18 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.treFile.header().resizeSection(2, 256)
         
         self.txtSource = QTextEdit()
+        self.txtSource.setReadOnly(True)
         self.txtSource.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.tabWidgetSource = QWidget()
         self.tabWidgetSource.setLayout(QVBoxLayout())
         self.tabWidgetSource.layout().addWidget(self.txtSource)
         self.tabWidgetTop.addTab(self.tabWidgetSource, "Source code")
+        
+        self.tblFileInfos = FileInfosTableWidget()
+        self.tabWidgetFileInfos = QWidget()
+        self.tabWidgetFileInfos.setLayout(QVBoxLayout())
+        self.tabWidgetFileInfos.layout().addWidget(self.tblFileInfos)
+        self.tabWidgetTop.addTab(self.tabWidgetFileInfos, "File Infos")
         
         self.tabWidgetFile = QWidget()
         self.tabWidgetFile.setLayout(QVBoxLayout())
@@ -392,6 +400,7 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         conv = Ansi2HTMLConverter()
         ansi = "".join(sourceCode)
         html = conv.convert(ansi)
+        html = html.replace("font-size: normal;", "font-size: small; font-weight: lighter; font-family: monospace;")
         print(html)
         self.txtSource.setHtml(html)
 #       self.apply_colors(sourceCode, self.txtSource)
@@ -445,13 +454,37 @@ class Pymobiledevice3GUIWindow(QMainWindow):
 #       data = bytearray(open(target,'rb').read())
 #       mach_header = MACH_HEADER.from_buffer_copy(data)
         mach_header = lldbHelper.GetFileHeader(target)
-        print(hex(mach_header.magic))
+        
+#       ("cputype",         c_uint),
+#       ("cpusubtype",      c_uint),
+#       ("filetype",        c_uint),
+#       ("ncmds",           c_uint),
+#       ("sizeofcmds",      c_uint),
+#       ("flags",           c_uint)
+        
+        print(f'cputype: {hex(mach_header.cputype)}')
+        print(f'cpusubtype: {hex(mach_header.cpusubtype)}')
+        print(f'filetype: {hex(mach_header.filetype)}')
+        print(f'ncmds: {hex(mach_header.ncmds)}')
+        print(f'sizeofcmds: {hex(mach_header.sizeofcmds)}')
+        print(f'flags: {hex(mach_header.flags)}')
+#       print(hex(mach_header.magic))
+        
+        print(lldbHelper.MachoMagic.to_str(lldbHelper.MachoMagic.create_magic_value(mach_header.magic)))
 #       print(dir(mach_header))
 #       print(repr(mach_header))
         if mach_header.magic == 0xfeedface:
             mode = 4
         elif mach_header.magic == 0xfeedfacf:
             mode = 8
+            
+        self.tblFileInfos.addRow("Magic", lldbHelper.MachoMagic.to_str(lldbHelper.MachoMagic.create_magic_value(mach_header.magic)) + " (" + hex(mach_header.magic) + ")")
+        self.tblFileInfos.addRow("CPU Type", lldbHelper.MachoMagic.to_str(lldbHelper.MachoMagic.create_magic_value(mach_header.magic)) + " (" + hex(mach_header.cputype) + ")")
+        self.tblFileInfos.addRow("CPU SubType", lldbHelper.MachoMagic.to_str(lldbHelper.MachoMagic.create_magic_value(mach_header.magic)) + " (" + hex(mach_header.cpusubtype) + ")")
+        self.tblFileInfos.addRow("File Type", lldbHelper.MachoFileType.to_str(lldbHelper.MachoFileType.create_filetype_value(mach_header.filetype)) + " (" + hex(mach_header.filetype) + ")")
+        self.tblFileInfos.addRow("Num CMDs", str(mach_header.ncmds) + " (" + hex(mach_header.ncmds) + ")")
+        self.tblFileInfos.addRow("Size CMDs", str(mach_header.sizeofcmds) + " (" + hex(mach_header.sizeofcmds) + ")")
+        self.tblFileInfos.addRow("Flags", lldbHelper.MachoMagic.to_str(lldbHelper.MachoMagic.create_magic_value(mach_header.magic)) + " (" + hex(mach_header.flags) + ")")
                     
         self.updateStatusBar("Loading target '%s' ..." % target)
         

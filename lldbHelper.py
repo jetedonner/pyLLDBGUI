@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import lldb
+import enum
 
 from ctypes import *
 from struct import *
@@ -10,6 +11,83 @@ debugger = None
 target = None
 process = None
 thread = None
+
+class MachoFileType(enum.Enum):
+	# Mach haeder "filetype" constants
+	MH_OBJECT = 0x00000001
+	MH_EXECUTE = 0x00000002
+	MH_FVMLIB = 0x00000003
+	MH_CORE = 0x00000004
+	MH_PRELOAD = 0x00000005
+	MH_DYLIB = 0x00000006
+	MH_DYLINKER = 0x00000007
+	MH_BUNDLE = 0x00000008
+	MH_DYLIB_STUB = 0x00000009
+	MH_DSYM = 0x0000000A
+	MH_KEXT_BUNDLE = 0x0000000B
+	
+	def create_filetype_value(value):
+		# Create an enum value from an integer
+		return MachoFileType.__new__(MachoFileType, value)
+	
+	@classmethod
+	def to_str(cls, magic):
+		if magic == cls.MH_OBJECT:
+			return "MH_OBJECT"
+		elif magic == cls.MH_EXECUTE:
+			return "MH_EXECUTE"
+		elif magic == cls.MH_FVMLIB:
+			return "MH_FVMLIB"
+		elif magic == cls.MH_CORE:
+			return "MH_CORE"
+		elif magic == cls.MH_PRELOAD:
+			return "MH_PRELOAD"
+		elif magic == cls.MH_DYLIB:
+			return "MH_DYLIB"
+		elif magic == cls.MH_DYLINKER:
+			return "MH_DYLINKER"
+		elif magic == cls.MH_BUNDLE:
+			return "MH_BUNDLE"
+		elif magic == cls.MH_DYLIB_STUB:
+			return "MH_DYLIB_STUB"
+		elif magic == cls.MH_DSYM:
+			return "MH_DSYM"
+		elif magic == cls.MH_KEXT_BUNDLE:
+			return "MH_KEXT_BUNDLE"
+		else:
+			return "UNKNOWN"
+		
+
+class MachoMagic(enum.Enum):	
+	# Mach header "magic" constants
+	MH_MAGIC = 0xfeedface
+	MH_CIGAM = 0xcefaedfe
+	MH_MAGIC_64 = 0xfeedfacf
+	MH_CIGAM_64 = 0xcffaedfe
+	FAT_MAGIC = 0xcafebabe
+	FAT_CIGAM = 0xbebafeca
+	
+#	@classmethod
+	def create_magic_value(value):
+		# Create an enum value from an integer
+		return MachoMagic.__new__(MachoMagic, value)
+	
+	@classmethod
+	def to_str(cls, magic):
+		if magic == cls.MH_MAGIC:
+			return "MH_MAGIC"
+		elif magic == cls.MH_CIGAM:
+			return "MH_CIGAM"
+		elif magic == cls.MH_MAGIC_64:
+			return "MH_MAGIC_64"
+		elif magic == cls.MH_CIGAM_64:
+			return "MH_CIGAM_64"
+		elif magic == cls.FAT_MAGIC:
+			return "FAT_MAGIC"
+		elif magic == cls.FAT_CIGAM:
+			return "FAT_CIGAM"
+		else:
+			return "UNKNOWN"
 
 # Thanks for MACH* part of the code - Jonathan Salwan
 class MACH_HEADER(Structure):

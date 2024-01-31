@@ -48,10 +48,20 @@ class QStatisticsTreeWidget(QTreeWidget):
 						idx = 0
 						child_item = QTreeWidgetItem(parent, [str(key), '', ''])
 						child_item.setExpanded(True)
+						appendStr = ""
 						for innerItem in value:
 							idx += 1
-							child_item2 = QTreeWidgetItem(child_item, [str(idx), '', ''])
-							child_item2.setExpanded(True)
+#							appendStr = ""
+#							print(dir(innerItem.items()))
+							
+							if key == "modules": # and innerItem.key == "path":
+								appendStr = "APPEND"
+								for key2, value2 in innerItem.items():
+									if key2 == "path":
+										appendStr = value2
+										break
+							child_item2 = QTreeWidgetItem(child_item, [str(idx) + " " + appendStr, '', ''])
+#							child_item2.setExpanded(True)
 							self.populate_tree(innerItem, child_item2)
 						child_item.setText(0, child_item.text(0) + " (" + str(idx) + ")")
 					else:
