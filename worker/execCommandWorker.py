@@ -49,7 +49,7 @@ class ExecCommandWorker(QRunnable):
 		QCoreApplication.processEvents()
 		self.isExecCommandActive = True
 		
-		global debugger
+#		global debugger
 		res = lldb.SBCommandReturnObject()
 		
 		

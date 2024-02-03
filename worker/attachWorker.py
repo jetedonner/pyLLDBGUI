@@ -124,7 +124,7 @@ class AttachLoadWorker(QRunnable):
 		
 		
 		# Create a new debugger instance
-		lldbHelper.debugger = lldb.SBDebugger.Create()
+#		lldbHelper.debugger = lldb.SBDebugger.Create()
 		
 #		global debugger
 #		debugger = self.debugger

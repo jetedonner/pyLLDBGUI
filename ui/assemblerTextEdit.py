@@ -11,6 +11,7 @@ from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
 from PyQt6 import uic, QtWidgets
 from config import *
+from breakpointHelper import *
 		
 class DisassemblyImageTableWidgetItem(QTableWidgetItem):
 	
@@ -84,6 +85,9 @@ class DisassemblyTableWidget(QTableWidget):
 		self.sigEnableBP.emit(self.item(self.selectedItems()[0].row(), 3).text(), not item.isBPEnabled)
 		pass
 		
+	def handle_editCondition(self):
+		BreakpointHelper().handle_editCondition(self, 2, 6)
+		
 	def __init__(self):
 		super().__init__()
 		self.context_menu = QMenu(self)
@@ -91,6 +95,8 @@ class DisassemblyTableWidget(QTableWidget):
 		actionToggleBP.triggered.connect(self.handle_toggleBP)
 		actionDisableBP = self.context_menu.addAction("Enable / Disable Breakpoint")
 		actionDisableBP.triggered.connect(self.handle_disableBP)
+		actionEditCondition = self.context_menu.addAction("Edit condition")
+		actionEditCondition.triggered.connect(self.handle_editCondition)
 		
 		self.context_menu.addSeparator()
 		actionCopyAddress = self.context_menu.addAction("Copy address")
@@ -113,9 +119,19 @@ class DisassemblyTableWidget(QTableWidget):
 		self.setColumnWidth(6, 304)
 		self.verticalHeader().hide()
 		self.horizontalHeader().show()
+		self.horizontalHeader().setHighlightSections(False)
 		self.setHorizontalHeaderLabels(['PC', 'BP', '#', 'Address', 'Instruction', 'Hex', 'Comment'])
+		self.horizontalHeaderItem(0).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
+		self.horizontalHeaderItem(1).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
 		self.horizontalHeaderItem(2).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
 #		self.horizontalHeaderItem(2).setFont(ConfigClass.font)
+		self.horizontalHeaderItem(0).setFont(ConfigClass.font)
+		self.horizontalHeaderItem(1).setFont(ConfigClass.font)
+		self.horizontalHeaderItem(2).setFont(ConfigClass.font)
+		self.horizontalHeaderItem(3).setFont(ConfigClass.font)
+		self.horizontalHeaderItem(4).setFont(ConfigClass.font)
+		self.horizontalHeaderItem(5).setFont(ConfigClass.font)
+		self.horizontalHeaderItem(6).setFont(ConfigClass.font)
 		self.horizontalHeaderItem(3).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
 #		self.horizontalHeaderItem(3).setFont(ConfigClass.font)
 		self.horizontalHeaderItem(4).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
@@ -143,20 +159,21 @@ class DisassemblyTableWidget(QTableWidget):
 		print(self.selectedItems())
 		self.context_menu.exec(event.globalPos())
 	
-	def toggleBPOn(self, row):
+	def toggleBPOn(self, row, updateBPWidget = True):
 #		print(f'TOGGLE BP: {self.item(row, 3).text()}')
 		item = self.item(row, 1)
 		item.toggleBPOn()
-		self.sigBPOn.emit(self.item(row, 3).text(), item.isBPOn)
+		if updateBPWidget:
+			self.sigBPOn.emit(self.item(row, 3).text(), item.isBPOn)
 		pass
 		
-	def toggleBPAtAddress(self, address):
+	def toggleBPAtAddress(self, address, updateBPWidget = True):
 #		self.txtMultiline
 #		print(f'CHECKING BREAKPOINT ROW-COUNT: {self.rowCount()}')
 		for row in range(self.rowCount()):
 #			print(f'CHECKING BREAKPOINT AT ADDRESS: {self.item(row, 3).text()}')
 			if self.item(row, 3).text() == address:
-				self.toggleBPOn(row)
+				self.toggleBPOn(row, updateBPWidget)
 				break
 		pass
 	
@@ -244,148 +261,3 @@ class AssemblerTextEdit(QWidget):
 		self.widget.setLayout(self.layFrame)
 		
 		self.layout().addWidget(self.widget)
-		
-		
-class BreakpointsTableWidget(QTableWidget):
-	
-#	actionShowMemory = None
-	
-#	def resetContentNG(self):
-#		#		self.clear()
-#		self.clearContents()
-#		self.setRowCount(0)
-#		#		self.initTable()
-#		pass
-		
-	def handle_toggleBP(self):
-#		item = self.item(self.selectedItems()[0].row(), 1)
-#		item.toggleBPOn()
-		pass
-		
-	def handle_disableBP(self):
-		item = self.item(self.selectedItems()[0].row(), 0)
-		item.toggleBPEnabled()
-		pass
-	
-	def doToggleBP(self, address, on):
-		for i in range(self.rowCount()):
-			if self.item(i, 2).text() == address:
-				itemCell = self.item(i, 0)
-				itemCell.toggleBPOn()
-				break
-			
-	def doEnableBP(self, address, enable):
-		for i in range(self.rowCount()):
-			if self.item(i, 2).text() == address:
-				itemCell = self.item(i, 0)
-				itemCell.toggleBPEnabled()
-				break
-						
-	def doBPOn(self, address, on):
-		bBPFound = False
-		for i in range(self.rowCount()):
-			if self.item(i, 2).text() == address:
-				bBPFound = True
-				itemCell = self.item(i, 0)
-				itemCell.toggleBPOn()
-				break
-		if on and not bBPFound:
-			self.addRow(on, self.rowCount() + 1, address, '', '0', '')
-		
-	def __init__(self):
-		super().__init__()
-		self.initTable()
-#		self.context_menu = QMenu(self)
-#		actionToggleBP = self.context_menu.addAction("Toggle Breakpoint")
-#		actionToggleBP.triggered.connect(self.handle_toggleBP)
-#		actionDisableBP = self.context_menu.addAction("Enable / Disable Breakpoint")
-#		actionDisableBP.triggered.connect(self.handle_disableBP)
-#		
-#		self.context_menu.addSeparator()
-#		actionCopyAddress = self.context_menu.addAction("Copy address")
-#		actionCopyInstruction = self.context_menu.addAction("Copy instruction")
-#		actionCopyHex = self.context_menu.addAction("Copy hex value")
-#		self.context_menu.addSeparator()
-#		actionFindReferences = self.context_menu.addAction("Find references")
-#		self.actionShowMemory = self.context_menu.addAction("Show memory")
-#		
-		
-	def initTable(self):
-		self.setColumnCount(6)
-		self.setColumnWidth(0, 48)
-		self.setColumnWidth(1, 32)
-		self.setColumnWidth(2, 96)
-		self.setColumnWidth(3, 108)
-		self.setColumnWidth(4, 32)
-		self.setColumnWidth(5, 108)
-#		self.setColumnWidth(5, 324)
-#		self.setColumnWidth(6, 304)
-		self.verticalHeader().hide()
-		self.horizontalHeader().show()
-		self.setHorizontalHeaderLabels(['State', '#', 'Address', 'Name', 'Hit', 'Condition'])#, 'Instruction', 'Hex', 'Comment'])
-		self.horizontalHeaderItem(0).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
-		self.horizontalHeaderItem(1).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
-		self.horizontalHeaderItem(2).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
-		self.horizontalHeaderItem(3).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
-		self.horizontalHeaderItem(4).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
-		self.horizontalHeaderItem(5).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
-#		self.horizontalHeaderItem(5).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
-#		self.horizontalHeaderItem(6).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
-		self.setFont(ConfigClass.font)
-#		
-		self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-		self.setShowGrid(False)
-#		self.cellDoubleClicked.connect(self.on_double_click)
-		pass
-		
-	def on_double_click(self, row, col):
-#		if col in range(3):
-#			self.toggleBPOn(row)
-		pass
-			
-	def contextMenuEvent(self, event):
-#		for i in dir(event):
-#			print(i)
-#		print(event.pos())
-#		print(self.itemAt(event.pos().x(), event.pos().y()))
-#		print(self.selectedItems())
-#		self.context_menu.exec(event.globalPos())
-		pass
-		
-	def toggleBPOn(self, row):
-#		item = self.item(row, 1)
-#		item.toggleBPOn()
-		pass
-		
-	def resetContent(self):
-		for row in range(self.rowCount(), 0):
-			self.removeRow(row)
-		self.setRowCount(0)
-		pass
-			
-	def addRow(self, state, num, address, nme, hitcount, condition):
-		currRowCount = self.rowCount()
-		self.setRowCount(currRowCount + 1)
-#		
-		item = DisassemblyImageTableWidgetItem()
-#		
-#		self.addItem(currRowCount, 0, ('>' if rip == address else ''))
-		item.toggleBPOn()
-		self.setItem(currRowCount, 0, item)
-		self.addItem(currRowCount, 1, "#" + str(num))
-		self.addItem(currRowCount, 2, address)
-		self.addItem(currRowCount, 3, nme)
-		self.addItem(currRowCount, 4, hitcount)
-		self.addItem(currRowCount, 5, condition)
-#		self.addItem(currRowCount, 6, comment)
-#		
-		self.setRowHeight(currRowCount, 18)
-		pass
-		
-	def addItem(self, row, col, txt):
-		item = QTableWidgetItem(txt, QTableWidgetItem.ItemType.Type)
-		item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable) #Qt.ItemFlag.ItemIsSelectable)
-		
-		# Insert the items into the row
-		self.setItem(row, col, item)
-		pass

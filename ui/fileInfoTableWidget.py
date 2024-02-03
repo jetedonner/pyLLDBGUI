@@ -64,9 +64,10 @@ class FileInfosTableWidget(QTableWidget):
 #		actionFindReferences = self.context_menu.addAction("Find references")
 #		self.actionShowMemory = self.context_menu.addAction("Show memory")
 		
-		self.setColumnCount(2)
+		self.setColumnCount(3)
 		self.setColumnWidth(0, 128)
 		self.setColumnWidth(1, 512)
+		self.setColumnWidth(2, 128)
 #		self.setColumnWidth(2, 72)
 #		self.setColumnWidth(3, 108)
 #		self.setColumnWidth(4, 256)
@@ -74,10 +75,12 @@ class FileInfosTableWidget(QTableWidget):
 #		self.setColumnWidth(6, 304)
 		self.verticalHeader().hide()
 		self.horizontalHeader().show()
-		self.setHorizontalHeaderLabels(['Key', 'Value']) #, '#', 'Address', 'Instruction', 'Hex', 'Comment'])
+		self.horizontalHeader().setHighlightSections(False)
+		self.setHorizontalHeaderLabels(['Key', 'Value', 'Raw']) #, '#', 'Address', 'Instruction', 'Hex', 'Comment'])
 		self.horizontalHeaderItem(0).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
 #		self.horizontalHeaderItem(2).setFont(ConfigClass.font)
 		self.horizontalHeaderItem(1).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
+		self.horizontalHeaderItem(2).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
 ##		self.horizontalHeaderItem(3).setFont(ConfigClass.font)
 #		self.horizontalHeaderItem(4).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
 ##		self.horizontalHeaderItem(4).setFont(ConfigClass.font)
@@ -127,7 +130,7 @@ class FileInfosTableWidget(QTableWidget):
 		for row in range(self.rowCount(), 0):
 			self.removeRow(row)
 			
-	def addRow(self, key, value): #, instr, comment, data, rip = ""):
+	def addRow(self, key, value, raw): #, instr, comment, data, rip = ""):
 		currRowCount = self.rowCount()
 		self.setRowCount(currRowCount + 1)
 		
@@ -136,6 +139,7 @@ class FileInfosTableWidget(QTableWidget):
 #		self.addItem(currRowCount, 0, ('>' if rip == address else ''))
 		self.addItem(currRowCount, 0, str(key))
 		self.addItem(currRowCount, 1, str(value))
+		self.addItem(currRowCount, 2, str(raw))
 #		self.addItem(currRowCount, 3, address)
 #		self.addItem(currRowCount, 4, instr)
 #		self.addItem(currRowCount, 5, data)

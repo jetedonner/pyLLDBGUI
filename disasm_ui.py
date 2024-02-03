@@ -22,6 +22,7 @@ import binascii
 import webbrowser
 import ctypes
 import time
+import signal
 
 from PyQt6.QtGui import *
 from PyQt6.QtCore import *
@@ -30,16 +31,19 @@ from PyQt6.QtWidgets import *
 from PyQt6 import uic, QtWidgets
 
 from ui.assemblerTextEdit import *
+from ui.breakpointTableWidget import *
 from ui.registerTreeView import *
 from ui.historyLineEdit import *
 from ui.statisticsTreeWidget import *
 from ui.fileInfoTableWidget import *
+from ui.fileStructureTreeView import *
                 
 from config import *
 from dbgHelper import *
 
 from PyQt6.QSwitch import *
 from PyQt6.QHEXTextEditSplitter import *
+from PyQt6.QConsoleTextEdit import *
 
 import lldbHelper
 from worker.targetWorker import *
@@ -58,7 +62,11 @@ APP_NAME = "LLDB-GUI"
 WINDOW_SIZE = 720
 
 APP_VERSION = "v0.0.1"
-                
+
+def breakpointHandler(frame, bpno, err):
+    print("MLIR debugger attaching...")
+    print("IIIIIIIIINNNNNNNN CCCCAAQALLLLLLBBBAAACCKKKK")
+    
 class Pymobiledevice3GUIWindow(QMainWindow):
     """PyMobiledevice3GUI's main window (GUI or view)."""
     
@@ -113,11 +121,17 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.load_action.triggered.connect(self.load_clicked)
         self.toolbar.addAction(self.load_action)
         
-        self.run_action = QAction(ConfigClass.iconPause, '&Run', self)
-        self.run_action.setStatusTip('Run Debugging')
-        self.run_action.setShortcut('Ctrl+P')
-        self.run_action.triggered.connect(self.handle_runProcess)
-        self.toolbar.addAction(self.run_action)
+        self.resume_action = QAction(ConfigClass.iconPlay, '&Resume', self)
+        self.resume_action.setStatusTip('Resume Debugging')
+        self.resume_action.setShortcut('Ctrl+R')
+        self.resume_action.triggered.connect(self.handle_resumeThread)
+        self.toolbar.addAction(self.resume_action)
+        
+#       self.run_action = QAction(ConfigClass.iconPlay, '&Resume', self)
+#       self.run_action.setStatusTip('Resume Debugging')
+#       self.run_action.setShortcut('Ctrl+R')
+#       self.run_action.triggered.connect(self.handle_runProcess)
+#       self.toolbar.addAction(self.run_action)
         
         self.step_over_action = QAction(ConfigClass.iconStepOver, '&Step Over', self)
         self.step_over_action.setStatusTip('Step over')
@@ -174,15 +188,13 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.tabWidgetTop = QTabWidget()
         self.tabWidgetTop.addTab(self.txtMultiline, "Debugger")
         
-        self.treFile = QTreeWidget()
-        self.treFile.setFont(ConfigClass.font)
-        self.treFile.setHeaderLabels(['Sections / Symbols', 'Address', 'File- / Byte-Size', 'Type'])
-        self.treFile.header().resizeSection(0, 196)
-        self.treFile.header().resizeSection(1, 256)
-        self.treFile.header().resizeSection(2, 256)
+        self.treFile = FileStructureTreeWidget()
+        self.treFile.actionShowMemoryFrom.triggered.connect(self.handle_showMemoryFileStructureFrom)
+        self.treFile.actionShowMemoryTo.triggered.connect(self.handle_showMemoryFileStructureTo)
         
-        self.txtSource = QTextEdit()
+        self.txtSource = QConsoleTextEdit()
         self.txtSource.setReadOnly(True)
+        self.txtSource.setFont(ConfigClass.font)
         self.txtSource.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.tabWidgetSource = QWidget()
         self.tabWidgetSource.setLayout(QVBoxLayout())
@@ -232,7 +244,7 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.tabThreads.layout().addWidget(self.treThreads)
         self.tabWidget.addTab(self.tabThreads, "Threads/Frames")
         
-        self.tblBPs = BreakpointsTableWidget()
+        self.tblBPs = BreakpointsTableWidget(self)
         self.tabBPs = QWidget()
         self.tabBPs.setLayout(QVBoxLayout())
         self.tabBPs.layout().addWidget(self.tblBPs)
@@ -310,7 +322,7 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.wdgCmd.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
         
         
-        self.txtConsole = QTextEdit()
+        self.txtConsole = QConsoleTextEdit()
         self.txtConsole.setReadOnly(True)
         self.txtConsole.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
         self.txtConsole.setFont(ConfigClass.font)
@@ -318,7 +330,6 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.layCmdParent.addWidget(self.wdgCmd)
         
         self.tabConsole.layout().addWidget(self.wdgConsole)
-        
         
         self.centralWidget = QWidget(self)
         self.centralWidget.setLayout(self.layout)        
@@ -339,13 +350,30 @@ class Pymobiledevice3GUIWindow(QMainWindow):
     def handle_enableBP(self, address, enable):
         self.tblBPs.doEnableBP(address, enable)
         pass
+    
+    def handle_showMemoryFileStructureFrom(self):
+        address = self.treFile.selectedItems()[0].text(1)
+        self.doReadMemory(address)
+        
+    def handle_showMemoryFileStructureTo(self):
+        address = self.treFile.selectedItems()[0].text(2)
+        self.doReadMemory(address)
         
     def handle_showMemory(self):
-        self.tabWidget.setCurrentWidget(self.tabMemory)
-        print(self.txtMultiline.table.item(self.txtMultiline.table.selectedItems()[0].row(), 3).text())
-        self.txtMemoryAddr.setText(self.txtMultiline.table.item(self.txtMultiline.table.selectedItems()[0].row(), 3).text())
+        address = self.txtMultiline.table.item(self.txtMultiline.table.selectedItems()[0].row(), 3).text()
+        self.doReadMemory(address)
         
     def readMemory_click(self):
+        try:
+#           global debugger
+            self.handle_readMemory(lldbHelper.debugger, int(self.txtMemoryAddr.text(), 16), int(self.txtMemorySize.text(), 16))
+        except Exception as e:
+            print(f"Error while reading memory from process: {e}")
+    
+    def doReadMemory(self, address, size = 0x100):
+        self.tabWidget.setCurrentWidget(self.tabMemory)
+        self.txtMemoryAddr.setText(address)
+        self.txtMemorySize.setText(hex(size))
         try:
 #           global debugger
             self.handle_readMemory(lldbHelper.debugger, int(self.txtMemoryAddr.text(), 16), int(self.txtMemorySize.text(), 16))
@@ -377,10 +405,15 @@ class Pymobiledevice3GUIWindow(QMainWindow):
     def handle_commandFinished(self, res):
 #       print(res.Succeeded())
 #       print(res.GetError())
+#       if "\x1b[32m" in res.GetOutput():
+#           print("KIM YOU ARE THE MAN!!!")
+#       else:
+#           print("KIM YOU NOT ARE THE MAN!!!")
+            
         if res.Succeeded():
-            self.txtConsole.append(res.GetOutput())
+            self.txtConsole.appendEscapedText(res.GetOutput())
         else:
-            self.txtConsole.append(f"{res.GetError()}")
+            self.txtConsole.appendEscapedText(f"{res.GetError()}")
         
         if self.swtAutoscroll.isChecked():
             self.sb = self.txtConsole.verticalScrollBar()
@@ -399,15 +432,19 @@ class Pymobiledevice3GUIWindow(QMainWindow):
     
     def handle_loadSourceFinished(self, sourceCode):
         if sourceCode != "":
-            conv = Ansi2HTMLConverter()
-            ansi = "".join(sourceCode)
-            html = conv.convert(ansi)
-            html = html.replace("font-size: normal;", "font-size: small; font-weight: lighter; font-family: monospace;")
-    #       print(html)
-            log(html)
-            self.txtSource.setHtml(html)
+#           conv = Ansi2HTMLConverter()
+#           ansi = "".join(sourceCode)
+#           html = conv.convert(ansi)
+#           html = html.replace("font-size: normal;", "font-size: small; font-weight: lighter; font-family: monospace;")
+#   #       print(html)
+#           log(html)
+#           self.txtSource.setHtml(html)
+            log(sourceCode)
+            self.txtSource.setEscapedText(sourceCode) # 
         else:
             self.txtSource.setText("<Source code NOT available>")
+        
+#       lldbHelper.debugger.SetAsync(True)
 #       self.apply_colors(sourceCode, self.txtSource)
 #       pattern = r"\x1b\[1;3\d\m"
 #       replacement = "\u001b[{}m"
@@ -456,40 +493,15 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         
         self.setWindowTitle(APP_NAME + " " + APP_VERSION + " - " + os.path.basename(target))
         
-#       data = bytearray(open(target,'rb').read())
-#       mach_header = MACH_HEADER.from_buffer_copy(data)
         mach_header = lldbHelper.GetFileHeader(target)
-        
-##       ("cputype",         c_uint),
-##       ("cpusubtype",      c_uint),
-##       ("filetype",        c_uint),
-##       ("ncmds",           c_uint),
-##       ("sizeofcmds",      c_uint),
-##       ("flags",           c_uint)
-#       
-#       print(f'cputype: {hex(mach_header.cputype)}')
-#       print(f'cpusubtype: {hex(mach_header.cpusubtype)}')
-#       print(f'filetype: {hex(mach_header.filetype)}')
-#       print(f'ncmds: {hex(mach_header.ncmds)}')
-#       print(f'sizeofcmds: {hex(mach_header.sizeofcmds)}')
-#       print(f'flags: {hex(mach_header.flags)}')
-##       print(hex(mach_header.magic))
-#       
-#       print(lldbHelper.MachoMagic.to_str(lldbHelper.MachoMagic.create_magic_value(mach_header.magic)))
-##       print(dir(mach_header))
-##       print(repr(mach_header))
-#       if mach_header.magic == 0xfeedface:
-#           mode = 4
-#       elif mach_header.magic == 0xfeedfacf:
-#           mode = 8
             
-        self.tblFileInfos.addRow("Magic", lldbHelper.MachoMagic.to_str(lldbHelper.MachoMagic.create_magic_value(mach_header.magic)) + " (" + hex(mach_header.magic) + ")")
-        self.tblFileInfos.addRow("CPU Type", lldbHelper.MachoCPUType.to_str(lldbHelper.MachoCPUType.create_cputype_value(mach_header.cputype)) + " (" + hex(mach_header.cputype) + ")")
-        self.tblFileInfos.addRow("CPU SubType", str(mach_header.cpusubtype) + " (" + hex(mach_header.cpusubtype) + ")")
-        self.tblFileInfos.addRow("File Type", lldbHelper.MachoFileType.to_str(lldbHelper.MachoFileType.create_filetype_value(mach_header.filetype)) + " (" + hex(mach_header.filetype) + ")")
-        self.tblFileInfos.addRow("Num CMDs", str(mach_header.ncmds) + " (" + hex(mach_header.ncmds) + ")")
-        self.tblFileInfos.addRow("Size CMDs", str(mach_header.sizeofcmds) + " (" + hex(mach_header.sizeofcmds) + ")")
-        self.tblFileInfos.addRow("Flags", lldbHelper.MachoFlag.to_str(lldbHelper.MachoFlag.create_flag_value(mach_header.flags)) + " (" + hex(mach_header.flags) + ")")
+        self.tblFileInfos.addRow("Magic", lldbHelper.MachoMagic.to_str(lldbHelper.MachoMagic.create_magic_value(mach_header.magic)), hex(mach_header.magic))
+        self.tblFileInfos.addRow("CPU Type", lldbHelper.MachoCPUType.to_str(lldbHelper.MachoCPUType.create_cputype_value(mach_header.cputype)), hex(mach_header.cputype))
+        self.tblFileInfos.addRow("CPU SubType", str(mach_header.cpusubtype), hex(mach_header.cpusubtype))
+        self.tblFileInfos.addRow("File Type", lldbHelper.MachoFileType.to_str(lldbHelper.MachoFileType.create_filetype_value(mach_header.filetype)), hex(mach_header.filetype))
+        self.tblFileInfos.addRow("Num CMDs", str(mach_header.ncmds), hex(mach_header.ncmds))
+        self.tblFileInfos.addRow("Size CMDs", str(mach_header.sizeofcmds), hex(mach_header.sizeofcmds))
+        self.tblFileInfos.addRow("Flags", lldbHelper.MachoFlag.to_str(lldbHelper.MachoFlag.create_flag_value(mach_header.flags)), hex(mach_header.flags))
                     
         self.updateStatusBar("Loading target '%s' ..." % target)
         
@@ -499,7 +511,9 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         self.tblBPs.resetContent()
 #       self.tblBPs.setRowCount(0)
         
-        self.workerLoadTarget = TargetLoadWorker(self, target)
+        self.interruptLoadWorker = TargetLoadReceiver()
+        
+        self.workerLoadTarget = TargetLoadWorker(self, self.interruptLoadWorker, target)
         self.workerLoadTarget.signals.sendProgressUpdate.connect(self.handle_progressUpdate)
         self.workerLoadTarget.signals.finished.connect(self.handle_progressFinished)
         self.workerLoadTarget.signals.loadStats.connect(self.handle_loadStats)
@@ -543,7 +557,7 @@ class Pymobiledevice3GUIWindow(QMainWindow):
 #           for inin in dir(sec):
 #               print(inin)
                 
-            sectionNode = QTreeWidgetItem(self.treFile, [sec.GetName(), str(hex(sec.GetFileAddress())) + " - " + str(hex(sec.GetFileAddress() + sec.GetByteSize())), hex(sec.GetFileByteSize()) + " / " + hex(sec.GetByteSize()), lldbHelper.SectionTypeString(sec.GetSectionType()) + " (" + str(sec.GetSectionType()) + ")"])
+            sectionNode = QTreeWidgetItem(self.treFile, [sec.GetName(), str(hex(sec.GetFileAddress())), str(hex(sec.GetFileAddress() + sec.GetByteSize())), hex(sec.GetFileByteSize()) + " / " + hex(sec.GetByteSize()), lldbHelper.SectionTypeString(sec.GetSectionType()) + " (" + str(sec.GetSectionType()) + ")"])
 #           for jete in dir(sec):
 #               print(jete)
             INDENT = "\t"
@@ -563,10 +577,10 @@ class Pymobiledevice3GUIWindow(QMainWindow):
                 
                 subSec = sec.GetSubSectionAtIndex(jete2)
                 
-                subSectionNode = QTreeWidgetItem(sectionNode, [subSec.GetName(), str(hex(subSec.GetFileAddress())) + " - " + str(hex(subSec.GetFileAddress() + subSec.GetByteSize())), hex(subSec.GetFileByteSize()) + " / " + hex(subSec.GetByteSize()), lldbHelper.SectionTypeString(subSec.GetSectionType()) + " (" + str(subSec.GetSectionType()) + ")"])
+                subSectionNode = QTreeWidgetItem(sectionNode, [subSec.GetName(), str(hex(subSec.GetFileAddress())), str(hex(subSec.GetFileAddress() + subSec.GetByteSize())), hex(subSec.GetFileByteSize()) + " / " + hex(subSec.GetByteSize()), lldbHelper.SectionTypeString(subSec.GetSectionType()) + " (" + str(subSec.GetSectionType()) + ")"])
                 
                 for sym in module.symbol_in_section_iter(subSec):
-                    subSectionNode2 = QTreeWidgetItem(subSectionNode, [sym.GetName(), str(hex(sym.GetStartAddress().GetFileAddress()) + " - " + hex(sym.GetEndAddress().GetFileAddress())), hex(sym.GetSize()), 'Symbol'])
+                    subSectionNode2 = QTreeWidgetItem(subSectionNode, [sym.GetName(), str(hex(sym.GetStartAddress().GetFileAddress())), str(hex(sym.GetEndAddress().GetFileAddress())), hex(sym.GetSize()), 'Symbol'])
                     print(dir(sym))
                     print(sym.GetName())
                     print(INDENT2 + repr(sym))
@@ -659,8 +673,8 @@ class Pymobiledevice3GUIWindow(QMainWindow):
 #               print(bl.GetQueueName())
 #               print(get_description(bp_cur))
 #               print(dir(get_description(bp_cur)))
-                self.txtMultiline.table.toggleBPAtAddress(hex(bl.GetLoadAddress()))
-                self.tblBPs.resetContent()
+                self.txtMultiline.table.toggleBPAtAddress(hex(bl.GetLoadAddress()), False)
+#               self.tblBPs.resetContent()
                 self.tblBPs.addRow(bp_cur.GetID(), idx, hex(bl.GetLoadAddress()), name, str(bp_cur.GetHitCount()), bp_cur.GetCondition())
 #               print(f'LOADING BREAKPOINT AT ADDRESS: {hex(bl.GetLoadAddress())}')
                 
@@ -716,7 +730,17 @@ class Pymobiledevice3GUIWindow(QMainWindow):
 #       # Print process information
 #       for processNG in processes:
 #           print(f"PID: {processNG['pid']}, Name: {processNG['name']}, Status: {processNG['status']}")
-            
+    
+    def handle_resumeThread(self):
+        print("Trying to SIGINT ...")
+        error = lldbHelper.process.Stop() #.Signal(signal.SIGBREAK)
+        print("After SIGINT ...")
+        if error:
+            print(error)
+#       self.run_action.setIcon(ConfigClass.iconPlay)
+#       if lldbHelper.process.Continue():
+#           self.updateStatusBar("Thread resumed ...")
+        
     def handle_runProcess(self):
         self.run_action.setIcon(ConfigClass.iconPlay)
 #       # Set the hourglass cursor
@@ -796,8 +820,9 @@ class Pymobiledevice3GUIWindow(QMainWindow):
         lldbHelper.thread.StepInstruction(True)
 #       for line in output_stream.readlines():
 #           print(f'>>>>>>> OUTPUT OF STEP: {line}')
-            
+        
         frame = lldbHelper.thread.GetFrameAtIndex(0)
+        print(f'DEEEEEEBBBBBUUUUUGGGG: {lldbHelper.thread} / {lldbHelper.thread.GetNumFrames()} / {frame}')
         print(f'NEXT STEP {frame.register["rip"].value}')
         
         # Get the current instruction
@@ -817,9 +842,10 @@ class Pymobiledevice3GUIWindow(QMainWindow):
     
     def handle_stepInto(self):
 #       global thread
-        lldbHelper.thread.StepInstruction(False)
-        frame = lldbHelper.thread.GetFrameAtIndex(0)
-        print(f'NEXT STEP INTO {frame.register["rip"].value}')
+        lldbHelper.process.Continue()
+#       lldbHelper.thread.StepInstruction(False)
+#       frame = lldbHelper.thread.GetFrameAtIndex(0)
+#       print(f'NEXT STEP INTO {frame.register["rip"].value}')
         
 #       function = frame.GetFunction()
 #       # See if we have debug info (a function)
@@ -867,6 +893,8 @@ def close_application():
 #   global process
     # Stop all running tasks in the thread pool
     if lldbHelper.process:
+        pymobiledevice3GUIWindow.interruptLoadWorker.interruptTargetLoadSignal.emit()
+        QCoreApplication.processEvents()
         print("KILLING PROCESS")
         lldbHelper.process.Kill()
     else:

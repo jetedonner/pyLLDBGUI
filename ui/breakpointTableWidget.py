@@ -1,0 +1,207 @@
+#!/usr/bin/env python3
+
+import lldb
+import os
+import sys
+import re
+import pyperclip
+
+from PyQt6.QtGui import *
+from PyQt6.QtCore import *
+from PyQt6.QtWidgets import *
+from PyQt6 import uic, QtWidgets
+from config import *
+		
+from ui.assemblerTextEdit import *
+from breakpointHelper import *
+
+class BreakpointsTableWidget(QTableWidget):
+	
+#	window() = None
+	
+#	def resetContentNG(self):
+#		#		self.clear()
+#		self.clearContents()
+#		self.setRowCount(0)
+#		#		self.initTable()
+#		pass
+		
+	def handle_toggleBP(self):
+		item = self.item(self.selectedItems()[0].row(), 0)
+		itemNum = self.item(self.selectedItems()[0].row(), 1)
+		item.toggleBPOn()
+		self.window().updateStatusBar(f"Set breakpoint {itemNum.text()} status to {item.isBPEnabled}")
+		pass
+		
+	def handle_disableBP(self):
+		item = self.item(self.selectedItems()[0].row(), 0)
+		itemNum = self.item(self.selectedItems()[0].row(), 1)
+		item.toggleBPEnabled()
+		self.window().updateStatusBar(f"Set breakpoint {itemNum.text()} enabled to {item.isBPEnabled}")
+		pass
+		
+		
+	def handle_editCondition(self):
+		
+		BreakpointHelper().handle_editCondition(self, 1, 5)
+#		itemNum = self.item(self.selectedItems()[0].row(), 1)
+#		itemCond = self.item(self.selectedItems()[0].row(), 5)
+#		title = f'Condition of breakpoint {itemNum.text()}'
+#		label = f'Edit the condition of breakpoint {itemNum.text()}'
+#		
+#		dialog = QInputDialog()
+#		dialog.setwindow()Title(title)
+#		dialog.setLabelText(label)
+#		oldCond = itemCond.text()
+#		dialog.setTextValue(oldCond)
+#		dialog.textValueChanged.connect(self.handle_editConditionChanged)
+#		dialog.resize(512, 128)
+#		# Show the dialog and get the selected process name
+#		if dialog.exec():
+#			# OK pressed
+#			pass
+#		else:
+#			itemCond.setText(oldCond)
+#		pass
+#	
+#	def handle_editConditionChanged(self, text):
+#		itemCond = self.item(self.selectedItems()[0].row(), 5)
+#		itemCond.setText(text)
+#		pass
+		
+	def handle_copyAddress(self):
+		item = self.item(self.selectedItems()[0].row(), 2)
+		pyperclip.copy(item.text())
+		self.window().updateStatusBar(f"Copied address {item.text()} of breakpoint to clipboard")
+#		clipboard_contents = pyperclip.paste()
+#		print(clipboard_contents)
+		pass
+	
+	def doToggleBP(self, address, on):
+		for i in range(self.rowCount()):
+			if self.item(i, 2).text() == address:
+				itemCell = self.item(i, 0)
+				itemCell.toggleBPOn()
+				break
+			
+	def doEnableBP(self, address, enable):
+		for i in range(self.rowCount()):
+			if self.item(i, 2).text() == address:
+				itemCell = self.item(i, 0)
+				itemCell.toggleBPEnabled()
+				break
+						
+	def doBPOn(self, address, on):
+		bBPFound = False
+		for i in range(self.rowCount()):
+			if self.item(i, 2).text() == address:
+				bBPFound = True
+				itemCell = self.item(i, 0)
+				itemCell.toggleBPOn()
+				break
+		if on and not bBPFound:
+			self.addRow(on, self.rowCount() + 1, address, '', '0', '')
+	
+	def __init__(self, window):
+		super().__init__()
+#		self.window() = window()
+		self.initTable()
+		self.context_menu = QMenu(self)
+		actionToggleBP = self.context_menu.addAction("Toggle Breakpoint")
+		actionToggleBP.triggered.connect(self.handle_toggleBP)
+		actionDisableBP = self.context_menu.addAction("Enable / Disable Breakpoint")
+		actionDisableBP.triggered.connect(self.handle_disableBP)
+		actionEditCondition = self.context_menu.addAction("Edit condition")
+		actionEditCondition.triggered.connect(self.handle_editCondition)
+		
+		self.context_menu.addSeparator()
+		actionCopyAddress = self.context_menu.addAction("Copy address")
+		actionCopyAddress.triggered.connect(self.handle_copyAddress)
+		
+#		actionCopyInstruction = self.context_menu.addAction("Copy instruction")
+#		actionCopyHex = self.context_menu.addAction("Copy hex value")
+#		self.context_menu.addSeparator()
+#		actionFindReferences = self.context_menu.addAction("Find references")
+#		self.actionShowMemory = self.context_menu.addAction("Show memory")
+#		
+		
+	def initTable(self):
+		self.setColumnCount(6)
+		self.setColumnWidth(0, 48)
+		self.setColumnWidth(1, 32)
+		self.setColumnWidth(2, 96)
+		self.setColumnWidth(3, 108)
+		self.setColumnWidth(4, 32)
+		self.setColumnWidth(5, 256)
+#		self.setColumnWidth(5, 324)
+#		self.setColumnWidth(6, 304)
+		self.verticalHeader().hide()
+		self.horizontalHeader().show()
+		self.horizontalHeader().setHighlightSections(False)
+		self.setHorizontalHeaderLabels(['State', '#', 'Address', 'Name', 'Hit', 'Condition'])#, 'Instruction', 'Hex', 'Comment'])
+		self.horizontalHeaderItem(0).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
+		self.horizontalHeaderItem(1).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
+		self.horizontalHeaderItem(2).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
+		self.horizontalHeaderItem(3).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
+		self.horizontalHeaderItem(4).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
+		self.horizontalHeaderItem(5).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
+#		self.horizontalHeaderItem(5).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
+#		self.horizontalHeaderItem(6).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
+		self.setFont(ConfigClass.font)
+#		
+		self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+		self.setShowGrid(False)
+#		self.cellDoubleClicked.connect(self.on_double_click)
+		pass
+		
+	def on_double_click(self, row, col):
+#		if col in range(3):
+#			self.toggleBPOn(row)
+		pass
+			
+	def contextMenuEvent(self, event):
+		for i in dir(event):
+			print(i)
+#			print(event.pos())
+#			print(self.itemAt(event.pos().x(), event.pos().y()))
+#			print(self.selectedItems())
+		self.context_menu.exec(event.globalPos())
+		pass
+		
+	def toggleBPOn(self, row):
+#		item = self.item(row, 1)
+#		item.toggleBPOn()
+		pass
+		
+	def resetContent(self):
+		for row in range(self.rowCount(), 0):
+			self.removeRow(row)
+		self.setRowCount(0)
+		pass
+			
+	def addRow(self, state, num, address, nme, hitcount, condition):
+		currRowCount = self.rowCount()
+		self.setRowCount(currRowCount + 1)
+#		
+		item = DisassemblyImageTableWidgetItem()
+#		
+#		self.addItem(currRowCount, 0, ('>' if rip == address else ''))
+		item.toggleBPOn()
+		self.setItem(currRowCount, 0, item)
+		self.addItem(currRowCount, 1, "#" + str(num))
+		self.addItem(currRowCount, 2, address)
+		self.addItem(currRowCount, 3, nme)
+		self.addItem(currRowCount, 4, hitcount)
+		self.addItem(currRowCount, 5, condition)
+#		self.addItem(currRowCount, 6, comment)
+#		
+		self.setRowHeight(currRowCount, 18)
+		pass
+		
+	def addItem(self, row, col, txt):
+		item = QTableWidgetItem(txt, QTableWidgetItem.ItemType.Type)
+		item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable) #Qt.ItemFlag.ItemIsSelectable)
+		
+		# Insert the items into the row
+		self.setItem(row, col, item)
+		pass
