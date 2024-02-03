@@ -66,7 +66,7 @@ class FileInfosTableWidget(QTableWidget):
 		
 		self.setColumnCount(2)
 		self.setColumnWidth(0, 128)
-		self.setColumnWidth(1, 256)
+		self.setColumnWidth(1, 512)
 #		self.setColumnWidth(2, 72)
 #		self.setColumnWidth(3, 108)
 #		self.setColumnWidth(4, 256)

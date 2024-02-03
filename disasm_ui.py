@@ -36,6 +36,7 @@ from ui.statisticsTreeWidget import *
 from ui.fileInfoTableWidget import *
                 
 from config import *
+from dbgHelper import *
 
 from PyQt6.QSwitch import *
 from PyQt6.QHEXTextEditSplitter import *
@@ -397,12 +398,16 @@ class Pymobiledevice3GUIWindow(QMainWindow):
 #       return matches
     
     def handle_loadSourceFinished(self, sourceCode):
-        conv = Ansi2HTMLConverter()
-        ansi = "".join(sourceCode)
-        html = conv.convert(ansi)
-        html = html.replace("font-size: normal;", "font-size: small; font-weight: lighter; font-family: monospace;")
-        print(html)
-        self.txtSource.setHtml(html)
+        if sourceCode != "":
+            conv = Ansi2HTMLConverter()
+            ansi = "".join(sourceCode)
+            html = conv.convert(ansi)
+            html = html.replace("font-size: normal;", "font-size: small; font-weight: lighter; font-family: monospace;")
+    #       print(html)
+            log(html)
+            self.txtSource.setHtml(html)
+        else:
+            self.txtSource.setText("<Source code NOT available>")
 #       self.apply_colors(sourceCode, self.txtSource)
 #       pattern = r"\x1b\[1;3\d\m"
 #       replacement = "\u001b[{}m"
@@ -455,36 +460,36 @@ class Pymobiledevice3GUIWindow(QMainWindow):
 #       mach_header = MACH_HEADER.from_buffer_copy(data)
         mach_header = lldbHelper.GetFileHeader(target)
         
-#       ("cputype",         c_uint),
-#       ("cpusubtype",      c_uint),
-#       ("filetype",        c_uint),
-#       ("ncmds",           c_uint),
-#       ("sizeofcmds",      c_uint),
-#       ("flags",           c_uint)
-        
-        print(f'cputype: {hex(mach_header.cputype)}')
-        print(f'cpusubtype: {hex(mach_header.cpusubtype)}')
-        print(f'filetype: {hex(mach_header.filetype)}')
-        print(f'ncmds: {hex(mach_header.ncmds)}')
-        print(f'sizeofcmds: {hex(mach_header.sizeofcmds)}')
-        print(f'flags: {hex(mach_header.flags)}')
-#       print(hex(mach_header.magic))
-        
-        print(lldbHelper.MachoMagic.to_str(lldbHelper.MachoMagic.create_magic_value(mach_header.magic)))
-#       print(dir(mach_header))
-#       print(repr(mach_header))
-        if mach_header.magic == 0xfeedface:
-            mode = 4
-        elif mach_header.magic == 0xfeedfacf:
-            mode = 8
+##       ("cputype",         c_uint),
+##       ("cpusubtype",      c_uint),
+##       ("filetype",        c_uint),
+##       ("ncmds",           c_uint),
+##       ("sizeofcmds",      c_uint),
+##       ("flags",           c_uint)
+#       
+#       print(f'cputype: {hex(mach_header.cputype)}')
+#       print(f'cpusubtype: {hex(mach_header.cpusubtype)}')
+#       print(f'filetype: {hex(mach_header.filetype)}')
+#       print(f'ncmds: {hex(mach_header.ncmds)}')
+#       print(f'sizeofcmds: {hex(mach_header.sizeofcmds)}')
+#       print(f'flags: {hex(mach_header.flags)}')
+##       print(hex(mach_header.magic))
+#       
+#       print(lldbHelper.MachoMagic.to_str(lldbHelper.MachoMagic.create_magic_value(mach_header.magic)))
+##       print(dir(mach_header))
+##       print(repr(mach_header))
+#       if mach_header.magic == 0xfeedface:
+#           mode = 4
+#       elif mach_header.magic == 0xfeedfacf:
+#           mode = 8
             
         self.tblFileInfos.addRow("Magic", lldbHelper.MachoMagic.to_str(lldbHelper.MachoMagic.create_magic_value(mach_header.magic)) + " (" + hex(mach_header.magic) + ")")
-        self.tblFileInfos.addRow("CPU Type", lldbHelper.MachoMagic.to_str(lldbHelper.MachoMagic.create_magic_value(mach_header.magic)) + " (" + hex(mach_header.cputype) + ")")
-        self.tblFileInfos.addRow("CPU SubType", lldbHelper.MachoMagic.to_str(lldbHelper.MachoMagic.create_magic_value(mach_header.magic)) + " (" + hex(mach_header.cpusubtype) + ")")
+        self.tblFileInfos.addRow("CPU Type", lldbHelper.MachoCPUType.to_str(lldbHelper.MachoCPUType.create_cputype_value(mach_header.cputype)) + " (" + hex(mach_header.cputype) + ")")
+        self.tblFileInfos.addRow("CPU SubType", str(mach_header.cpusubtype) + " (" + hex(mach_header.cpusubtype) + ")")
         self.tblFileInfos.addRow("File Type", lldbHelper.MachoFileType.to_str(lldbHelper.MachoFileType.create_filetype_value(mach_header.filetype)) + " (" + hex(mach_header.filetype) + ")")
         self.tblFileInfos.addRow("Num CMDs", str(mach_header.ncmds) + " (" + hex(mach_header.ncmds) + ")")
         self.tblFileInfos.addRow("Size CMDs", str(mach_header.sizeofcmds) + " (" + hex(mach_header.sizeofcmds) + ")")
-        self.tblFileInfos.addRow("Flags", lldbHelper.MachoMagic.to_str(lldbHelper.MachoMagic.create_magic_value(mach_header.magic)) + " (" + hex(mach_header.flags) + ")")
+        self.tblFileInfos.addRow("Flags", lldbHelper.MachoFlag.to_str(lldbHelper.MachoFlag.create_flag_value(mach_header.flags)) + " (" + hex(mach_header.flags) + ")")
                     
         self.updateStatusBar("Loading target '%s' ..." % target)
         

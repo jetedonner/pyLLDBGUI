@@ -164,3 +164,15 @@ cython_debug/
 convTest.py
 createTest.py
 raw.txt
+hello_world/hello_world
+hello_world/hello_world.c
+hello_world/hello_world2
+hello_world/hello_world_test
+hello_world/hello_world_test.c
+hello_world/hello_world_test.dSYM/Contents/Info.plist
+hello_world/hello_world_test.dSYM/Contents/Resources/DWARF/hello_world_test
+hello_world/hello_world_test.dSYM/Contents/Resources/Relocations/x86_64/hello_world_test.yml
+hello_world/hello_worldtest
+hello_world/hello_world_test2
+hello_world/lib4inject.c
+hello_world/xyz_test

@@ -51,11 +51,7 @@ class QStatisticsTreeWidget(QTreeWidget):
 						appendStr = ""
 						for innerItem in value:
 							idx += 1
-#							appendStr = ""
-#							print(dir(innerItem.items()))
-							
-							if key == "modules": # and innerItem.key == "path":
-								appendStr = "APPEND"
+							if key == "modules":
 								for key2, value2 in innerItem.items():
 									if key2 == "path":
 										appendStr = value2
