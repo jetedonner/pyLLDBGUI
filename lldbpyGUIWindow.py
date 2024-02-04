@@ -4,7 +4,7 @@
 #from lldbutil import *
 #from inputHelper import FBInputHandler
 #import psutil
-#import os
+import os
 #import os.path
 #import sys
 #import sre_constants
@@ -25,9 +25,12 @@ from PyQt6.QConsoleTextEdit import *
 
 from ui.assemblerTextEdit import *
 from ui.registerTreeView import *
+from ui.fileInfoTableWidget import *
+from ui.statisticsTreeWidget import *
 
 from worker.eventListenerWorker import *
 
+import lldbHelper
 from config import *
 
 APP_NAME = "LLDB-PyGUI"
@@ -95,6 +98,40 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.tabWidgetMain = QTabWidget()
 		self.tabWidgetMain.addTab(self.splitter, "Debugger")
 		
+		self.tblFileInfos = FileInfosTableWidget()
+		self.tabWidgetFileInfos = QWidget()
+		self.tabWidgetFileInfos.setLayout(QVBoxLayout())
+		
+		
+		self.gbFileInfo = QGroupBox("File Header")
+		self.gbFileInfo.setLayout(QHBoxLayout())
+		self.gbFileInfo.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Maximum)
+		self.gbFileInfo.layout().addWidget(self.tblFileInfos)
+		
+		self.splitterFileInfos = QSplitter()
+		self.splitterFileInfos.setContentsMargins(0, 0, 0, 0)
+		self.splitterFileInfos.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+		self.splitterFileInfos.setOrientation(Qt.Orientation.Vertical)
+		
+		self.splitterFileInfos.addWidget(self.gbFileInfo)
+		
+		self.gbFileStats = QGroupBox("File Statistics")
+		self.gbFileStats.setLayout(QHBoxLayout())
+		self.gbFileStats.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Maximum)
+		
+		self.treStats = QStatisticsTreeWidget()
+		self.tabWidgetStats = QWidget()
+		self.tabWidgetStats.setLayout(QVBoxLayout())
+		self.tabWidgetStats.layout().addWidget(self.treStats)
+		
+		self.gbFileStats.layout().addWidget(self.tabWidgetStats)
+		
+		self.splitterFileInfos.addWidget(self.gbFileStats)
+		
+		self.tabWidgetFileInfos.layout().addWidget(self.splitterFileInfos)
+		
+		self.tabWidgetMain.addTab(self.tabWidgetFileInfos, "File Info")
+		
 		self.layout.addWidget(self.tabWidgetMain)
 		
 		self.centralWidget = QWidget(self)
@@ -105,10 +142,14 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		print(f"NUM-TARGETS: {self.debugger.GetNumTargets()}")
 		if self.debugger.GetNumTargets() > 0:
+			
 			print(f"TARGET-1: {self.debugger.GetTargetAtIndex(0)}")
 			target = self.debugger.GetTargetAtIndex(0)
 			
 			if target:
+				self.loadFileInfo(target.GetExecutable().GetFilename())
+				self.loadFileStats(target)
+				
 				process = target.GetProcess()
 				if process:
 					thread = process.GetThreadAtIndex(0)
@@ -170,6 +211,28 @@ class LLDBPyGUIWindow(QMainWindow):
 						self.start_eventListenerWorker(self.debugger)
 #						process.Continue()	
 	
+	def loadFileInfo(self, target):
+		self.setWindowTitle(APP_NAME + " " + APP_VERSION + " - " + os.path.basename(target))
+		
+		mach_header = lldbHelper.GetFileHeader(target)
+		
+		self.tblFileInfos.addRow("Magic", lldbHelper.MachoMagic.to_str(lldbHelper.MachoMagic.create_magic_value(mach_header.magic)), hex(mach_header.magic))
+		self.tblFileInfos.addRow("CPU Type", lldbHelper.MachoCPUType.to_str(lldbHelper.MachoCPUType.create_cputype_value(mach_header.cputype)), hex(mach_header.cputype))
+		self.tblFileInfos.addRow("CPU SubType", str(mach_header.cpusubtype), hex(mach_header.cpusubtype))
+		self.tblFileInfos.addRow("File Type", lldbHelper.MachoFileType.to_str(lldbHelper.MachoFileType.create_filetype_value(mach_header.filetype)), hex(mach_header.filetype))
+		self.tblFileInfos.addRow("Num CMDs", str(mach_header.ncmds), hex(mach_header.ncmds))
+		self.tblFileInfos.addRow("Size CMDs", str(mach_header.sizeofcmds), hex(mach_header.sizeofcmds))
+		self.tblFileInfos.addRow("Flags", lldbHelper.MachoFlag.to_str(lldbHelper.MachoFlag.create_flag_value(mach_header.flags)), hex(mach_header.flags))
+		
+	def loadFileStats(self, target):
+		statistics = target.GetStatistics()
+		stream = lldb.SBStream()
+		success = statistics.GetAsJSON(stream)
+		if success:
+#			self.signals.loadStats.emit(str(stream.GetData()))
+			
+			self.treStats.loadJSON(str(stream.GetData()))
+		
 	def start_eventListenerWorker(self, debugger):
 		workerEventListener = EventListenerWorker(debugger)
 #		workerEventListener.signals.finished.connect(self.handle_commandFinished)
