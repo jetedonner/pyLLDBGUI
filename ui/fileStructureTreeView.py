@@ -18,8 +18,8 @@ class FileStructureTreeWidget(QTreeWidget):
 		self.context_menu = QMenu(self)
 		actionShowInfos = self.context_menu.addAction("Show infos")
 		
-		self.actionShowMemoryFrom = self.context_menu.addAction("Show memory @ From")
-		self.actionShowMemoryTo = self.context_menu.addAction("Show memory @ To")
+		self.actionShowMemoryFrom = self.context_menu.addAction("Show memory")
+		self.actionShowMemoryTo = self.context_menu.addAction("Show memory after End")
 		
 		self.setFont(ConfigClass.font)
 		self.setHeaderLabels(['Sections / Symbols', 'Address From', 'Address To', 'File- / Byte-Size', 'Type'])

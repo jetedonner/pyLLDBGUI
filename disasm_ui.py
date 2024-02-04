@@ -353,7 +353,9 @@ class Pymobiledevice3GUIWindow(QMainWindow):
     
     def handle_showMemoryFileStructureFrom(self):
         address = self.treFile.selectedItems()[0].text(1)
-        self.doReadMemory(address)
+        size = int(self.treFile.selectedItems()[0].text(2), 16) - int(self.treFile.selectedItems()[0].text(1), 16)
+        
+        self.doReadMemory(address, size)
         
     def handle_showMemoryFileStructureTo(self):
         address = self.treFile.selectedItems()[0].text(2)
