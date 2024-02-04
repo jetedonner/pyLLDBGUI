@@ -5,6 +5,7 @@ import lldb
 import sys
 import re
 import os
+import threading
 import time
 import struct
 import argparse
@@ -23,185 +24,9 @@ from PyQt6 import uic, QtWidgets
 
 from PyQt6.QConsoleTextEdit import *
 
-APP_NAME = "ConsoleTextEditWindow-TEST"
-PROMPT_TEXT = "lldbpyGUI"
-WINDOW_SIZE = 720
+from lldbpyGUIConfig import *
+from lldbpyGUIWindow import *
 
-APP_VERSION = "v0.0.1"
-
-try:
-    import keystone
-    CONFIG_KEYSTONE_AVAILABLE = 1
-except ImportError:
-    CONFIG_KEYSTONE_AVAILABLE = 0
-    pass
-
-VERSION = "3.1"
-BUILD = "383"
-
-#
-# User configurable options
-#
-CONFIG_ENABLE_COLOR = 1
-# light or dark mode
-CONFIG_APPEARANCE = "light"
-# display the instruction bytes in disassembler output
-CONFIG_DISPLAY_DISASSEMBLY_BYTES = 1
-# the maximum number of lines to display in disassembler output
-CONFIG_DISASSEMBLY_LINE_COUNT = 8
-# x/i and disas output customization - doesn't affect context disassembler output
-CONFIG_USE_CUSTOM_DISASSEMBLY_FORMAT = 1
-# enable all the register command shortcuts
-CONFIG_ENABLE_REGISTER_SHORTCUTS = 1
-# display stack contents on context stop
-CONFIG_DISPLAY_STACK_WINDOW = 0
-CONFIG_DISPLAY_FLOW_WINDOW = 0
-# display data contents on context stop - an address for the data must be set with "datawin" command
-CONFIG_DISPLAY_DATA_WINDOW = 0
-# disassembly flavor 'intel' or 'att' - default is Intel unless AT&T syntax is your cup of tea
-CONFIG_FLAVOR = "intel"
-
-# setup the logging level, which is a bitmask of any of the following possible values (don't use spaces, doesn't seem to work)
-#
-# LOG_VERBOSE LOG_PROCESS LOG_THREAD LOG_EXCEPTIONS LOG_SHLIB LOG_MEMORY LOG_MEMORY_DATA_SHORT LOG_MEMORY_DATA_LONG LOG_MEMORY_PROTECTIONS LOG_BREAKPOINTS LOG_EVENTS LOG_WATCHPOINTS
-# LOG_STEP LOG_TASK LOG_ALL LOG_DEFAULT LOG_NONE LOG_RNB_MINIMAL LOG_RNB_MEDIUM LOG_RNB_MAX LOG_RNB_COMM  LOG_RNB_REMOTE LOG_RNB_EVENTS LOG_RNB_PROC LOG_RNB_PACKETS LOG_RNB_ALL LOG_RNB_DEFAULT
-# LOG_DARWIN_LOG LOG_RNB_NONE
-#
-# to see log (at least in macOS)
-# $ log stream --process debugserver --style compact
-# (or whatever style you like)
-CONFIG_LOG_LEVEL = "LOG_NONE"
-
-# removes the offsets and modifies the module name position
-# reference: https://lldb.llvm.org/formats.html
-CUSTOM_DISASSEMBLY_FORMAT = "\"{${function.initial-function}{${function.name-without-args}} @ {${module.file.basename}}:\n}{${function.changed}\n{${function.name-without-args}} @ {${module.file.basename}}:\n}{${current-pc-arrow} }${addr-file-or-load}: \""
-
-# the colors definitions - don't mess with this
-if CONFIG_ENABLE_COLOR:
-    RESET =     "\033[0m"
-    BOLD =      "\033[1m"
-    UNDERLINE = "\033[4m"
-    REVERSE =   "\033[7m"
-    BLACK =     "\033[30m"
-    RED =       "\033[31m"
-    GREEN =     "\033[32m"
-    YELLOW =    "\033[33m"
-    BLUE =      "\033[34m"
-    MAGENTA =   "\033[35m"
-    CYAN =      "\033[36m"
-    WHITE =     "\033[37m"
-else:
-    RESET =     ""
-    BOLD =      ""
-    UNDERLINE = ""
-    REVERSE =   ""
-    BLACK =     ""
-    RED =       ""
-    GREEN =     ""
-    YELLOW =    ""
-    BLUE =      ""
-    MAGENTA =   ""
-    CYAN =      ""
-    WHITE =     ""
-
-# default colors - modify as you wish
-# since these are just strings modes can be combined
-if CONFIG_APPEARANCE == "light":
-    COLOR_REGVAL           = BLACK
-    COLOR_REGNAME          = GREEN
-    COLOR_CPUFLAGS         = BOLD + UNDERLINE + MAGENTA
-    COLOR_SEPARATOR        = BOLD + BLUE
-    COLOR_HIGHLIGHT_LINE   = RED
-    COLOR_REGVAL_MODIFIED  = RED
-    COLOR_SYMBOL_NAME      = BLUE
-    COLOR_CURRENT_PC       = RED
-    COLOR_CONDITIONAL_YES  = REVERSE + GREEN
-    COLOR_CONDITIONAL_NO   = REVERSE + RED
-    COLOR_HEXDUMP_HEADER   = BLUE
-    COLOR_HEXDUMP_ADDR     = BLACK
-    COLOR_HEXDUMP_DATA     = BLACK
-    COLOR_HEXDUMP_ASCII    = BLACK
-    COLOR_COMMENT          = GREEN
-elif CONFIG_APPEARANCE == "dark":
-    COLOR_REGVAL           = WHITE
-    COLOR_REGNAME          = GREEN
-    COLOR_CPUFLAGS         = BOLD + UNDERLINE + MAGENTA
-    COLOR_SEPARATOR        = CYAN
-    COLOR_HIGHLIGHT_LINE   = RED
-    COLOR_REGVAL_MODIFIED  = RED
-    COLOR_SYMBOL_NAME      = BLUE
-    COLOR_CURRENT_PC       = RED
-    COLOR_CONDITIONAL_YES  = REVERSE + GREEN
-    COLOR_CONDITIONAL_NO   = REVERSE + RED
-    COLOR_HEXDUMP_HEADER   = BLUE
-    COLOR_HEXDUMP_ADDR     = WHITE
-    COLOR_HEXDUMP_DATA     = WHITE
-    COLOR_HEXDUMP_ASCII    = WHITE
-    COLOR_COMMENT          = GREEN # XXX: test and change
-else:
-    print("[-] Invalid CONFIG_APPEARANCE value.")
-
-# configure the separator character between the "windows" and their size
-SEPARATOR = "-"
-# minimum terminal width 120 chars
-I386_TOP_SIZE = 81
-I386_STACK_SIZE = I386_TOP_SIZE - 1
-I386_BOTTOM_SIZE = 87
-# minimum terminal width 125 chars
-X64_TOP_SIZE = 119
-X64_STACK_SIZE = X64_TOP_SIZE - 1
-X64_BOTTOM_SIZE = 125
-# minimum terminal width 108 chars
-ARM_TOP_SIZE = 102
-ARM_STACK_SIZE = ARM_TOP_SIZE - 1
-ARM_BOTTOM_SIZE = 108
-
-# turn on debugging output - you most probably don't need this
-DEBUG = 0
-
-#
-# Don't mess after here unless you know what you are doing!
-#
-
-DATA_WINDOW_ADDRESS = 0
-POINTER_SIZE = 8
-
-old_x86 = { "eax": 0, "ecx": 0, "edx": 0, "ebx": 0, "esp": 0, "ebp": 0, "esi": 0, "edi": 0, "eip": 0,
-            "eflags": 0, "cs": 0, "ds": 0, "fs": 0, "gs": 0, "ss": 0, "es": 0 }
-
-old_x64 = { "rax": 0, "rcx": 0, "rdx": 0, "rbx": 0, "rsp": 0, "rbp": 0, "rsi": 0, "rdi": 0, "rip": 0,
-            "r8": 0, "r9": 0, "r10": 0, "r11": 0, "r12": 0, "r13": 0, "r14": 0, "r15": 0,
-            "rflags": 0, "cs": 0, "fs": 0, "gs": 0 }
-
-old_arm64 = { "x0": 0, "x1": 0, "x2": 0, "x3": 0, "x4": 0, "x5": 0, "x6": 0, "x7": 0, "x8": 0, "x9": 0, "x10": 0, 
-              "x11": 0, "x12": 0, "x13": 0, "x14": 0, "x15": 0, "x16": 0, "x17": 0, "x18": 0, "x19": 0, "x20": 0, 
-              "x21": 0, "x22": 0, "x23": 0, "x24": 0, "x25": 0, "x26": 0, "x27": 0, "x28": 0, "fp": 0, "lr": 0, 
-              "sp": 0, "pc": 0, "cpsr": 0 }
-
-GlobalListOutput = []
-
-int3patches = {}
-
-crack_cmds = []
-crack_cmds_noret = []
-modules_list = []
-
-g_current_target = ""
-g_target_hash = ""
-g_home = ""
-g_db = ""
-g_dbdata = {}
-
-# dyld modes
-dyld_mode_dict = { 
-    0: "dyld_image_adding",
-    1: "dyld_image_removing",
-    2: "dyld_image_info_change",
-    3: "dyld_image_dyld_moved"
-}
-
-MIN_COLUMNS = 125
-MIN_ROWS = 25
 # test terminal - idea from https://github.com/ant4g0nist/lisa.py/
 try:
     tty_rows, tty_columns = struct.unpack("hh", fcntl.ioctl(1, termios.TIOCGWINSZ, "1234"))
@@ -215,6 +40,10 @@ except Exception as e:
     print("\033[1m\033[31m[-] failed to find out terminal size.")
     print("[!] lldbinit is best experienced with a terminal size at least {}x{}\033[0m".format(MIN_COLUMNS, MIN_ROWS))
 
+def breakpointHandler(frame, bpno, err):
+  print("MLIR debugger attaching...")
+  print("IIIIIIIIINNNNNNNN CCCCAAQALLLLLLBBBAAACCKKKK")
+  
 class QConsoleTextEditWindow(QMainWindow):
     
     mytext = "thread #1: tid = 0xa8f62d, 0x0000000100003f40 hello_world_test_loop`main, queue = \x1b[32m'com.apple.main-thread'\x1b[0m, stop reason = \x1b[31mbreakpoint 1.1\x1b[0m\nthread #2: tid = 0xa8f62d, 0x0000000100003f40 hello_world_test_loop`main, queue = \x1b[35m'com.apple.main-thread'\x1b[0m, stop reason = \x1b[36mbreakpoint 1.1\x1b[0m"
@@ -241,11 +70,14 @@ class QConsoleTextEditWindow(QMainWindow):
         self.cmdTest3 = QPushButton("RE READ")
         self.cmdTest3.clicked.connect(self.readProcess)
         self.cmdTest4 = QPushButton("DI")
-        self.cmdTest4.clicked.connect(self.readProcess2)
+        self.cmdTest4.clicked.connect(self.disassembleLocation)
+        self.cmdTest5 = QPushButton("Clear")
+        self.cmdTest5.clicked.connect(self.clearTxt)
         self.layout.addWidget(self.cmdTest)
         self.layout.addWidget(self.cmdTest2)
         self.layout.addWidget(self.cmdTest3)
         self.layout.addWidget(self.cmdTest4)
+        self.layout.addWidget(self.cmdTest5)
         self.txtOutput = QConsoleTextEdit()
         self.txtOutput.setFont(QFont("Courier New"))
         self.layout.addWidget(self.txtOutput)
@@ -279,29 +111,24 @@ class QConsoleTextEditWindow(QMainWindow):
         self.txtOutput.appendEscapedText(res.GetOutput())
         # ci.HandleCommand("n", res)
 
-    def readProcess2(self):
+    def disassembleLocation(self):
         res = lldb.SBCommandReturnObject()
         ci = self.debugger.GetCommandInterpreter()
         # ci.HandleCommand("re read", res)
         ci.HandleCommand("di", res)
         print(res.GetOutput())
         self.txtOutput.appendEscapedText(res.GetOutput())
+        
+    def clearTxt(self):
+        self.txtOutput.setEscapedText("")
+    
 
     # we hook this so we have a chance to initialize/reset some stuff when targets are (re)run
 
-        
 
 #def close_application():
 #   pass
-    
-#global pymobiledevice3GUIApp
-#pymobiledevice3GUIApp = QApplication([])
-#pymobiledevice3GUIApp.aboutToQuit.connect(close_application)
-#
-#pymobiledevice3GUIWindow = QConsoleTextEditWindow()
-#pymobiledevice3GUIWindow.show()
-#
-#sys.exit(pymobiledevice3GUIApp.exec())
+
 
 def __lldb_init_module(debugger, internal_dict):
     ''' we can execute lldb commands using debugger.HandleCommand() which makes all output to default
@@ -321,7 +148,7 @@ def __lldb_init_module(debugger, internal_dict):
     
     res = lldb.SBCommandReturnObject()
     ci = debugger.GetCommandInterpreter()
-
+    
     # settings
     ci.HandleCommand("settings set target.x86-disassembly-flavor " + CONFIG_FLAVOR, res)
     ci.HandleCommand(f"settings set prompt \"({PROMPT_TEXT}) \"", res)
@@ -339,38 +166,109 @@ def __lldb_init_module(debugger, internal_dict):
     ci.HandleCommand(f"command alias -h '({PROMPT_TEXT}) Start the target and stop at entrypoint.' -- run r", res)
 
     ci.HandleCommand(f"command script add -h '({PROMPT_TEXT})' -f lldbpyGUI.StartTestingEnv test", res)
-    
+
+processGlob = None
+
 def StartTestingEnv(debugger, command, result, dict):
-  print(f"Starting TEST ENVIRONMENT for LLDB-PYGUI (Development Mode, ver. {APP_VERSION})")
+  print(f"#=================================================================================#")
+  print(f"| Starting TEST ENVIRONMENT for LLDB-PyGUI (Development Mode, ver. {APP_VERSION})        |")
+  print(f"|                                                                                 |")
+  print(f"| Desc:                                                                           |")
+  print(f"| This python script is for development of the LLDB python GUI - use at own risk! |")
+  print(f"|                                                                                 |")
+  print(f"| Author / Copyright:                                                             |")
+  print(f"| Kim David Hauser (JeTeDonner), (c) by kimhauser.ch 1991-2024                    |")
+  print(f"#=================================================================================#")
   res = lldb.SBCommandReturnObject()    
   # must be set to true otherwise we don't get any output on the first stop hook related to this
   debugger.SetAsync(False)
   # imitate the original 'r' alias plus the stop at entry and pass everything else as target argv[]
-  debugger.GetCommandInterpreter().HandleCommand("r", res)
-  print(f"Command 'r' succeeded? => {res.Succeeded()}")
-  print(res.GetOutput())
-  debugger.SetAsync(False)
-  debugger.GetCommandInterpreter().HandleCommand("b 4294983557", res)
-  print(f"Command 'b 4294983557' succeeded? => {res.Succeeded()}")
-  print(res.GetOutput())
-  debugger.GetCommandInterpreter().HandleCommand("continue", res)
-  print(f"Command 'continue' succeeded? => {res.Succeeded()}")
-  print(res.GetOutput())
-  debugger.GetCommandInterpreter().HandleCommand("pygui", res)
-  print(f"Command 'pygui' succeeded? => {res.Succeeded()}")
-  print(res.GetOutput())
+  print(f"NUM-TARGETS: {debugger.GetNumTargets()}")
+  if debugger.GetNumTargets() > 0:
+    print(f"TARGET-1: {debugger.GetTargetAtIndex(0)}")
+    target = debugger.GetTargetAtIndex(0)
+    
+    fname = "main"
+    main_bp = target.BreakpointCreateByName(fname, target.GetExecutable().GetFilename())
+    main_bp.AddName(fname)
+    print(main_bp)
+    
+    loop_bp = target.BreakpointCreateByAddress(0x100003f85) # 0x100003c90)
+    loop_bp.SetEnabled(True)
+    loop_bp.AddName("loop_bp")
+    loop_bp.SetScriptCallbackFunction("lldbpyGUI.breakpointHandler")
+#   loop_bp.SetCondition("$eax == 0x00000005")
+#   loop_bp.SetScriptCallbackFunction("disasm_ui.breakpointHandler")
+    print(loop_bp)
+    
+    loop_bp2 = target.BreakpointCreateByAddress(0x100003f6d) # 0x100003c90)
+    loop_bp2.SetEnabled(True)
+    loop_bp2.AddName("loop_bp2")
+    loop_bp2.SetCondition("$eax == 0x00000005")
+    loop_bp2.SetScriptCallbackFunction("lldbpyGUI.breakpointHandler")
+    print(loop_bp2)
+    
+    process = target.LaunchSimple(None, None, os.getcwd())
+    if process:
+#     pass
+      processGlob = process
+      state = process.GetState()
+#				print(self.process)
+      if state == lldb.eStateStopped:
+        print("state == lldb.eStateStopped")
+        
+#       TestCommand(debugger, command, result, dict)
+# debugger.GetCommandInterpreter().HandleCommand("r", res)
+# print(f"Command 'r' succeeded? => {res.Succeeded()}")
+# print(res.GetOutput())
+# debugger.SetAsync(False)
+# debugger.GetCommandInterpreter().HandleCommand("b 4294983557", res)
+# print(f"Command 'b 4294983557' succeeded? => {res.Succeeded()}")
+# print(res.GetOutput())
+# debugger.GetCommandInterpreter().HandleCommand("continue", res)
+# print(f"Command 'continue' succeeded? => {res.Succeeded()}")
+# print(res.GetOutput())
+# debugger.GetCommandInterpreter().HandleCommand("pygui", res)
+# print(f"Command 'pygui' succeeded? => {res.Succeeded()}")
+# print(res.GetOutput())
 # pass
+
+#pymobiledevice3GUIWindow = None
+#pymobiledevice3GUIApp = None
+#debuggerNG = None
+    
+#def run_gui_thread():
+#   pymobiledevice3GUIApp = QApplication([])
+#   # pymobiledevice3GUIApp.aboutToQuit.connect(close_application)
+#   
+#   pymobiledevice3GUIWindow = QConsoleTextEditWindow(debuggerNG)
+#   pymobiledevice3GUIWindow.show()
+# 
+##   sys.exit(pymobiledevice3GUIApp.exec())
+#   pymobiledevice3GUIApp.exec()
   
+
+
 def TestCommand(debugger, command, result, dict):
-    print("Hello World - TestCommand!!!")
-
+    print("STARTING LLDB-PyGUI!!!")
+#   debuggerNG = debugger
+#   debugger.SetAsync(True)
     pymobiledevice3GUIApp = QApplication([])
-    # pymobiledevice3GUIApp.aboutToQuit.connect(close_application)
-
-    pymobiledevice3GUIWindow = QConsoleTextEditWindow(debugger)
+    #   # pymobiledevice3GUIApp.aboutToQuit.connect(close_application)
+    #
+    pymobiledevice3GUIWindow = LLDBPyGUIWindow(debugger) # QConsoleTextEditWindow(debugger)
     pymobiledevice3GUIWindow.show()
-
-    sys.exit(pymobiledevice3GUIApp.exec())
+#
+##   sys.exit(pymobiledevice3GUIApp.exec())
+    pymobiledevice3GUIApp.exec()
+    
+#   gui_thread = threading.Thread(target=run_gui_thread)
+#   gui_thread.start()
+# 
+#   # Continue with other script tasks
+#   time.sleep(5)  # Simulate other work
+#   print("Script continues while GUI runs in a separate thread.")
+    
     return 0
     # also modify to stop at entry point since we can't set breakpoints before
 
