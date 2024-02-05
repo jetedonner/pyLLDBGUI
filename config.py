@@ -23,6 +23,7 @@ class ConfigClass():
 	toolbarIconSize = 24
 	
 	iconBug = None
+	iconBugGreen = None
 	iconStd = None
 	iconBPEnabled = None
 	iconBPDisabled = None
@@ -44,6 +45,7 @@ class ConfigClass():
 		
 		ConfigClass.iconStd = QIcon()
 		ConfigClass.iconBug = QIcon(os.path.join(resources_root, 'bug.png'))
+		ConfigClass.iconBugGreen = QIcon(os.path.join(resources_root, 'bug_green2.png'))
 		ConfigClass.iconBPEnabled = QIcon(os.path.join(resources_root, 'bug.png'))
 		ConfigClass.iconBPDisabled = QIcon(os.path.join(resources_root, 'bug_bw_greyscale.png'))
 		ConfigClass.iconBin = QIcon(os.path.join(resources_root, 'recyclebin.png'))

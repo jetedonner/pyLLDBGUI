@@ -26,11 +26,13 @@ from PyQt6.QConsoleTextEdit import *
 from ui.assemblerTextEdit import *
 from ui.registerTreeView import *
 from ui.fileInfoTableWidget import *
+from ui.fileStructureTreeView import *
 from ui.statisticsTreeWidget import *
 
 from worker.eventListenerWorker import *
 
 import lldbHelper
+from lldbutil import *
 from config import *
 
 APP_NAME = "LLDB-PyGUI"
@@ -115,10 +117,29 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.splitterFileInfos.addWidget(self.gbFileInfo)
 		
+		
+		
+		self.gbFileStruct = QGroupBox("File Structure")
+		self.gbFileStruct.setLayout(QHBoxLayout())
+		self.gbFileStruct.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Maximum)
+		
+		self.treFile = FileStructureTreeWidget()
+#		self.treFile.actionShowMemoryFrom.triggered.connect(self.handle_showMemoryFileStructureFrom)
+#		self.treFile.actionShowMemoryTo.triggered.connect(self.handle_showMemoryFileStructureTo)
+		
+		self.tabWidgetStruct = QWidget()
+		self.tabWidgetStruct.setLayout(QVBoxLayout())
+		self.tabWidgetStruct.layout().addWidget(self.treFile)
+		
+		self.gbFileStruct.layout().addWidget(self.tabWidgetStruct)
+		
+		self.splitterFileInfos.addWidget(self.gbFileStruct)
+		
 		self.gbFileStats = QGroupBox("File Statistics")
 		self.gbFileStats.setLayout(QHBoxLayout())
 		self.gbFileStats.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Maximum)
 		
+		self.splitterFileInfos.addWidget(self.gbFileStats)
 		self.treStats = QStatisticsTreeWidget()
 		self.tabWidgetStats = QWidget()
 		self.tabWidgetStats.setLayout(QVBoxLayout())
@@ -157,6 +178,38 @@ class LLDBPyGUIWindow(QMainWindow):
 		#				pass
 						frame = thread.GetFrameAtIndex(0)
 						if frame:
+							########################################################################
+							i = 0
+							addr = frame.GetPCAddress()
+							load_addr = addr.GetLoadAddress(target)
+							function = frame.GetFunction()
+							mod_name = frame.GetModule().GetFileSpec().GetFilename()
+							print(f'load_addr: {load_addr}')
+							if not function:
+								# No debug info for 'function'.
+								symbol = frame.GetSymbol()
+								file_addr = addr.GetFileAddress()
+								start_addr = symbol.GetStartAddress().GetFileAddress()
+								symbol_name = symbol.GetName()
+								symbol_offset = file_addr - start_addr
+								print(f'symbol_name: {symbol_name}')
+#								with open("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/my_output.txt", "w") as output:
+								print('  frame #{num}: {addr:#016x} {mod}`{symbol} + {offset}'.format(num=i, addr=load_addr, mod=mod_name, symbol=symbol_name, offset=symbol_offset))
+							else:
+								# Debug info is available for 'function'.
+								func_name = frame.GetFunctionName()
+								file_name = frame.GetLineEntry().GetFileSpec().GetFilename()
+								line_num = frame.GetLineEntry().GetLine()
+								print(f'function.GetStartAddress().GetFileAddress(): {function.GetStartAddress().	GetFileAddress()}')
+								print(f'func_name: {func_name}')
+#								with open("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/my_output.txt", "w") as output:
+								print('  frame #{num}: {addr:#016x} {mod}`{func} at {file}:{line} {args}'.format(num=i, addr=load_addr, mod=mod_name, func='%s [inlined]' % func_name if frame.IsInlined() else func_name, file=file_name, line=line_num, args=get_args_as_string(frame, showFuncName=False))) #args=get_args_as_string(frame, showFuncName=False)), output)
+								
+								
+								self.disassemble_instructions(function.GetInstructions(target), target)
+								
+							########################################################################
+#							...
 		#					self.sendProgressUpdate(25)
 			
 		#					if idx2 == 0:
@@ -223,7 +276,28 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.tblFileInfos.addRow("Num CMDs", str(mach_header.ncmds), hex(mach_header.ncmds))
 		self.tblFileInfos.addRow("Size CMDs", str(mach_header.sizeofcmds), hex(mach_header.sizeofcmds))
 		self.tblFileInfos.addRow("Flags", lldbHelper.MachoFlag.to_str(lldbHelper.MachoFlag.create_flag_value(mach_header.flags)), hex(mach_header.flags))
-		
+	
+	def disassemble_instructions(self, insts, target):
+		idx = 0
+		for i in insts:
+			if idx == 0:
+				print(dir(i))
+			print(i)
+			idx += 1
+			print(i.GetData(target))
+			self.txtMultiline.appendAsmTextNG(hex(i.GetAddress().GetFileAddress()), i.GetMnemonic(target) + " " + i.GetOperands(target), i.GetComment(target), str(i.GetData(target)).replace("                             ", "\t\t").replace("		            ", "\t\t\t").replace("		         ", "\t\t").replace("		      ", "\t\t").replace("			   ", "\t\t\t"), True, "")
+			
+#	def disassemble_instruction(self, insts, target):
+#		idx = 0
+#		for i in insts:
+#			if idx == 0:
+#				print(dir(i))
+#			print(i)
+#			idx += 1
+#			
+#			self.txtMultiline.appendAsmTextNG(hex(i.GetAddress().GetFileAddress()), i.GetMnemonic(target) + " " + i.GetOperands(target), "", "".replace("                             ", "\t\t").replace("		            ", "\t\t\t").replace("		         ", "\t\t").replace("		      ", "\t\t").replace("			   ", "\t\t\t"), True, "")
+			
+			
 	def loadFileStats(self, target):
 		statistics = target.GetStatistics()
 		stream = lldb.SBStream()

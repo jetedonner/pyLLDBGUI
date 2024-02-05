@@ -27,6 +27,8 @@ from PyQt6.QConsoleTextEdit import *
 from lldbpyGUIConfig import *
 from lldbpyGUIWindow import *
 
+from config import *
+
 # test terminal - idea from https://github.com/ant4g0nist/lisa.py/
 try:
     tty_rows, tty_columns = struct.unpack("hh", fcntl.ioctl(1, termios.TIOCGWINSZ, "1234"))
@@ -40,94 +42,94 @@ except Exception as e:
     print("\033[1m\033[31m[-] failed to find out terminal size.")
     print("[!] lldbinit is best experienced with a terminal size at least {}x{}\033[0m".format(MIN_COLUMNS, MIN_ROWS))
 
-def breakpointHandler(frame, bpno, err):
-  print("MLIR debugger attaching...")
-  print("IIIIIIIIINNNNNNNN CCCCAAQALLLLLLBBBAAACCKKKK")
-  
-class QConsoleTextEditWindow(QMainWindow):
-    
-    mytext = "thread #1: tid = 0xa8f62d, 0x0000000100003f40 hello_world_test_loop`main, queue = \x1b[32m'com.apple.main-thread'\x1b[0m, stop reason = \x1b[31mbreakpoint 1.1\x1b[0m\nthread #2: tid = 0xa8f62d, 0x0000000100003f40 hello_world_test_loop`main, queue = \x1b[35m'com.apple.main-thread'\x1b[0m, stop reason = \x1b[36mbreakpoint 1.1\x1b[0m"
-    debugger = None
-
-    def __init__(self, debugger):
-        super().__init__()
-        self.debugger = debugger
-        self.setWindowTitle(APP_NAME + " " + APP_VERSION)
-        self.setBaseSize(WINDOW_SIZE * 2, WINDOW_SIZE)
-        self.setMinimumSize(WINDOW_SIZE * 2, WINDOW_SIZE + 72)
-        
-        self.layout = QVBoxLayout()
-        # self.layoutV = QHBoxLayout()
-
-        self.centralWidget = QWidget(self)
-        self.centralWidget.setLayout(self.layout)
-        self.setCentralWidget(self.centralWidget)
-        self.txtConsole = QConsoleTextEdit()
-        self.cmdTest = QPushButton("CONTINUE")
-        self.cmdTest.clicked.connect(self.interruptProcess)
-        self.cmdTest2 = QPushButton("STEP NEXT")
-        self.cmdTest2.clicked.connect(self.stepNextProcess)
-        self.cmdTest3 = QPushButton("RE READ")
-        self.cmdTest3.clicked.connect(self.readProcess)
-        self.cmdTest4 = QPushButton("DI")
-        self.cmdTest4.clicked.connect(self.disassembleLocation)
-        self.cmdTest5 = QPushButton("Clear")
-        self.cmdTest5.clicked.connect(self.clearTxt)
-        self.layout.addWidget(self.cmdTest)
-        self.layout.addWidget(self.cmdTest2)
-        self.layout.addWidget(self.cmdTest3)
-        self.layout.addWidget(self.cmdTest4)
-        self.layout.addWidget(self.cmdTest5)
-        self.txtOutput = QConsoleTextEdit()
-        self.txtOutput.setFont(QFont("Courier New"))
-        self.layout.addWidget(self.txtOutput)
-        self.txtConsole.setText(self.mytext)
-        # self.txtConsole.appendText(self.mytext)
-        
-    def interruptProcess(self):
-        res = lldb.SBCommandReturnObject()
-        ci = self.debugger.GetCommandInterpreter()
-        # ci.HandleCommand("re read", res)
-        ci.HandleCommand("continue", res)
-        print(res.GetOutput())
-        self.txtOutput.appendEscapedText(res.GetOutput())
-        # ci.HandleCommand("n", res)
-
-    def stepNextProcess(self):
-        res = lldb.SBCommandReturnObject()
-        ci = self.debugger.GetCommandInterpreter()
-        # ci.HandleCommand("re read", res)
-        ci.HandleCommand("n", res)
-        print(res.GetOutput())
-        self.txtOutput.appendEscapedText(res.GetOutput())
-        # ci.HandleCommand("n", res)
-
-    def readProcess(self):
-        res = lldb.SBCommandReturnObject()
-        ci = self.debugger.GetCommandInterpreter()
-        # ci.HandleCommand("re read", res)
-        ci.HandleCommand("re read", res)
-        print(res.GetOutput())
-        self.txtOutput.appendEscapedText(res.GetOutput())
-        # ci.HandleCommand("n", res)
-
-    def disassembleLocation(self):
-        res = lldb.SBCommandReturnObject()
-        ci = self.debugger.GetCommandInterpreter()
-        # ci.HandleCommand("re read", res)
-        ci.HandleCommand("di", res)
-        print(res.GetOutput())
-        self.txtOutput.appendEscapedText(res.GetOutput())
-        
-    def clearTxt(self):
-        self.txtOutput.setEscapedText("")
-    
-
-    # we hook this so we have a chance to initialize/reset some stuff when targets are (re)run
-
-
-#def close_application():
-#   pass
+#def breakpointHandler(frame, bpno, err):
+# print("MLIR debugger attaching...")
+# print("IIIIIIIIINNNNNNNN CCCCAAQALLLLLLBBBAAACCKKKK")
+# 
+#class QConsoleTextEditWindow(QMainWindow):
+#   
+#   mytext = "thread #1: tid = 0xa8f62d, 0x0000000100003f40 hello_world_test_loop`main, queue = \x1b[32m'com.apple.main-thread'\x1b[0m, stop reason = \x1b[31mbreakpoint 1.1\x1b[0m\nthread #2: tid = 0xa8f62d, 0x0000000100003f40 hello_world_test_loop`main, queue = \x1b[35m'com.apple.main-thread'\x1b[0m, stop reason = \x1b[36mbreakpoint 1.1\x1b[0m"
+#   debugger = None
+#
+#   def __init__(self, debugger):
+#       super().__init__()
+#       self.debugger = debugger
+#       self.setWindowTitle(APP_NAME + " " + APP_VERSION)
+#       self.setBaseSize(WINDOW_SIZE * 2, WINDOW_SIZE)
+#       self.setMinimumSize(WINDOW_SIZE * 2, WINDOW_SIZE + 72)
+#       
+#       self.layout = QVBoxLayout()
+#       # self.layoutV = QHBoxLayout()
+#
+#       self.centralWidget = QWidget(self)
+#       self.centralWidget.setLayout(self.layout)
+#       self.setCentralWidget(self.centralWidget)
+#       self.txtConsole = QConsoleTextEdit()
+#       self.cmdTest = QPushButton("CONTINUE")
+#       self.cmdTest.clicked.connect(self.interruptProcess)
+#       self.cmdTest2 = QPushButton("STEP NEXT")
+#       self.cmdTest2.clicked.connect(self.stepNextProcess)
+#       self.cmdTest3 = QPushButton("RE READ")
+#       self.cmdTest3.clicked.connect(self.readProcess)
+#       self.cmdTest4 = QPushButton("DI")
+#       self.cmdTest4.clicked.connect(self.disassembleLocation)
+#       self.cmdTest5 = QPushButton("Clear")
+#       self.cmdTest5.clicked.connect(self.clearTxt)
+#       self.layout.addWidget(self.cmdTest)
+#       self.layout.addWidget(self.cmdTest2)
+#       self.layout.addWidget(self.cmdTest3)
+#       self.layout.addWidget(self.cmdTest4)
+#       self.layout.addWidget(self.cmdTest5)
+#       self.txtOutput = QConsoleTextEdit()
+#       self.txtOutput.setFont(QFont("Courier New"))
+#       self.layout.addWidget(self.txtOutput)
+#       self.txtConsole.setText(self.mytext)
+#       # self.txtConsole.appendText(self.mytext)
+#       
+#   def interruptProcess(self):
+#       res = lldb.SBCommandReturnObject()
+#       ci = self.debugger.GetCommandInterpreter()
+#       # ci.HandleCommand("re read", res)
+#       ci.HandleCommand("continue", res)
+#       print(res.GetOutput())
+#       self.txtOutput.appendEscapedText(res.GetOutput())
+#       # ci.HandleCommand("n", res)
+#
+#   def stepNextProcess(self):
+#       res = lldb.SBCommandReturnObject()
+#       ci = self.debugger.GetCommandInterpreter()
+#       # ci.HandleCommand("re read", res)
+#       ci.HandleCommand("n", res)
+#       print(res.GetOutput())
+#       self.txtOutput.appendEscapedText(res.GetOutput())
+#       # ci.HandleCommand("n", res)
+#
+#   def readProcess(self):
+#       res = lldb.SBCommandReturnObject()
+#       ci = self.debugger.GetCommandInterpreter()
+#       # ci.HandleCommand("re read", res)
+#       ci.HandleCommand("re read", res)
+#       print(res.GetOutput())
+#       self.txtOutput.appendEscapedText(res.GetOutput())
+#       # ci.HandleCommand("n", res)
+#
+#   def disassembleLocation(self):
+#       res = lldb.SBCommandReturnObject()
+#       ci = self.debugger.GetCommandInterpreter()
+#       # ci.HandleCommand("re read", res)
+#       ci.HandleCommand("di", res)
+#       print(res.GetOutput())
+#       self.txtOutput.appendEscapedText(res.GetOutput())
+#       
+#   def clearTxt(self):
+#       self.txtOutput.setEscapedText("")
+#   
+#
+#   # we hook this so we have a chance to initialize/reset some stuff when targets are (re)run
+#
+#
+##def close_application():
+##   pass
 
 
 def __lldb_init_module(debugger, internal_dict):
@@ -248,19 +250,35 @@ def StartTestingEnv(debugger, command, result, dict):
 #   pymobiledevice3GUIApp.exec()
   
 
-
+def close_application():
+##   global process
+# # Stop all running tasks in the thread pool
+# if lldbHelper.process:
+#   pymobiledevice3GUIWindow.interruptLoadWorker.interruptTargetLoadSignal.emit()
+#   QCoreApplication.processEvents()
+#   print("KILLING PROCESS")
+#   lldbHelper.process.Kill()
+# else:
+#   print("NO PROCESS TO KILL!!!")
+##   global pymobiledevice3GUIApp
+##   pymobiledevice3GUIApp.quit()
+    pass
+    
 def TestCommand(debugger, command, result, dict):
     print("STARTING LLDB-PyGUI!!!")
 #   debuggerNG = debugger
 #   debugger.SetAsync(True)
     pymobiledevice3GUIApp = QApplication([])
-    #   # pymobiledevice3GUIApp.aboutToQuit.connect(close_application)
+    pymobiledevice3GUIApp.aboutToQuit.connect(close_application)
+    
     #
+    ConfigClass.initIcons()
+    pymobiledevice3GUIApp.setWindowIcon(ConfigClass.iconBugGreen)
+    
     pymobiledevice3GUIWindow = LLDBPyGUIWindow(debugger) # QConsoleTextEditWindow(debugger)
     pymobiledevice3GUIWindow.show()
-#
 ##   sys.exit(pymobiledevice3GUIApp.exec())
-    pymobiledevice3GUIApp.exec()
+    sys.exit(pymobiledevice3GUIApp.exec())
     
 #   gui_thread = threading.Thread(target=run_gui_thread)
 #   gui_thread.start()
