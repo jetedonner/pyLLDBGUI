@@ -248,9 +248,13 @@ def StartTestingEnv(debugger, command, result, dict):
 # 
 ##   sys.exit(pymobiledevice3GUIApp.exec())
 #   pymobiledevice3GUIApp.exec()
-  
+
+global pymobiledevice3GUIWindow
+pymobiledevice3GUIWindow = None
 
 def close_application():
+    pymobiledevice3GUIWindow.interruptEventListenerWorker.interruptEventListener.emit()
+    pymobiledevice3GUIWindow.interruptLoadSourceWorker.interruptLoadSource.emit()
 ##   global process
 # # Stop all running tasks in the thread pool
 # if lldbHelper.process:
@@ -275,6 +279,7 @@ def TestCommand(debugger, command, result, dict):
     ConfigClass.initIcons()
     pymobiledevice3GUIApp.setWindowIcon(ConfigClass.iconBugGreen)
     
+    global pymobiledevice3GUIWindow
     pymobiledevice3GUIWindow = LLDBPyGUIWindow(debugger) # QConsoleTextEditWindow(debugger)
     pymobiledevice3GUIWindow.show()
 ##   sys.exit(pymobiledevice3GUIApp.exec())

@@ -30,10 +30,12 @@ from ui.fileStructureTreeView import *
 from ui.statisticsTreeWidget import *
 
 from worker.eventListenerWorker import *
+from worker.loadSourceWorker import *
 
 import lldbHelper
 from lldbutil import *
 from config import *
+from dbgHelper import *
 
 APP_NAME = "LLDB-PyGUI"
 WINDOW_SIZE = 680
@@ -46,6 +48,8 @@ class LLDBPyGUIWindow(QMainWindow):
 #	regTreeList = []
 	
 	debugger = None
+	interruptEventListenerWorker = None
+	interruptLoadSourceWorker = None
 	
 	def __init__(self, debugger):
 		super().__init__()
@@ -58,6 +62,13 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.toolbar = QToolBar('Main ToolBar')
 		self.addToolBar(Qt.ToolBarArea.LeftToolBarArea, self.toolbar)
 		self.toolbar.setIconSize(QSize(ConfigClass.toolbarIconSize, ConfigClass.toolbarIconSize))
+		
+		# new menu item
+		self.load_action = QAction(ConfigClass.iconBug, '&Load Target', self)
+		self.load_action.setStatusTip('Load Target')
+		self.load_action.setShortcut('Ctrl+L')
+		self.load_action.triggered.connect(self.load_clicked)
+		self.toolbar.addAction(self.load_action)
 		
 		self.statusBar = QStatusBar()
 		self.setStatusBar(self.statusBar)
@@ -93,7 +104,12 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.tabWidgetReg = QTabWidget()
 		
 		self.tabWidgetDbg.addTab(self.tabWidgetReg, "Register")
-		self.tabWidgetDbg.addTab(QConsoleTextEdit(), "Source")
+		self.txtSource = QConsoleTextEdit()
+		self.txtSource.setFont(ConfigClass.font)
+		self.gbpSource = QGroupBox("Source")
+		self.gbpSource.setLayout(QHBoxLayout())
+		self.gbpSource.layout().addWidget(self.txtSource)
+		self.tabWidgetDbg.addTab(self.gbpSource, "Source")
 		self.tabWidgetDbg.addTab(QTextEdit(), "Break-/Watchpoints")
 		self.tabWidgetDbg.addTab(QTextEdit(), "Threads/Frames")
 		
@@ -159,6 +175,9 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.centralWidget.setLayout(self.layout)        
 		self.setCentralWidget(self.centralWidget)
 		
+		self.interruptEventListenerWorker = EventListenerReceiver()
+		self.interruptLoadSourceWorker = LoadSourceCodeReceiver()
+		
 		self.threadpool = QThreadPool()
 		
 		print(f"NUM-TARGETS: {self.debugger.GetNumTargets()}")
@@ -207,6 +226,62 @@ class LLDBPyGUIWindow(QMainWindow):
 								
 								
 								self.disassemble_instructions(function.GetInstructions(target), target)
+							
+							
+							for symbol in frame.GetModule():
+								name = symbol.GetName()
+								saddr = symbol.GetStartAddress()
+								eaddr = symbol.GetEndAddress()
+								type = symbol.GetType()
+								
+								print(f'- SYM: {name} => {saddr} - {eaddr} ({type})')
+							
+							
+							module = frame.GetModule()
+#								self.signals.loadSections.emit(frame.GetModule())
+#								QCoreApplication.processEvents()
+							
+							print('Number of sections: %d' % module.GetNumSections())
+							for sec in module.section_iter():
+								print(sec)
+								print(sec.GetName())
+								print(f'GetFileByteSize() == {hex(sec.GetFileByteSize())}')
+								print(f'GetByteSize() == {hex(sec.GetByteSize())}')
+								
+								print(f'GetSectionType: {sec.GetSectionType()} / {lldbHelper.SectionTypeString(sec.GetSectionType())}')
+								
+					#           for inin in dir(sec):
+					#               print(inin)
+								
+								sectionNode = QTreeWidgetItem(self.treFile, [sec.GetName(), str(hex(sec.GetFileAddress())), str(hex(sec.GetFileAddress() + sec.GetByteSize())), hex(sec.GetFileByteSize()) + " / " + hex(sec.GetByteSize()), lldbHelper.SectionTypeString(sec.GetSectionType()) + " (" + str(sec.GetSectionType()) + ")"])
+					#           for jete in dir(sec):
+					#               print(jete)
+								INDENT = "\t"
+								INDENT2 = "\t\t"
+					#           if sec.GetName() == "__TEXT":
+								# Iterates the text section and prints each symbols within each sub-section.
+					#           for subsec2 in sec:
+					#               print(subsec2.GetName())
+					#               print(INDENT + repr(subsec2))
+					#               for sym in module.symbol_in_section_iter(subsec2):
+					#                   print(sym.GetName())
+					#                   print(INDENT2 + repr(sym))
+					#                   print(INDENT2 + 'symbol type: %s' % str(sym.GetType())) # symbol_type_to_str
+								
+								for jete2 in range(sec.GetNumSubSections()):
+									print(sec.GetSubSectionAtIndex(jete2).GetName())
+									
+									subSec = sec.GetSubSectionAtIndex(jete2)
+									
+									subSectionNode = QTreeWidgetItem(sectionNode, [subSec.GetName(), str(hex(subSec.GetFileAddress())), str(hex(subSec.GetFileAddress() + subSec.GetByteSize())), hex(subSec.GetFileByteSize()) + " / " + hex(subSec.GetByteSize()), lldbHelper.SectionTypeString(subSec.GetSectionType()) + " (" + str(subSec.GetSectionType()) + ")"])
+									
+									for sym in module.symbol_in_section_iter(subSec):
+										subSectionNode2 = QTreeWidgetItem(subSectionNode, [sym.GetName(), str(hex(sym.GetStartAddress().GetFileAddress())), str(hex(sym.GetEndAddress().GetFileAddress())), hex(sym.GetSize()), 'Symbol'])
+										print(dir(sym))
+										print(sym.GetName())
+										print(INDENT2 + repr(sym))
+										print(INDENT2 + 'symbol type: %s' % str(sym.GetType())) # symbol_type_to_str
+							pass
 								
 							########################################################################
 #							...
@@ -261,8 +336,21 @@ class LLDBPyGUIWindow(QMainWindow):
 #									QCoreApplication.processEvents()
 									registerDetailNode = QTreeWidgetItem(treDet, [child.GetName(), child.GetValue(), memoryValue])
 						
-						self.start_eventListenerWorker(self.debugger)
-#						process.Continue()	
+						self.start_eventListenerWorker(self.debugger, self.interruptEventListenerWorker)
+						self.start_loadSourceWorker(self.debugger, "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/hello_world/hello_world_test.c", self.interruptLoadSourceWorker)
+#						process.Continue()
+						
+	def load_clicked(self, s):
+		dialog = QFileDialog(None, "Select executable or library", "", "All Files (*.*)")
+		dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
+		dialog.setNameFilter("Executables (*.exe *.com *.bat *);;Libraries (*.dll *.so *.dylib)")
+		
+		if dialog.exec():
+			filename = dialog.selectedFiles()[0]
+			print(filename)
+#			self.start_workerLoadTarget(filename)
+		else:
+			return None
 	
 	def loadFileInfo(self, target):
 		self.setWindowTitle(APP_NAME + " " + APP_VERSION + " - " + os.path.basename(target))
@@ -307,11 +395,24 @@ class LLDBPyGUIWindow(QMainWindow):
 			
 			self.treStats.loadJSON(str(stream.GetData()))
 		
-	def start_eventListenerWorker(self, debugger):
-		workerEventListener = EventListenerWorker(debugger)
+	def start_eventListenerWorker(self, debugger, event_listener):
+		workerEventListener = EventListenerWorker(debugger, event_listener)
 #		workerEventListener.signals.finished.connect(self.handle_commandFinished)
 		
 		self.threadpool.start(workerEventListener)
+		
+	def start_loadSourceWorker(self, debugger, sourceFile, event_listener):
+		self.workerLoadSource = LoadSourceCodeWorker(debugger, sourceFile, event_listener)
+		self.workerLoadSource.signals.finished.connect(self.handle_loadSourceFinished)
+		
+		self.threadpool.start(self.workerLoadSource)
+		
+	def handle_loadSourceFinished(self, sourceCode):
+		if sourceCode != "":
+			log(sourceCode)
+			self.txtSource.setEscapedText(sourceCode) # 
+		else:
+			self.txtSource.setText("<Source code NOT available>")
 		
 	def read_memory(self, process, address, size):
 		error = lldb.SBError()

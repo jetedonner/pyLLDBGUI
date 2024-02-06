@@ -33,11 +33,13 @@ class EventListenerWorker(QRunnable):
 	
 	debugger = None
 	
-	def __init__(self, debugger):
+	def __init__(self, debugger, data_receiver):
 		super(EventListenerWorker, self).__init__()
 		self.debugger = debugger
 		self.isEventListenerActive = False
 		self.signals = EventListenerWorkerSignals()
+		self.data_receiver = data_receiver
+		self.data_receiver.interruptEventListener.connect(self.handle_interruptEventListener)
 		
 	def run(self):
 		self.runEventListener()
@@ -91,4 +93,5 @@ class EventListenerWorker(QRunnable):
 	def handle_interruptEventListener(self):
 #		print(f"Received interrupt in the sysLog worker thread")
 #		self.isSysLogActive = False
+		interruptEventListener = True
 		pass

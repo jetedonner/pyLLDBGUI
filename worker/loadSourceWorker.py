@@ -24,7 +24,7 @@ import lldbHelper
 interruptLoadSourceCode = False
 
 class LoadSourceCodeReceiver(QObject):
-	interruptLoadSourceCode = pyqtSignal()
+	interruptLoadSource = pyqtSignal()
 	
 class LoadSourceCodeWorkerSignals(QObject):
 	finished = pyqtSignal(str)
@@ -33,12 +33,16 @@ class LoadSourceCodeWorkerSignals(QObject):
 class LoadSourceCodeWorker(QRunnable):
 	
 	sourceFile = ''
+	debugger = None
 	
-	def __init__(self, sourceFile):
+	def __init__(self, debugger, sourceFile, data_receiver):
 		super(LoadSourceCodeWorker, self).__init__()
 		self.isLoadSourceCodeActive = False
+		self.debugger = debugger
 		self.sourceFile = sourceFile
+		self.data_receiver = data_receiver
 		self.signals = LoadSourceCodeWorkerSignals()
+		self.data_receiver.interruptLoadSource.connect(self.handle_interruptLoadSourceCode)
 		
 	def run(self):
 		self.runLoadSourceCode()
@@ -69,7 +73,7 @@ class LoadSourceCodeWorker(QRunnable):
 		
 		# Create the filespec for 'main.c'.
 		filespec = lldb.SBFileSpec(self.sourceFile, False)
-		source_mgr = lldbHelper.debugger.GetSourceManager()
+		source_mgr = self.debugger.GetSourceManager()
 		# Use a string stream as the destination.
 		stream = lldb.SBStream()
 		source_mgr.DisplaySourceLinesWithLineNumbers(filespec, 1, 0, 64, '=>', stream)
@@ -82,5 +86,5 @@ class LoadSourceCodeWorker(QRunnable):
 		
 	def handle_interruptLoadSourceCode(self):
 #		print(f"Received interrupt in the sysLog worker thread")
-#		self.isSysLogActive = False
+		interruptLoadSourceCode = True
 		pass
