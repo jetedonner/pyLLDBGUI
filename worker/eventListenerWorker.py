@@ -32,6 +32,7 @@ class EventListenerWorkerSignals(QObject):
 class EventListenerWorker(QRunnable):
 	
 	debugger = None
+	listener = None
 	
 	def __init__(self, debugger, data_receiver):
 		super(EventListenerWorker, self).__init__()
@@ -71,27 +72,34 @@ class EventListenerWorker(QRunnable):
 #		self.isEventListenerActive = False
 #		self.signals.finished.emit(res)
 #		QCoreApplication.processEvents()
-		listener = self.debugger.GetListener()
+		self.listener = self.debugger.GetListener()
 		self.debugger.GetTargetAtIndex(0).GetProcess().Continue()
 		# sign up for process state change events
 		stop_idx = 0
-		interruptEventListener = False
-		while not interruptEventListener:
-			event = lldb.SBEvent()
-			if listener.WaitForEvent(lldb.UINT32_MAX, event):
-				if lldb.SBProcess.EventIsProcessEvent(event):
-					state = lldb.SBProcess.GetStateFromEvent(event)
-					if state == lldb.eStateInvalid:
-						# Not a state event
-						print('process event = %s' % (event))
-					else:
-						print("process state changed event: %s" % (lldb.SBDebugger.StateAsCString(state)))
+#		interruptEventListener = False
+#		while not interruptEventListener:
+#			event = lldb.SBEvent()
+#			print(f'BEFORE ---- NEW EVENT: {event}')
+#			if self.listener.WaitForEvent(lldb.UINT32_MAX, event):
+#				print(f'NEW EVENT: {event}')
+#				if lldb.SBProcess.EventIsProcessEvent(event):
+#					state = lldb.SBProcess.GetStateFromEvent(event)
+#					if state == lldb.eStateInvalid:
+#						# Not a state event
+#						print('process event = %s' % (event))
+#					else:
+#						print("process state changed event: %s" % (lldb.SBDebugger.StateAsCString(state)))
+#			QCoreApplication.processEvents()
+		print("interruptEventListener == TRUE")
 		self.signals.finished.emit(None)
 		QCoreApplication.processEvents()
 
 		
 	def handle_interruptEventListener(self):
+		print("IN handle_interruptEventListener ....")
 #		print(f"Received interrupt in the sysLog worker thread")
 #		self.isSysLogActive = False
 		interruptEventListener = True
+#		self.listener.StopListeningForEvents()
+		QCoreApplication.processEvents()
 		pass

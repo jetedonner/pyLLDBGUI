@@ -87,4 +87,5 @@ class LoadSourceCodeWorker(QRunnable):
 	def handle_interruptLoadSourceCode(self):
 #		print(f"Received interrupt in the sysLog worker thread")
 		interruptLoadSourceCode = True
+		QCoreApplication.processEvents()
 		pass

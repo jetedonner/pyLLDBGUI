@@ -255,15 +255,17 @@ pymobiledevice3GUIWindow = None
 def close_application():
     pymobiledevice3GUIWindow.interruptEventListenerWorker.interruptEventListener.emit()
     pymobiledevice3GUIWindow.interruptLoadSourceWorker.interruptLoadSource.emit()
+    QCoreApplication.processEvents()
+    print("close_application()")
 ##   global process
 # # Stop all running tasks in the thread pool
-# if lldbHelper.process:
+    if pymobiledevice3GUIWindow.process:
 #   pymobiledevice3GUIWindow.interruptLoadWorker.interruptTargetLoadSignal.emit()
 #   QCoreApplication.processEvents()
-#   print("KILLING PROCESS")
-#   lldbHelper.process.Kill()
-# else:
-#   print("NO PROCESS TO KILL!!!")
+        print("KILLING PROCESS")
+        pymobiledevice3GUIWindow.process.Kill()
+    else:
+        print("NO PROCESS TO KILL!!!")
 ##   global pymobiledevice3GUIApp
 ##   pymobiledevice3GUIApp.quit()
     pass

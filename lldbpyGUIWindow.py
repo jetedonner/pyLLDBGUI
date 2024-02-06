@@ -28,6 +28,7 @@ from ui.registerTreeView import *
 from ui.fileInfoTableWidget import *
 from ui.fileStructureTreeView import *
 from ui.statisticsTreeWidget import *
+from ui.breakpointTableWidget import *
 
 from worker.eventListenerWorker import *
 from worker.loadSourceWorker import *
@@ -50,6 +51,7 @@ class LLDBPyGUIWindow(QMainWindow):
 	debugger = None
 	interruptEventListenerWorker = None
 	interruptLoadSourceWorker = None
+	process = None
 	
 	def __init__(self, debugger):
 		super().__init__()
@@ -110,7 +112,14 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.gbpSource.setLayout(QHBoxLayout())
 		self.gbpSource.layout().addWidget(self.txtSource)
 		self.tabWidgetDbg.addTab(self.gbpSource, "Source")
-		self.tabWidgetDbg.addTab(QTextEdit(), "Break-/Watchpoints")
+		
+		self.tblBPs = BreakpointsTableWidget(self)
+#		self.tabBPs = QWidget()
+#		self.tabBPs.setLayout(QVBoxLayout())
+#		self.tabBPs.layout().addWidget(self.tblBPs)
+#		self.tabWidget.addTab(self.tabBPs, "Breakpoints")
+		
+		self.tabWidgetDbg.addTab(self.tblBPs, "Break-/Watchpoints")
 		self.tabWidgetDbg.addTab(QTextEdit(), "Threads/Frames")
 		
 		self.tabWidgetMain = QTabWidget()
@@ -187,12 +196,57 @@ class LLDBPyGUIWindow(QMainWindow):
 			target = self.debugger.GetTargetAtIndex(0)
 			
 			if target:
+				print("======== START BP INTER =========")
+				for b in target.breakpoint_iter():
+					print(b)
+				print("========= END BP INTER ==========")
+				
+				idx = 0
+				for i in range(target.GetNumBreakpoints()):
+					idx += 1
+		#           print(dir(lldbHelper.target.GetBreakpointAtIndex(i)))
+					bp_cur = target.GetBreakpointAtIndex(i)
+					print(bp_cur)
+					for bl in bp_cur:
+						# Make sure the name list has the remaining name:
+						name_list = lldb.SBStringList()
+						bp_cur.GetNames(name_list)
+		#               print(name_list)
+		#               print(len(name_list))
+		#               print(name_list.GetSize())
+						num_names = name_list.GetSize()
+		#               self.assertEquals(
+		#                   num_names, 1, "Name list has %d items, expected 1." % (num_names)
+		#               )
+						
+						name = name_list.GetStringAtIndex(0)
+		#               self.assertEquals(
+		#                   name,
+		#                   other_bkpt_name,
+		#                   "Remaining name was: %s expected %s." % (name, other_bkpt_name),
+		#               )
+		#               print(dir(bl))
+		#               bp_cur = lldbHelper.target.GetBreakpointAtIndex(i)
+		#               print(bl)
+		#               print(dir(bl))
+		#               print(bl.GetQueueName())
+		#               print(get_description(bp_cur))
+		#               print(dir(get_description(bp_cur)))
+						
+						
+						self.txtMultiline.table.toggleBPAtAddress(hex(bl.GetLoadAddress()), False)
+						
+						
+#						self.tblBPs.resetContent()
+						self.tblBPs.addRow(bp_cur.GetID(), idx, hex(bl.GetLoadAddress()), name, str(bp_cur.GetHitCount()), bp_cur.GetCondition())
+		#               print(f'LOADING BREAKPOINT AT ADDRESS: {hex(bl.GetLoadAddress())}')
+				
 				self.loadFileInfo(target.GetExecutable().GetFilename())
 				self.loadFileStats(target)
 				
-				process = target.GetProcess()
-				if process:
-					thread = process.GetThreadAtIndex(0)
+				self.process = target.GetProcess()
+				if self.process:
+					thread = self.process.GetThreadAtIndex(0)
 					if thread:
 		#				pass
 						frame = thread.GetFrameAtIndex(0)
@@ -239,7 +293,7 @@ class LLDBPyGUIWindow(QMainWindow):
 							
 							module = frame.GetModule()
 #								self.signals.loadSections.emit(frame.GetModule())
-#								QCoreApplication.processEvents()
+#								QCoreApplication.self.processEvents()
 							
 							print('Number of sections: %d' % module.GetNumSections())
 							for sec in module.section_iter():
@@ -321,7 +375,7 @@ class LLDBPyGUIWindow(QMainWindow):
 										size = 32  # Adjust the size based on your data type (e.g., int, float)
 										
 										# Read memory and print the result
-										data = self.read_memory(process, target.ResolveLoadAddress(int(child.GetValue(), 16)), size)
+										data = self.read_memory(self.process, target.ResolveLoadAddress(int(child.GetValue(), 16)), size)
 										
 										hex_string = ''.join("%02x" % byte for byte in data)
 										
@@ -333,13 +387,15 @@ class LLDBPyGUIWindow(QMainWindow):
 										pass
 										
 #									self.signals.loadRegisterValue.emit(currReg, child.GetName(), child.GetValue(), memoryValue)
-#									QCoreApplication.processEvents()
+#									QCoreApplication.self.processEvents()
 									registerDetailNode = QTreeWidgetItem(treDet, [child.GetName(), child.GetValue(), memoryValue])
 						
 						self.start_eventListenerWorker(self.debugger, self.interruptEventListenerWorker)
 						self.start_loadSourceWorker(self.debugger, "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/hello_world/hello_world_test.c", self.interruptLoadSourceWorker)
-#						process.Continue()
-						
+#						self.process.Continue()
+				
+
+		
 	def load_clicked(self, s):
 		dialog = QFileDialog(None, "Select executable or library", "", "All Files (*.*)")
 		dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
