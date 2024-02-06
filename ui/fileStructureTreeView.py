@@ -22,11 +22,12 @@ class FileStructureTreeWidget(QTreeWidget):
 		self.actionShowMemoryTo = self.context_menu.addAction("Show memory after End")
 		
 		self.setFont(ConfigClass.font)
-		self.setHeaderLabels(['Sections / Symbols', 'Address From', 'Address To', 'File- / Byte-Size', 'Type'])
+		self.setHeaderLabels(['Sections / Symbols', 'Address From', 'Address To', 'File-Size', 'Byte-Size', 'Type'])
 		self.header().resizeSection(0, 196)
 		self.header().resizeSection(1, 128)
 		self.header().resizeSection(2, 128)
-		self.header().resizeSection(3, 256)
+		self.header().resizeSection(3, 128)
+		self.header().resizeSection(4, 256)
 		
 	def contextMenuEvent(self, event):
 		# Show the context menu

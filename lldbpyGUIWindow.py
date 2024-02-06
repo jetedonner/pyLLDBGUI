@@ -83,7 +83,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.layout = QVBoxLayout()
 		
-		self.txtMultiline = AssemblerTextEdit()
+		self.txtMultiline = AssemblerTextEditNG()
 #		self.txtMultiline.table.actionShowMemory.triggered.connect(self.handle_showMemory)
 #		self.txtMultiline.table.sigEnableBP.connect(self.handle_enableBP)
 #		self.txtMultiline.table.sigBPOn.connect(self.handle_BPOn)
@@ -253,7 +253,7 @@ class LLDBPyGUIWindow(QMainWindow):
 					#           for inin in dir(sec):
 					#               print(inin)
 								
-								sectionNode = QTreeWidgetItem(self.treFile, [sec.GetName(), str(hex(sec.GetFileAddress())), str(hex(sec.GetFileAddress() + sec.GetByteSize())), hex(sec.GetFileByteSize()) + " / " + hex(sec.GetByteSize()), lldbHelper.SectionTypeString(sec.GetSectionType()) + " (" + str(sec.GetSectionType()) + ")"])
+								sectionNode = QTreeWidgetItem(self.treFile, [sec.GetName(), str(hex(sec.GetFileAddress())), str(hex(sec.GetFileAddress() + sec.GetByteSize())), hex(sec.GetFileByteSize()), hex(sec.GetByteSize()), lldbHelper.SectionTypeString(sec.GetSectionType()) + " (" + str(sec.GetSectionType()) + ")"])
 					#           for jete in dir(sec):
 					#               print(jete)
 								INDENT = "\t"
@@ -373,7 +373,7 @@ class LLDBPyGUIWindow(QMainWindow):
 			print(i)
 			idx += 1
 			print(i.GetData(target))
-			self.txtMultiline.appendAsmTextNG(hex(i.GetAddress().GetFileAddress()), i.GetMnemonic(target) + " " + i.GetOperands(target), i.GetComment(target), str(i.GetData(target)).replace("                             ", "\t\t").replace("		            ", "\t\t\t").replace("		         ", "\t\t").replace("		      ", "\t\t").replace("			   ", "\t\t\t"), True, "")
+			self.txtMultiline.appendAsmTextNG(hex(i.GetAddress().GetFileAddress()), i.GetMnemonic(target),  i.GetOperands(target), i.GetComment(target), str(i.GetData(target)).replace("                             ", "\t\t").replace("		            ", "\t\t\t").replace("		         ", "\t\t").replace("		      ", "\t\t").replace("			   ", "\t\t\t"), True, "")
 			
 #	def disassemble_instruction(self, insts, target):
 #		idx = 0
