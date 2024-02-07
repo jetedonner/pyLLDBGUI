@@ -35,6 +35,7 @@ from ui.historyLineEdit import *
 
 from worker.eventListenerWorker import *
 from worker.loadSourceWorker import *
+from worker.execCommandWorker import *
 
 import lldbHelper
 from lldbutil import *
@@ -522,18 +523,42 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.txtConsole.setText("")
 		
 	def click_execCommand(self):
-#		newCommand = self.txtCmd.text()
-#		
-#		if len(self.txtCmd.lstCommands) > 0:
-#			if self.txtCmd.lstCommands[len(self.txtCmd.lstCommands) - 1] != newCommand:
-#				self.txtCmd.lstCommands.append(newCommand)
-#				self.txtCmd.currCmd = len(self.txtCmd.lstCommands) - 1
-#		else:
-#			self.txtCmd.lstCommands.append(newCommand)
-#			self.txtCmd.currCmd = len(self.txtCmd.lstCommands) - 1
-#			
-#		self.start_execCommandWorker(newCommand)
+		print("EXEC COMMAND!!!!")
+		newCommand = self.txtCmd.text()
+		
+		if len(self.txtCmd.lstCommands) > 0:
+			if self.txtCmd.lstCommands[len(self.txtCmd.lstCommands) - 1] != newCommand:
+				self.txtCmd.lstCommands.append(newCommand)
+				self.txtCmd.currCmd = len(self.txtCmd.lstCommands) - 1
+			else:
+				self.txtCmd.lstCommands.append(newCommand)
+				self.txtCmd.currCmd = len(self.txtCmd.lstCommands) - 1
+					
+		self.start_execCommandWorker(newCommand)
 		pass
+		
+	def start_execCommandWorker(self, command):
+		workerExecCommand = ExecCommandWorker(self.debugger, command)
+		workerExecCommand.signals.finished.connect(self.handle_commandFinished)
+		
+		self.threadpool.start(workerExecCommand)
+		
+	def handle_commandFinished(self, res):
+#       print(res.Succeeded())
+#       print(res.GetError())
+#       if "\x1b[32m" in res.GetOutput():
+#           print("KIM YOU ARE THE MAN!!!")
+#       else:
+#           print("KIM YOU NOT ARE THE MAN!!!")
+		
+		if res.Succeeded():
+			self.txtConsole.appendEscapedText(res.GetOutput())
+		else:
+			self.txtConsole.appendEscapedText(f"{res.GetError()}")
+			
+		if self.swtAutoscroll.isChecked():
+			self.sb = self.txtConsole.verticalScrollBar()
+			self.sb.setValue(self.sb.maximum())
 		
 	def load_clicked(self, s):
 		dialog = QFileDialog(None, "Select executable or library", "", "All Files (*.*)")

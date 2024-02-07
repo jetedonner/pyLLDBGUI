@@ -181,7 +181,7 @@ def StartTestingEnv(debugger, command, result, dict):
   print(f"| Author / Copyright:                                                             |")
   print(f"| Kim David Hauser (JeTeDonner), (c) by kimhauser.ch 1991-2024                    |")
   print(f"#=================================================================================#")
-  res = lldb.SBCommandReturnObject()    
+# res = lldb.SBCommandReturnObject()    
   # must be set to true otherwise we don't get any output on the first stop hook related to this
   debugger.SetAsync(True)
   # imitate the original 'r' alias plus the stop at entry and pass everything else as target argv[]

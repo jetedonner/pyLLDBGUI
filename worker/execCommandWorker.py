@@ -31,9 +31,12 @@ class ExecCommandWorkerSignals(QObject):
 	
 class ExecCommandWorker(QRunnable):
 	
-	def __init__(self, command):
+	debugger = None
+	
+	def __init__(self, debugger, command):
 		super(ExecCommandWorker, self).__init__()
 		self.isExecCommandActive = False
+		self.debugger = debugger
 		self.command = command
 		self.signals = ExecCommandWorkerSignals()
 		
@@ -54,7 +57,7 @@ class ExecCommandWorker(QRunnable):
 		
 		
 		# Get the command interpreter
-		command_interpreter = lldbHelper.debugger.GetCommandInterpreter()
+		command_interpreter = self.debugger.GetCommandInterpreter()
 		
 		# Execute the 'frame variable' command
 		command_interpreter.HandleCommand(self.command, res)
