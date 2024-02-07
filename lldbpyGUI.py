@@ -156,7 +156,7 @@ def __lldb_init_module(debugger, internal_dict):
     ci.HandleCommand(f"settings set prompt \"({PROMPT_TEXT}) \"", res)
     ci.HandleCommand("settings set stop-disassembly-count 0", res)
     # set the log level - must be done on startup?
-    ci.HandleCommand("settings set target.process.extra-startup-command QSetLogging:bitmask=" + CONFIG_LOG_LEVEL + ";", res)
+#   ci.HandleCommand("settings set target.process.extra-startup-command QSetLogging:bitmask=" + CONFIG_LOG_LEVEL + ";", res)
     if CONFIG_USE_CUSTOM_DISASSEMBLY_FORMAT == 1:
         ci.HandleCommand("settings set disassembly-format " + CUSTOM_DISASSEMBLY_FORMAT, res)
 
@@ -183,7 +183,7 @@ def StartTestingEnv(debugger, command, result, dict):
   print(f"#=================================================================================#")
   res = lldb.SBCommandReturnObject()    
   # must be set to true otherwise we don't get any output on the first stop hook related to this
-  debugger.SetAsync(False)
+  debugger.SetAsync(True)
   # imitate the original 'r' alias plus the stop at entry and pass everything else as target argv[]
   print(f"NUM-TARGETS: {debugger.GetNumTargets()}")
   if debugger.GetNumTargets() > 0:
@@ -252,8 +252,11 @@ def StartTestingEnv(debugger, command, result, dict):
 global pymobiledevice3GUIWindow
 pymobiledevice3GUIWindow = None
 
+global pymobiledevice3GUIApp
+pymobiledevice3GUIApp = None
+
 def close_application():
-    pymobiledevice3GUIWindow.interruptEventListenerWorker.interruptEventListener.emit()
+#   pymobiledevice3GUIWindow.interruptEventListenerWorker.interruptEventListener.emit()
     pymobiledevice3GUIWindow.interruptLoadSourceWorker.interruptLoadSource.emit()
     QCoreApplication.processEvents()
     print("close_application()")
@@ -266,17 +269,18 @@ def close_application():
         pymobiledevice3GUIWindow.process.Kill()
     else:
         print("NO PROCESS TO KILL!!!")
-##   global pymobiledevice3GUIApp
-##   pymobiledevice3GUIApp.quit()
+    global pymobiledevice3GUIApp
+    pymobiledevice3GUIApp.quit()
+#   sys.exit()
     pass
     
 def TestCommand(debugger, command, result, dict):
     print("STARTING LLDB-PyGUI!!!")
 #   debuggerNG = debugger
 #   debugger.SetAsync(True)
+    global pymobiledevice3GUIApp
     pymobiledevice3GUIApp = QApplication([])
     pymobiledevice3GUIApp.aboutToQuit.connect(close_application)
-    
     #
     ConfigClass.initIcons()
     pymobiledevice3GUIApp.setWindowIcon(ConfigClass.iconBugGreen)
@@ -285,8 +289,8 @@ def TestCommand(debugger, command, result, dict):
     pymobiledevice3GUIWindow = LLDBPyGUIWindow(debugger) # QConsoleTextEditWindow(debugger)
     pymobiledevice3GUIWindow.show()
 ##   sys.exit(pymobiledevice3GUIApp.exec())
-    sys.exit(pymobiledevice3GUIApp.exec())
-    
+#   sys.exit(pymobiledevice3GUIApp.exec())
+    pymobiledevice3GUIApp.exec()
 #   gui_thread = threading.Thread(target=run_gui_thread)
 #   gui_thread.start()
 # 

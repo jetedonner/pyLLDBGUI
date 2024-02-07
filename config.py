@@ -36,6 +36,11 @@ class ConfigClass():
 	iconStepInto = None
 	iconStepOut = None
 	
+	iconResume = None
+	
+	iconRestart = None
+	iconStop = None
+	
 	iconGithub = None
 	
 	@staticmethod
@@ -56,6 +61,13 @@ class ConfigClass():
 		ConfigClass.iconStepOver = QIcon(os.path.join(resources_root, 'step_over_ng2.png'))
 		ConfigClass.iconStepInto = QIcon(os.path.join(resources_root, 'step_into.png'))
 		ConfigClass.iconStepOut = QIcon(os.path.join(resources_root, 'step_out_ng.png'))
+		
+		ConfigClass.iconResume = QIcon(os.path.join(resources_root, 'Resume.png'))
+		ConfigClass.iconStepOver = QIcon(os.path.join(resources_root, 'StepOver.png'))
+		ConfigClass.iconStepInto = QIcon(os.path.join(resources_root, 'StepInto.png'))
+		ConfigClass.iconStepOut = QIcon(os.path.join(resources_root, 'StepOut.png'))
+		ConfigClass.iconRestart = QIcon(os.path.join(resources_root, 'Restart.png'))
+		ConfigClass.iconStop = QIcon(os.path.join(resources_root, 'Stop.png'))
 		
 		ConfigClass.iconGithub = QIcon(os.path.join(resources_root, 'github.png'))
 		

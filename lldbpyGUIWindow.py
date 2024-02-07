@@ -22,6 +22,8 @@ from PyQt6.QtWidgets import *
 from PyQt6 import uic, QtWidgets
 
 from PyQt6.QConsoleTextEdit import *
+from PyQt6.QSwitch import *
+from PyQt6.QHEXTextEditSplitter import *
 
 from ui.assemblerTextEdit import *
 from ui.registerTreeView import *
@@ -29,6 +31,7 @@ from ui.fileInfoTableWidget import *
 from ui.fileStructureTreeView import *
 from ui.statisticsTreeWidget import *
 from ui.breakpointTableWidget import *
+from ui.historyLineEdit import *
 
 from worker.eventListenerWorker import *
 from worker.loadSourceWorker import *
@@ -71,6 +74,43 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.load_action.setShortcut('Ctrl+L')
 		self.load_action.triggered.connect(self.load_clicked)
 		self.toolbar.addAction(self.load_action)
+		
+		
+		self.load_resume = QAction(ConfigClass.iconResume, '&Resume', self)
+		self.load_resume.setStatusTip('Resume')
+#		self.load_resume.setShortcut('Ctrl+L')
+		self.load_resume.triggered.connect(self.handle_resumeThread)
+		self.toolbar.addAction(self.load_resume)
+		
+		self.step_over = QAction(ConfigClass.iconStepOver, '&Step Over', self)
+		self.step_over.setStatusTip('Step Over')
+#		self.load_resume.setShortcut('Ctrl+L')
+#		self.load_resume.triggered.connect(self.load_clicked)
+		self.toolbar.addAction(self.step_over)
+		
+		self.step_into = QAction(ConfigClass.iconStepInto, '&Step Into', self)
+		self.step_into.setStatusTip('Step Into')
+#		self.load_resume.setShortcut('Ctrl+L')
+#		self.load_resume.triggered.connect(self.load_clicked)
+		self.toolbar.addAction(self.step_into)
+		
+		self.step_out = QAction(ConfigClass.iconStepOut, '&Step Out', self)
+		self.step_out.setStatusTip('Step Out')
+#		self.load_resume.setShortcut('Ctrl+L')
+#		self.load_resume.triggered.connect(self.load_clicked)
+		self.toolbar.addAction(self.step_out)
+		
+		self.step_restart = QAction(ConfigClass.iconRestart, '&Restart', self)
+		self.step_restart.setStatusTip('Restart')
+#		self.load_resume.setShortcut('Ctrl+L')
+#		self.load_resume.triggered.connect(self.load_clicked)
+		self.toolbar.addAction(self.step_restart)
+		
+		self.stop = QAction(ConfigClass.iconStop, '&Stop', self)
+		self.stop.setStatusTip('Stop')
+#		self.load_resume.setShortcut('Ctrl+L')
+		self.stop.triggered.connect(self.handle_stopThread)
+		self.toolbar.addAction(self.stop)
 		
 		self.statusBar = QStatusBar()
 		self.setStatusBar(self.statusBar)
@@ -130,6 +170,19 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.tabWidgetFileInfos.setLayout(QVBoxLayout())
 		
 		
+#		self.tabWidgetReg = QTabWidget()
+		
+		self.tabWidgetFileInfo = QTabWidget()
+		
+#		self.tabWidgetFileInfo.addTab(self.tabWidgetReg, "File Infos")
+#		self.txtSource = QConsoleTextEdit()
+#		self.txtSource.setFont(ConfigClass.font)
+#		self.gbpSource = QGroupBox("Source")
+#		self.gbpSource.setLayout(QHBoxLayout())
+#		self.gbpSource.layout().addWidget(self.txtSource)
+#		self.tabWidgetDbg.addTab(self.gbpSource, "Source")
+		
+		
 		self.gbFileInfo = QGroupBox("File Header")
 		self.gbFileInfo.setLayout(QHBoxLayout())
 		self.gbFileInfo.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Maximum)
@@ -140,8 +193,8 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.splitterFileInfos.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 		self.splitterFileInfos.setOrientation(Qt.Orientation.Vertical)
 		
-		self.splitterFileInfos.addWidget(self.gbFileInfo)
-		
+#		self.splitterFileInfos.addWidget(self.gbFileInfo)
+		self.tabWidgetFileInfo.addTab(self.gbFileInfo, "File Header")
 		
 		
 		self.gbFileStruct = QGroupBox("File Structure")
@@ -158,7 +211,8 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.gbFileStruct.layout().addWidget(self.tabWidgetStruct)
 		
-		self.splitterFileInfos.addWidget(self.gbFileStruct)
+#		self.splitterFileInfos.addWidget(self.gbFileStruct)
+		self.tabWidgetFileInfo.addTab(self.gbFileStruct	, "File Structure")
 		
 		self.gbFileStats = QGroupBox("File Statistics")
 		self.gbFileStats.setLayout(QHBoxLayout())
@@ -172,11 +226,62 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.gbFileStats.layout().addWidget(self.tabWidgetStats)
 		
-		self.splitterFileInfos.addWidget(self.gbFileStats)
+#		self.splitterFileInfos.addWidget(self.gbFileStats)
+		self.tabWidgetFileInfo.addTab(self.gbFileStats, "File Statistics")
 		
-		self.tabWidgetFileInfos.layout().addWidget(self.splitterFileInfos)
+		self.tabWidgetFileInfos.layout().addWidget(self.tabWidgetFileInfo)
 		
 		self.tabWidgetMain.addTab(self.tabWidgetFileInfos, "File Info")
+		
+		self.wdgCmd = QWidget()
+		self.wdgConsole = QWidget()
+		self.layCmdParent = QVBoxLayout()
+		self.layCmd = QHBoxLayout()
+		self.wdgCmd.setLayout(self.layCmd)
+		self.wdgConsole.setLayout(self.layCmdParent)
+		
+		self.lblCmd = QLabel("Command: ")
+		self.lblCmd.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
+		
+		self.txtCmd = HistoryLineEdit()
+		self.txtCmd.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+		self.txtCmd.setText("re read")
+		self.txtCmd.returnPressed.connect(self.click_execCommand)
+		
+		self.swtAutoscroll = QSwitch("Autoscroll")
+		self.swtAutoscroll.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
+		self.swtAutoscroll.setChecked(True)
+		
+		self.cmdExecuteCmd = QPushButton("Execute")
+		self.cmdExecuteCmd.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
+		self.cmdExecuteCmd.clicked.connect(self.click_execCommand)
+		
+		self.cmdClear = QPushButton()
+		self.cmdClear.setIcon(ConfigClass.iconBin)
+		self.cmdClear.setToolTip("Clear the console log")
+		self.cmdClear.setIconSize(QSize(16, 16))
+		self.cmdClear.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
+		self.cmdClear.clicked.connect(self.clear_clicked)
+		
+		self.layCmd.addWidget(self.lblCmd)
+		self.layCmd.addWidget(self.txtCmd)
+		self.layCmd.addWidget(self.cmdExecuteCmd)
+		self.layCmd.addWidget(self.swtAutoscroll)
+		self.layCmd.addWidget(self.cmdClear)
+		self.wdgCmd.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
+		
+		
+		self.txtConsole = QConsoleTextEdit()
+		self.txtConsole.setReadOnly(True)
+		self.txtConsole.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+		self.txtConsole.setFont(ConfigClass.font)
+		self.layCmdParent.addWidget(self.txtConsole)
+		self.layCmdParent.addWidget(self.wdgCmd)
+		
+#		self.tabConsole.layout().addWidget(self.wdgConsole)
+		
+		
+		self.tabWidgetMain.addTab(self.wdgConsole, "Console")
 		
 		self.layout.addWidget(self.tabWidgetMain)
 		
@@ -196,50 +301,7 @@ class LLDBPyGUIWindow(QMainWindow):
 			target = self.debugger.GetTargetAtIndex(0)
 			
 			if target:
-				print("======== START BP INTER =========")
-				for b in target.breakpoint_iter():
-					print(b)
-				print("========= END BP INTER ==========")
 				
-				idx = 0
-				for i in range(target.GetNumBreakpoints()):
-					idx += 1
-		#           print(dir(lldbHelper.target.GetBreakpointAtIndex(i)))
-					bp_cur = target.GetBreakpointAtIndex(i)
-					print(bp_cur)
-					for bl in bp_cur:
-						# Make sure the name list has the remaining name:
-						name_list = lldb.SBStringList()
-						bp_cur.GetNames(name_list)
-		#               print(name_list)
-		#               print(len(name_list))
-		#               print(name_list.GetSize())
-						num_names = name_list.GetSize()
-		#               self.assertEquals(
-		#                   num_names, 1, "Name list has %d items, expected 1." % (num_names)
-		#               )
-						
-						name = name_list.GetStringAtIndex(0)
-		#               self.assertEquals(
-		#                   name,
-		#                   other_bkpt_name,
-		#                   "Remaining name was: %s expected %s." % (name, other_bkpt_name),
-		#               )
-		#               print(dir(bl))
-		#               bp_cur = lldbHelper.target.GetBreakpointAtIndex(i)
-		#               print(bl)
-		#               print(dir(bl))
-		#               print(bl.GetQueueName())
-		#               print(get_description(bp_cur))
-		#               print(dir(get_description(bp_cur)))
-						
-						
-						self.txtMultiline.table.toggleBPAtAddress(hex(bl.GetLoadAddress()), False)
-						
-						
-#						self.tblBPs.resetContent()
-						self.tblBPs.addRow(bp_cur.GetID(), idx, hex(bl.GetLoadAddress()), name, str(bp_cur.GetHitCount()), bp_cur.GetCondition())
-		#               print(f'LOADING BREAKPOINT AT ADDRESS: {hex(bl.GetLoadAddress())}')
 				
 				self.loadFileInfo(target.GetExecutable().GetFilename())
 				self.loadFileStats(target)
@@ -251,6 +313,9 @@ class LLDBPyGUIWindow(QMainWindow):
 		#				pass
 						frame = thread.GetFrameAtIndex(0)
 						if frame:
+							
+							rip = self.convert_address(frame.register["rip"].value)
+							
 							########################################################################
 							i = 0
 							addr = frame.GetPCAddress()
@@ -279,7 +344,7 @@ class LLDBPyGUIWindow(QMainWindow):
 								print('  frame #{num}: {addr:#016x} {mod}`{func} at {file}:{line} {args}'.format(num=i, addr=load_addr, mod=mod_name, func='%s [inlined]' % func_name if frame.IsInlined() else func_name, file=file_name, line=line_num, args=get_args_as_string(frame, showFuncName=False))) #args=get_args_as_string(frame, showFuncName=False)), output)
 								
 								
-								self.disassemble_instructions(function.GetInstructions(target), target)
+								self.disassemble_instructions(function.GetInstructions(target), target, rip)
 							
 							
 							for symbol in frame.GetModule():
@@ -390,11 +455,85 @@ class LLDBPyGUIWindow(QMainWindow):
 #									QCoreApplication.self.processEvents()
 									registerDetailNode = QTreeWidgetItem(treDet, [child.GetName(), child.GetValue(), memoryValue])
 						
-						self.start_eventListenerWorker(self.debugger, self.interruptEventListenerWorker)
+#						self.start_eventListenerWorker(self.debugger, self.interruptEventListenerWorker)
 						self.start_loadSourceWorker(self.debugger, "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/hello_world/hello_world_test.c", self.interruptLoadSourceWorker)
 #						self.process.Continue()
 				
-
+				print("======== START BP INTER =========")
+				for b in target.breakpoint_iter():
+					print(b)
+				print("========= END BP INTER ==========")
+				
+				idx = 0
+				for i in range(target.GetNumBreakpoints()):
+					idx += 1
+		#           print(dir(lldbHelper.target.GetBreakpointAtIndex(i)))
+					bp_cur = target.GetBreakpointAtIndex(i)
+					print(bp_cur)
+					for bl in bp_cur:
+						# Make sure the name list has the remaining name:
+						name_list = lldb.SBStringList()
+						bp_cur.GetNames(name_list)
+		#               print(name_list)
+		#               print(len(name_list))
+		#               print(name_list.GetSize())
+						num_names = name_list.GetSize()
+		#               self.assertEquals(
+		#                   num_names, 1, "Name list has %d items, expected 1." % (num_names)
+		#               )
+						
+						name = name_list.GetStringAtIndex(0)
+		#               self.assertEquals(
+		#                   name,
+		#                   other_bkpt_name,
+		#                   "Remaining name was: %s expected %s." % (name, other_bkpt_name),
+		#               )
+		#               print(dir(bl))
+		#               bp_cur = lldbHelper.target.GetBreakpointAtIndex(i)
+		#               print(bl)
+		#               print(dir(bl))
+		#               print(bl.GetQueueName())
+		#               print(get_description(bp_cur))
+		#               print(dir(get_description(bp_cur)))
+						
+						
+						self.txtMultiline.table.toggleBPAtAddress(hex(bl.GetLoadAddress()), False)
+						
+						
+#						self.tblBPs.resetContent()
+						self.tblBPs.addRow(bp_cur.GetID(), idx, hex(bl.GetLoadAddress()), name, str(bp_cur.GetHitCount()), bp_cur.GetCondition())
+		#               print(f'LOADING BREAKPOINT AT ADDRESS: {hex(bl.GetLoadAddress())}')
+		
+	def convert_address(self, address):
+		# Get the address to be converted
+#       address = "0x0000000100003f5f"
+		
+		# Convert the address to hex
+		converted_address = int(address, 16)
+		
+		# Print the converted address
+#       print("Converted address:", hex(converted_address))
+		return hex(converted_address)
+	
+	def updateStatusBar(self, msg):
+		self.statusBar.showMessage(msg)
+		
+	def clear_clicked(self):
+		self.txtConsole.setText("")
+		
+	def click_execCommand(self):
+#		newCommand = self.txtCmd.text()
+#		
+#		if len(self.txtCmd.lstCommands) > 0:
+#			if self.txtCmd.lstCommands[len(self.txtCmd.lstCommands) - 1] != newCommand:
+#				self.txtCmd.lstCommands.append(newCommand)
+#				self.txtCmd.currCmd = len(self.txtCmd.lstCommands) - 1
+#		else:
+#			self.txtCmd.lstCommands.append(newCommand)
+#			self.txtCmd.currCmd = len(self.txtCmd.lstCommands) - 1
+#			
+#		self.start_execCommandWorker(newCommand)
+		pass
 		
 	def load_clicked(self, s):
 		dialog = QFileDialog(None, "Select executable or library", "", "All Files (*.*)")
@@ -421,7 +560,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.tblFileInfos.addRow("Size CMDs", str(mach_header.sizeofcmds), hex(mach_header.sizeofcmds))
 		self.tblFileInfos.addRow("Flags", lldbHelper.MachoFlag.to_str(lldbHelper.MachoFlag.create_flag_value(mach_header.flags)), hex(mach_header.flags))
 	
-	def disassemble_instructions(self, insts, target):
+	def disassemble_instructions(self, insts, target, rip):
 		idx = 0
 		for i in insts:
 			if idx == 0:
@@ -429,7 +568,7 @@ class LLDBPyGUIWindow(QMainWindow):
 			print(i)
 			idx += 1
 			print(i.GetData(target))
-			self.txtMultiline.appendAsmTextNG(hex(i.GetAddress().GetFileAddress()), i.GetMnemonic(target),  i.GetOperands(target), i.GetComment(target), str(i.GetData(target)).replace("                             ", "\t\t").replace("		            ", "\t\t\t").replace("		         ", "\t\t").replace("		      ", "\t\t").replace("			   ", "\t\t\t"), True, "")
+			self.txtMultiline.appendAsmTextNG(hex(i.GetAddress().GetFileAddress()), i.GetMnemonic(target),  i.GetOperands(target), i.GetComment(target), str(i.GetData(target)).replace("                             ", "\t\t").replace("		            ", "\t\t\t").replace("		         ", "\t\t").replace("		      ", "\t\t").replace("			   ", "\t\t\t"), True, rip)
 			
 #	def disassemble_instruction(self, insts, target):
 #		idx = 0
@@ -462,7 +601,21 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.workerLoadSource.signals.finished.connect(self.handle_loadSourceFinished)
 		
 		self.threadpool.start(self.workerLoadSource)
-		
+	
+	def handle_resumeThread(self):
+		print("Trying to Continue ...")
+		error = self.process.Continue()
+		print("After Continue ...")
+#		if error:
+#			print(error)
+			
+	def handle_stopThread(self):
+		print("Trying to SIGINT ...")
+		error = self.process.Stop()
+		print("After SIGINT ...")
+		if error:
+			print(error)
+			
 	def handle_loadSourceFinished(self, sourceCode):
 		if sourceCode != "":
 			log(sourceCode)
