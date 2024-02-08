@@ -422,7 +422,8 @@ class Pymobiledevice3GUIWindow(QMainWindow):
             self.sb.setValue(self.sb.maximum())
     
     def start_loadSourceWorker(self, sourceFile):
-        workerLoadSource = LoadSourceCodeWorker(sourceFile)
+        self.interruptLoadSourceWorker = LoadSourceCodeReceiver()
+        workerLoadSource = LoadSourceCodeWorker(lldbHelper.debugger, sourceFile, self.interruptLoadSourceWorker)
         workerLoadSource.signals.finished.connect(self.handle_loadSourceFinished)
         
         self.threadpool.start(workerLoadSource)

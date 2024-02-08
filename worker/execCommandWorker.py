@@ -19,8 +19,6 @@ from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
 from PyQt6 import uic, QtWidgets
 
-import lldbHelper
-
 interruptExecCommand = False
 
 class ExecCommandReceiver(QObject):
@@ -54,24 +52,17 @@ class ExecCommandWorker(QRunnable):
 		
 #		global debugger
 		res = lldb.SBCommandReturnObject()
-		
-		
 		# Get the command interpreter
 		command_interpreter = self.debugger.GetCommandInterpreter()
 		
 		# Execute the 'frame variable' command
 		command_interpreter.HandleCommand(self.command, res)
-#       print(f'{res}')
-#       for i in dir(res):
-#           print(i)
-#       print(res.Succeeded())
-#       print(res.GetError())
 		
 		self.isExecCommandActive = False
 		self.signals.finished.emit(res)
 		QCoreApplication.processEvents()
 		
 	def handle_interruptExecCommand(self):
-#		print(f"Received interrupt in the sysLog worker thread")
-#		self.isSysLogActive = False
+		print(f"Received interrupt in the exec command worker thread")
+		self.interruptExecCommand = True
 		pass

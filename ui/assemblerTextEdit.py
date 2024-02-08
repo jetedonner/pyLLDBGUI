@@ -79,7 +79,7 @@ class DisassemblyTableWidget(QTableWidget):
 		self.sigBPOn.emit(self.item(self.selectedItems()[0].row(), 3).text(), item.isBPOn)
 		pass
 		
-	def handle_disableBP(self):
+	def handle_enableBP(self):
 		item = self.item(self.selectedItems()[0].row(), 1)
 		item.toggleBPEnabled()
 		self.sigEnableBP.emit(self.item(self.selectedItems()[0].row(), 3).text(), not item.isBPEnabled)
@@ -94,7 +94,7 @@ class DisassemblyTableWidget(QTableWidget):
 		actionToggleBP = self.context_menu.addAction("Toggle Breakpoint")
 		actionToggleBP.triggered.connect(self.handle_toggleBP)
 		actionDisableBP = self.context_menu.addAction("Enable / Disable Breakpoint")
-		actionDisableBP.triggered.connect(self.handle_disableBP)
+		actionDisableBP.triggered.connect(self.handle_enableBP)
 		actionEditCondition = self.context_menu.addAction("Edit condition")
 		actionEditCondition.triggered.connect(self.handle_editCondition)
 		
@@ -292,7 +292,7 @@ class DisassemblyTableWidgetNG(QTableWidget):
 		self.sigBPOn.emit(self.item(self.selectedItems()[0].row(), 3).text(), item.isBPOn)
 		pass
 		
-	def handle_disableBP(self):
+	def handle_enableBP(self):
 		item = self.item(self.selectedItems()[0].row(), 1)
 		item.toggleBPEnabled()
 		self.sigEnableBP.emit(self.item(self.selectedItems()[0].row(), 3).text(), not item.isBPEnabled)
@@ -307,7 +307,7 @@ class DisassemblyTableWidgetNG(QTableWidget):
 		actionToggleBP = self.context_menu.addAction("Toggle Breakpoint")
 		actionToggleBP.triggered.connect(self.handle_toggleBP)
 		actionDisableBP = self.context_menu.addAction("Enable / Disable Breakpoint")
-		actionDisableBP.triggered.connect(self.handle_disableBP)
+		actionDisableBP.triggered.connect(self.handle_enableBP)
 		actionEditCondition = self.context_menu.addAction("Edit condition")
 		actionEditCondition.triggered.connect(self.handle_editCondition)
 		

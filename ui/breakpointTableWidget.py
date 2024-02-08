@@ -27,17 +27,19 @@ class BreakpointsTableWidget(QTableWidget):
 #		pass
 		
 	def handle_toggleBP(self):
-		item = self.item(self.selectedItems()[0].row(), 0)
-		itemNum = self.item(self.selectedItems()[0].row(), 1)
-		item.toggleBPOn()
-		self.window().updateStatusBar(f"Set breakpoint {itemNum.text()} status to {item.isBPEnabled}")
+		if len(self.selectedItems()) > 0:
+			item = self.item(self.selectedItems()[0].row(), 0)
+			itemNum = self.item(self.selectedItems()[0].row(), 1)
+			item.toggleBPOn()
+			self.window().updateStatusBar(f"Set breakpoint {itemNum.text()} status to {item.isBPEnabled}")
 		pass
 		
-	def handle_disableBP(self):
-		item = self.item(self.selectedItems()[0].row(), 0)
-		itemNum = self.item(self.selectedItems()[0].row(), 1)
-		item.toggleBPEnabled()
-		self.window().updateStatusBar(f"Set breakpoint {itemNum.text()} enabled to {item.isBPEnabled}")
+	def handle_enableBP(self):
+		if len(self.selectedItems()) > 0:
+			item = self.item(self.selectedItems()[0].row(), 0)
+			itemNum = self.item(self.selectedItems()[0].row(), 1)
+			item.toggleBPEnabled()
+			self.window().updateStatusBar(f"Set breakpoint {itemNum.text()} enabled to {item.isBPEnabled}")
 		pass
 		
 		
@@ -70,11 +72,12 @@ class BreakpointsTableWidget(QTableWidget):
 #		pass
 		
 	def handle_copyAddress(self):
-		item = self.item(self.selectedItems()[0].row(), 2)
-		pyperclip.copy(item.text())
-		self.window().updateStatusBar(f"Copied address {item.text()} of breakpoint to clipboard")
-#		clipboard_contents = pyperclip.paste()
-#		print(clipboard_contents)
+		if len(self.selectedItems()) > 0:
+			item = self.item(self.selectedItems()[0].row(), 2)
+			pyperclip.copy(item.text())
+			self.window().updateStatusBar(f"Copied address {item.text()} of breakpoint to clipboard")
+	#		clipboard_contents = pyperclip.paste()
+	#		print(clipboard_contents)
 		pass
 	
 	def doToggleBP(self, address, on):
@@ -110,7 +113,7 @@ class BreakpointsTableWidget(QTableWidget):
 		actionToggleBP = self.context_menu.addAction("Toggle Breakpoint")
 		actionToggleBP.triggered.connect(self.handle_toggleBP)
 		actionDisableBP = self.context_menu.addAction("Enable / Disable Breakpoint")
-		actionDisableBP.triggered.connect(self.handle_disableBP)
+		actionDisableBP.triggered.connect(self.handle_enableBP)
 		actionEditCondition = self.context_menu.addAction("Edit condition")
 		actionEditCondition.triggered.connect(self.handle_editCondition)
 		

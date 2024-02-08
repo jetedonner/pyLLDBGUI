@@ -16,6 +16,16 @@ import fcntl
 import json
 import hashlib
 
+try:
+  import queue
+except ImportError:
+  import Queue as queue
+
+#global process
+#process = None
+
+import debuggerdriver
+
 from PyQt6.QtGui import *
 from PyQt6.QtCore import *
 
@@ -28,6 +38,7 @@ from lldbpyGUIConfig import *
 from lldbpyGUIWindow import *
 
 from config import *
+
 
 # test terminal - idea from https://github.com/ant4g0nist/lisa.py/
 try:
@@ -42,10 +53,11 @@ except Exception as e:
     print("\033[1m\033[31m[-] failed to find out terminal size.")
     print("[!] lldbinit is best experienced with a terminal size at least {}x{}\033[0m".format(MIN_COLUMNS, MIN_ROWS))
 
-#def breakpointHandler(frame, bpno, err):
-# print("MLIR debugger attaching...")
-# print("IIIIIIIIINNNNNNNN CCCCAAQALLLLLLBBBAAACCKKKK")
-# 
+
+def breakpointHandler(frame, bpno, err):
+    print("MLIR debugger attaching...")
+    print("IIIIIIIIINNNNNNNN CCCCAAQALLLLLLBBBAAACCKKKK")
+  
 #class QConsoleTextEditWindow(QMainWindow):
 #   
 #   mytext = "thread #1: tid = 0xa8f62d, 0x0000000100003f40 hello_world_test_loop`main, queue = \x1b[32m'com.apple.main-thread'\x1b[0m, stop reason = \x1b[31mbreakpoint 1.1\x1b[0m\nthread #2: tid = 0xa8f62d, 0x0000000100003f40 hello_world_test_loop`main, queue = \x1b[35m'com.apple.main-thread'\x1b[0m, stop reason = \x1b[36mbreakpoint 1.1\x1b[0m"
@@ -169,7 +181,7 @@ def __lldb_init_module(debugger, internal_dict):
 
     ci.HandleCommand(f"command script add -h '({PROMPT_TEXT})' -f lldbpyGUI.StartTestingEnv test", res)
 
-processGlob = None
+#processGlob = None
 
 def StartTestingEnv(debugger, command, result, dict):
   print(f"#=================================================================================#")
@@ -187,6 +199,29 @@ def StartTestingEnv(debugger, command, result, dict):
   # imitate the original 'r' alias plus the stop at entry and pass everything else as target argv[]
   print(f"NUM-TARGETS: {debugger.GetNumTargets()}")
   if debugger.GetNumTargets() > 0:
+#   self.listener = debugger.GetListener()
+#   if not self.listener.IsValid():
+#     raise "Invalid listener"
+#   self.debugger = debugger
+#   self.listener.StartListeningForEventClass(self.debugger,
+#                                             lldb.SBTarget.GetBroadcasterClassName(),
+#                                             lldb.SBTarget.eBroadcastBitBreakpointChanged
+#                                             #| lldb.SBTarget.eBroadcastBitModuleLoaded
+#                                             #| lldb.SBTarget.eBroadcastBitModuleUnloaded
+#                                             | lldb.SBTarget.eBroadcastBitWatchpointChanged
+#                                             #| lldb.SBTarget.eBroadcastBitSymbolLoaded
+#                                             )
+#   
+#   self.listener.StartListeningForEventClass(self.debugger,
+#                                             lldb.SBThread.GetBroadcasterClassName(),
+#                                             lldb.SBThread.eBroadcastBitStackChanged
+#                                             #  lldb.SBThread.eBroadcastBitBreakpointChanged
+#                                             | lldb.SBThread.eBroadcastBitThreadSuspended
+#                                             | lldb.SBThread.eBroadcastBitThreadResumed
+#                                             | lldb.SBThread.eBroadcastBitSelectedFrameChanged
+#                                             | lldb.SBThread.eBroadcastBitThreadSelected
+#                                             )
+          
     print(f"TARGET-1: {debugger.GetTargetAtIndex(0)}")
     target = debugger.GetTargetAtIndex(0)
     
@@ -199,8 +234,8 @@ def StartTestingEnv(debugger, command, result, dict):
     loop_bp.SetEnabled(True)
     loop_bp.AddName("loop_bp")
     loop_bp.SetScriptCallbackFunction("lldbpyGUI.breakpointHandler")
-#   loop_bp.SetCondition("$eax == 0x00000005")
-#   loop_bp.SetScriptCallbackFunction("disasm_ui.breakpointHandler")
+    #   loop_bp.SetCondition("$eax == 0x00000005")
+    #   loop_bp.SetScriptCallbackFunction("disasm_ui.breakpointHandler")
     print(loop_bp)
     
     loop_bp2 = target.BreakpointCreateByAddress(0x100003f6d) # 0x100003c90)
@@ -210,14 +245,37 @@ def StartTestingEnv(debugger, command, result, dict):
     loop_bp2.SetScriptCallbackFunction("lldbpyGUI.breakpointHandler")
     print(loop_bp2)
     
+#   global process
     process = target.LaunchSimple(None, None, os.getcwd())
     if process:
 #     pass
-      processGlob = process
+#     processGlob = process
       state = process.GetState()
 #				print(self.process)
       if state == lldb.eStateStopped:
         print("state == lldb.eStateStopped")
+      
+      TestCommand(debugger, command, result, dict)
+        
+#       fname = "main"
+#       main_bp = target.BreakpointCreateByName(fname, target.GetExecutable().GetFilename())
+#       main_bp.AddName(fname)
+#       print(main_bp)
+#       
+#       loop_bp = target.BreakpointCreateByAddress(0x100003f85) # 0x100003c90)
+#       loop_bp.SetEnabled(True)
+#       loop_bp.AddName("loop_bp")
+#       loop_bp.SetScriptCallbackFunction("lldbpyGUI.breakpointHandler")
+#   #   loop_bp.SetCondition("$eax == 0x00000005")
+#   #   loop_bp.SetScriptCallbackFunction("disasm_ui.breakpointHandler")
+#       print(loop_bp)
+#       
+#       loop_bp2 = target.BreakpointCreateByAddress(0x100003f6d) # 0x100003c90)
+#       loop_bp2.SetEnabled(True)
+#       loop_bp2.AddName("loop_bp2")
+#       loop_bp2.SetCondition("$eax == 0x00000005")
+#       loop_bp2.SetScriptCallbackFunction("lldbpyGUI.breakpointHandler")
+#       print(loop_bp2)
         
 #       TestCommand(debugger, command, result, dict)
 # debugger.GetCommandInterpreter().HandleCommand("r", res)
@@ -260,6 +318,9 @@ def close_application():
     pymobiledevice3GUIWindow.interruptLoadSourceWorker.interruptLoadSource.emit()
     QCoreApplication.processEvents()
     print("close_application()")
+    
+#   global debuggerNG
+#   debuggerNG.terminate()
 ##   global process
 # # Stop all running tasks in the thread pool
     if pymobiledevice3GUIWindow.process:
@@ -271,6 +332,9 @@ def close_application():
         print("NO PROCESS TO KILL!!!")
     global pymobiledevice3GUIApp
     pymobiledevice3GUIApp.quit()
+    
+    global driver
+    driver.terminate()
 #   sys.exit()
     pass
     
@@ -278,6 +342,25 @@ def TestCommand(debugger, command, result, dict):
     print("STARTING LLDB-PyGUI!!!")
 #   debuggerNG = debugger
 #   debugger.SetAsync(True)
+  
+    global event_queue
+    event_queue = queue.Queue()
+
+#   global debuggerNG
+#   debuggerNG = debugger
+#   debugger = lldb.SBDebugger.Create()
+    global driver
+    driver = debuggerdriver.createDriver(debugger, event_queue)
+#   view = LLDBUI(screen, event_queue, driver)
+#   driver.createTarget('/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/hello_world_test', '')
+    driver.start()
+    print("AFTER START DRIVER!!!!")
+    # hack to avoid hanging waiting for prompts!
+    driver.handleCommand("settings set auto-confirm true")
+
+#   handle_args(driver, sys.argv)
+#   view.eventLoop()
+    
     global pymobiledevice3GUIApp
     pymobiledevice3GUIApp = QApplication([])
     pymobiledevice3GUIApp.aboutToQuit.connect(close_application)

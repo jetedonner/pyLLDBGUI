@@ -32,6 +32,7 @@ from ui.fileStructureTreeView import *
 from ui.statisticsTreeWidget import *
 from ui.breakpointTableWidget import *
 from ui.historyLineEdit import *
+from ui.threadFrameTreeView import *
 
 from worker.eventListenerWorker import *
 from worker.loadSourceWorker import *
@@ -86,19 +87,19 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.step_over = QAction(ConfigClass.iconStepOver, '&Step Over', self)
 		self.step_over.setStatusTip('Step Over')
 #		self.load_resume.setShortcut('Ctrl+L')
-#		self.load_resume.triggered.connect(self.load_clicked)
+		self.step_over.triggered.connect(self.stepOver_clicked)
 		self.toolbar.addAction(self.step_over)
 		
 		self.step_into = QAction(ConfigClass.iconStepInto, '&Step Into', self)
 		self.step_into.setStatusTip('Step Into')
 #		self.load_resume.setShortcut('Ctrl+L')
-#		self.load_resume.triggered.connect(self.load_clicked)
+		self.step_into.triggered.connect(self.stepInto_clicked)
 		self.toolbar.addAction(self.step_into)
 		
 		self.step_out = QAction(ConfigClass.iconStepOut, '&Step Out', self)
 		self.step_out.setStatusTip('Step Out')
 #		self.load_resume.setShortcut('Ctrl+L')
-#		self.load_resume.triggered.connect(self.load_clicked)
+		self.step_out.triggered.connect(self.stepOut_clicked)
 		self.toolbar.addAction(self.step_out)
 		
 		self.step_restart = QAction(ConfigClass.iconRestart, '&Restart', self)
@@ -130,6 +131,8 @@ class LLDBPyGUIWindow(QMainWindow):
 #		self.txtMultiline.table.actionShowMemory.triggered.connect(self.handle_showMemory)
 #		self.txtMultiline.table.sigEnableBP.connect(self.handle_enableBP)
 #		self.txtMultiline.table.sigBPOn.connect(self.handle_BPOn)
+		self.txtMultiline.table.sigEnableBP.connect(self.handle_enableBP)
+		self.txtMultiline.table.sigBPOn.connect(self.handle_BPOn)
 		
 		self.txtMultiline.setContentsMargins(0, 0, 0, 0)
 		
@@ -155,13 +158,25 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.tabWidgetDbg.addTab(self.gbpSource, "Source")
 		
 		self.tblBPs = BreakpointsTableWidget(self)
-#		self.tabBPs = QWidget()
-#		self.tabBPs.setLayout(QVBoxLayout())
-#		self.tabBPs.layout().addWidget(self.tblBPs)
-#		self.tabWidget.addTab(self.tabBPs, "Breakpoints")
 		
-		self.tabWidgetDbg.addTab(self.tblBPs, "Break-/Watchpoints")
-		self.tabWidgetDbg.addTab(QTextEdit(), "Threads/Frames")
+		self.gbpBPs = QGroupBox("Breakpoints")
+		self.gbpBPs.setLayout(QHBoxLayout())
+		self.gbpBPs.layout().addWidget(self.tblBPs)
+		
+		self.tabWidgetDbg.addTab(self.gbpBPs, "Break-/Watchpoints")
+		
+		self.treThreads = ThreadFrameTreeWidget()
+		self.treThreads.setFont(ConfigClass.font)
+		self.treThreads.setHeaderLabels(['Num / ID', 'Hex ID', 'Process / Threads / Frames', 'PC', 'Lang (guess)'])
+		self.treThreads.header().resizeSection(0, 148)
+		self.treThreads.header().resizeSection(1, 128)
+		self.treThreads.header().resizeSection(2, 512)
+		
+		self.gbpThreads = QGroupBox("Threads / Frames")
+		self.gbpThreads.setLayout(QHBoxLayout())
+		self.gbpThreads.layout().addWidget(self.treThreads)
+		
+		self.tabWidgetDbg.addTab(self.gbpThreads, "Threads/Frames")
 		
 		self.tabWidgetMain = QTabWidget()
 		self.tabWidgetMain.addTab(self.splitter, "Debugger")
@@ -170,19 +185,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.tabWidgetFileInfos = QWidget()
 		self.tabWidgetFileInfos.setLayout(QVBoxLayout())
 		
-		
-#		self.tabWidgetReg = QTabWidget()
-		
 		self.tabWidgetFileInfo = QTabWidget()
-		
-#		self.tabWidgetFileInfo.addTab(self.tabWidgetReg, "File Infos")
-#		self.txtSource = QConsoleTextEdit()
-#		self.txtSource.setFont(ConfigClass.font)
-#		self.gbpSource = QGroupBox("Source")
-#		self.gbpSource.setLayout(QHBoxLayout())
-#		self.gbpSource.layout().addWidget(self.txtSource)
-#		self.tabWidgetDbg.addTab(self.gbpSource, "Source")
-		
 		
 		self.gbFileInfo = QGroupBox("File Header")
 		self.gbFileInfo.setLayout(QHBoxLayout())
@@ -279,9 +282,6 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.layCmdParent.addWidget(self.txtConsole)
 		self.layCmdParent.addWidget(self.wdgCmd)
 		
-#		self.tabConsole.layout().addWidget(self.wdgConsole)
-		
-		
 		self.tabWidgetMain.addTab(self.wdgConsole, "Console")
 		
 		self.layout.addWidget(self.tabWidgetMain)
@@ -302,17 +302,40 @@ class LLDBPyGUIWindow(QMainWindow):
 			target = self.debugger.GetTargetAtIndex(0)
 			
 			if target:
-				
-				
 				self.loadFileInfo(target.GetExecutable().GetFilename())
 				self.loadFileStats(target)
 				
 				self.process = target.GetProcess()
 				if self.process:
-					thread = self.process.GetThreadAtIndex(0)
-					if thread:
+					
+					
+					idx = 0
+					self.thread = self.process.GetThreadAtIndex(0)
+					if self.thread:
+						
+#						def BroadcastBitStackChanged(args):
+#							print(f"STACK Changed {args}")
+#							
+#						self.thread.eBroadcastBitStackChanged.connect(BroadcastBitStackChanged)
+						
+						
+						for frame in self.thread:
+							print(frame)
+							
+						self.treThreads.clear()
+						self.processNode = QTreeWidgetItem(self.treThreads, ["#0 " + str(self.process.GetProcessID()), hex(self.process.GetProcessID()) + "", self.process.GetTarget().GetExecutable().GetFilename(), '', ''])
+						
+						self.threadNode = QTreeWidgetItem(self.processNode, ["#" + str(idx) + " " + str(self.thread.GetThreadID()), hex(self.thread.GetThreadID()) + "", self.thread.GetQueueName(), '', ''])
+						
+				#       print(thread.GetNumFrames())
+						for idx2 in range(self.thread.GetNumFrames()):
+							frame = self.thread.GetFrameAtIndex(idx2)
+				#           print(dir(frame))
+							frameNode = QTreeWidgetItem(self.threadNode, ["#" + str(frame.GetFrameID()), "", str(frame.GetPCAddress()), str(hex(frame.GetPC())), lldbHelper.GuessLanguage(frame)]) # + " " + str(thread.GetThreadID()) + " (0x" + hex(thread.GetThreadID()) + ")", thread.GetQueueName()])
+						self.processNode.setExpanded(True)
+						self.threadNode.setExpanded(True)
 		#				pass
-						frame = thread.GetFrameAtIndex(0)
+						frame = self.thread.GetFrameAtIndex(0)
 						if frame:
 							
 							rip = self.convert_address(frame.register["rip"].value)
@@ -397,7 +420,7 @@ class LLDBPyGUIWindow(QMainWindow):
 									
 									for sym in module.symbol_in_section_iter(subSec):
 										subSectionNode2 = QTreeWidgetItem(subSectionNode, [sym.GetName(), str(hex(sym.GetStartAddress().GetFileAddress())), str(hex(sym.GetEndAddress().GetFileAddress())), hex(sym.GetSize()), 'Symbol'])
-										print(dir(sym))
+#										print(dir(sym))
 										print(sym.GetName())
 										print(INDENT2 + repr(sym))
 										print(INDENT2 + 'symbol type: %s' % str(sym.GetType())) # symbol_type_to_str
@@ -468,16 +491,12 @@ class LLDBPyGUIWindow(QMainWindow):
 				idx = 0
 				for i in range(target.GetNumBreakpoints()):
 					idx += 1
-		#           print(dir(lldbHelper.target.GetBreakpointAtIndex(i)))
 					bp_cur = target.GetBreakpointAtIndex(i)
 					print(bp_cur)
 					for bl in bp_cur:
 						# Make sure the name list has the remaining name:
 						name_list = lldb.SBStringList()
 						bp_cur.GetNames(name_list)
-		#               print(name_list)
-		#               print(len(name_list))
-		#               print(name_list.GetSize())
 						num_names = name_list.GetSize()
 		#               self.assertEquals(
 		#                   num_names, 1, "Name list has %d items, expected 1." % (num_names)
@@ -505,10 +524,7 @@ class LLDBPyGUIWindow(QMainWindow):
 						self.tblBPs.addRow(bp_cur.GetID(), idx, hex(bl.GetLoadAddress()), name, str(bp_cur.GetHitCount()), bp_cur.GetCondition())
 		#               print(f'LOADING BREAKPOINT AT ADDRESS: {hex(bl.GetLoadAddress())}')
 		
-	def convert_address(self, address):
-		# Get the address to be converted
-#       address = "0x0000000100003f5f"
-		
+	def convert_address(self, address):		
 		# Convert the address to hex
 		converted_address = int(address, 16)
 		
@@ -523,7 +539,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.txtConsole.setText("")
 		
 	def click_execCommand(self):
-		print("EXEC COMMAND!!!!")
+#		print("EXEC COMMAND!!!!")
 		newCommand = self.txtCmd.text()
 		
 		if len(self.txtCmd.lstCommands) > 0:
@@ -544,13 +560,6 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.threadpool.start(workerExecCommand)
 		
 	def handle_commandFinished(self, res):
-#       print(res.Succeeded())
-#       print(res.GetError())
-#       if "\x1b[32m" in res.GetOutput():
-#           print("KIM YOU ARE THE MAN!!!")
-#       else:
-#           print("KIM YOU NOT ARE THE MAN!!!")
-		
 		if res.Succeeded():
 			self.txtConsole.appendEscapedText(res.GetOutput())
 		else:
@@ -588,23 +597,12 @@ class LLDBPyGUIWindow(QMainWindow):
 	def disassemble_instructions(self, insts, target, rip):
 		idx = 0
 		for i in insts:
-			if idx == 0:
-				print(dir(i))
+#			if idx == 0:
+#				print(dir(i))
 			print(i)
 			idx += 1
 			print(i.GetData(target))
 			self.txtMultiline.appendAsmTextNG(hex(i.GetAddress().GetFileAddress()), i.GetMnemonic(target),  i.GetOperands(target), i.GetComment(target), str(i.GetData(target)).replace("                             ", "\t\t").replace("		            ", "\t\t\t").replace("		         ", "\t\t").replace("		      ", "\t\t").replace("			   ", "\t\t\t"), True, rip)
-			
-#	def disassemble_instruction(self, insts, target):
-#		idx = 0
-#		for i in insts:
-#			if idx == 0:
-#				print(dir(i))
-#			print(i)
-#			idx += 1
-#			
-#			self.txtMultiline.appendAsmTextNG(hex(i.GetAddress().GetFileAddress()), i.GetMnemonic(target) + " " + i.GetOperands(target), "", "".replace("                             ", "\t\t").replace("		            ", "\t\t\t").replace("		         ", "\t\t").replace("		      ", "\t\t").replace("			   ", "\t\t\t"), True, "")
-			
 			
 	def loadFileStats(self, target):
 		statistics = target.GetStatistics()
@@ -612,7 +610,6 @@ class LLDBPyGUIWindow(QMainWindow):
 		success = statistics.GetAsJSON(stream)
 		if success:
 #			self.signals.loadStats.emit(str(stream.GetData()))
-			
 			self.treStats.loadJSON(str(stream.GetData()))
 		
 	def start_eventListenerWorker(self, debugger, event_listener):
@@ -627,6 +624,14 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.threadpool.start(self.workerLoadSource)
 	
+	def handle_enableBP(self, address, enable):
+		self.tblBPs.doEnableBP(address, enable)
+#		pass
+	
+	def handle_BPOn(self, address, on):
+		self.tblBPs.doBPOn(address, on)
+#		pass
+		
 	def handle_resumeThread(self):
 		print("Trying to Continue ...")
 		error = self.process.Continue()
@@ -640,7 +645,46 @@ class LLDBPyGUIWindow(QMainWindow):
 		print("After SIGINT ...")
 		if error:
 			print(error)
+	
+	def stepOver_clicked(self):
+		print("Trying to step OVER ...")
+		self.thread.StepInstruction(True)
+		
+		frame = self.thread.GetFrameAtIndex(0)
+#		print(f'DEEEEEEBBBBBUUUUUGGGG: {lldbHelper.thread} / {lldbHelper.thread.GetNumFrames()} / {frame}')
+#		print(f'NEXT STEP {frame.register["rip"].value}')
+		
+		# Get the current instruction
+#       instruction = frame
+		print(f'NEXT INSTRUCTION {hex(frame.GetPC())}')
+		self.txtMultiline.setPC(frame.GetPC())
+		
+##       self.regTreeList.clear()
+#		for reg in self.regTreeList:
+#			reg.clear()
+#			
+#		self.workerLoadRegister = RegisterLoadWorker(self, lldbHelper.target)
+#		self.workerLoadRegister.signals.loadRegister.connect(self.handle_loadRegister)
+#		self.workerLoadRegister.signals.loadRegisterValue.connect(self.handle_loadRegisterValue)
+#		
+#		self.threadpool.start(self.workerLoadRegister)
 			
+	def stepInto_clicked(self):
+		print("Trying to step INTO ...")
+		self.thread.StepInto()
+		
+		frame = self.thread.GetFrameAtIndex(0)
+		print(f'NEXT INSTRUCTION {hex(frame.GetPC())}')
+		self.txtMultiline.setPC(frame.GetPC())
+		
+	def stepOut_clicked(self):
+		print("Trying to step OUT ...")
+		self.thread.StepOut()
+		
+		frame = self.thread.GetFrameAtIndex(0)
+		print(f'NEXT INSTRUCTION {hex(frame.GetPC())}')
+		self.txtMultiline.setPC(frame.GetPC())
+		
 	def handle_loadSourceFinished(self, sourceCode):
 		if sourceCode != "":
 			log(sourceCode)
@@ -659,5 +703,4 @@ class LLDBPyGUIWindow(QMainWindow):
 			return data
 		else:
 			print("Error reading memory:", error)
-			return None
-							
+			return None			

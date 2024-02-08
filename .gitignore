@@ -177,3 +177,14 @@ hello_world/hello_world_test2
 hello_world/lib4inject.c
 hello_world/xyz_test
 my_output.txt
+lui/breakwin.py
+lui/commandwin.py
+lui/cui.py
+lui/debuggerdriver.py
+lui/eventwin.py
+lui/lldbutil.py
+lui/lui.py
+lui/Readme
+lui/sandbox.py
+lui/sourcewin.py
+lui/statuswin.py
