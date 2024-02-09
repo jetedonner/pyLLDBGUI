@@ -418,10 +418,10 @@ class LLDBPyGUIWindow(QMainWindow):
 									
 									subSec = sec.GetSubSectionAtIndex(jete2)
 									
-									subSectionNode = QTreeWidgetItem(sectionNode, [subSec.GetName(), str(hex(subSec.GetFileAddress())), str(hex(subSec.GetFileAddress() + subSec.GetByteSize())), hex(subSec.GetFileByteSize()) + " / " + hex(subSec.GetByteSize()), lldbHelper.SectionTypeString(subSec.GetSectionType()) + " (" + str(subSec.GetSectionType()) + ")"])
+									subSectionNode = QTreeWidgetItem(sectionNode, [subSec.GetName(), str(hex(subSec.GetFileAddress())), str(hex(subSec.GetFileAddress() + subSec.GetByteSize())), hex(subSec.GetFileByteSize()), hex(subSec.GetByteSize()), lldbHelper.SectionTypeString(subSec.GetSectionType()) + " (" + str(subSec.GetSectionType()) + ")"])
 									
 									for sym in module.symbol_in_section_iter(subSec):
-										subSectionNode2 = QTreeWidgetItem(subSectionNode, [sym.GetName(), str(hex(sym.GetStartAddress().GetFileAddress())), str(hex(sym.GetEndAddress().GetFileAddress())), hex(sym.GetSize()), 'Symbol'])
+										subSectionNode2 = QTreeWidgetItem(subSectionNode, [sym.GetName(), str(hex(sym.GetStartAddress().GetFileAddress())), str(hex(sym.GetEndAddress().GetFileAddress())), hex(sym.GetSize()), '', 'Symbol (%s)' % str(sym.GetType())])
 #										print(dir(sym))
 										print(sym.GetName())
 										print(INDENT2 + repr(sym))
@@ -459,27 +459,27 @@ class LLDBPyGUIWindow(QMainWindow):
 								self.tabWidgetReg.addTab(tabDet, value.GetName())
 								
 								for child in value:
-									memoryValue = ""
-									try:
-										
-										# Specify the memory address and size you want to read
-										size = 32  # Adjust the size based on your data type (e.g., int, float)
-										
-										# Read memory and print the result
-										data = self.read_memory(self.process, target.ResolveLoadAddress(int(child.GetValue(), 16)), size)
-										
-										hex_string = ''.join("%02x" % byte for byte in data)
-										
-										formatted_hex_string = ' '.join(re.findall(r'.{2}', hex_string))
-										memoryValue = formatted_hex_string
-		
-									except Exception as e:
-#                              				print(f"Error getting memory for addr: {e}")
-										pass
+#									memoryValue = ""
+#									try:
+#										
+#										# Specify the memory address and size you want to read
+#										size = 32  # Adjust the size based on your data type (e.g., int, float)
+#										
+#										# Read memory and print the result
+#										data = self.read_memory(self.process, target.ResolveLoadAddress(int(child.GetValue(), 16)), size)
+#										
+#										hex_string = ''.join("%02x" % byte for byte in data)
+#										
+#										formatted_hex_string = ' '.join(re.findall(r'.{2}', hex_string))
+#										memoryValue = formatted_hex_string
+#		
+#									except Exception as e:
+##                              				print(f"Error getting memory for addr: {e}")
+#										pass
 										
 #									self.signals.loadRegisterValue.emit(currReg, child.GetName(), child.GetValue(), memoryValue)
 #									QCoreApplication.self.processEvents()
-									registerDetailNode = QTreeWidgetItem(treDet, [child.GetName(), child.GetValue(), memoryValue])
+									registerDetailNode = QTreeWidgetItem(treDet, [child.GetName(), child.GetValue(), getMemoryValueAtAddress(target, self.process, child.GetValue())])
 						
 #						self.start_eventListenerWorker(self.debugger, self.interruptEventListenerWorker)
 						self.start_loadSourceWorker(self.debugger, "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/hello_world/hello_world_test.c", self.interruptLoadSourceWorker)
@@ -606,27 +606,27 @@ class LLDBPyGUIWindow(QMainWindow):
 			self.tabWidgetReg.addTab(tabDet, value.GetName())
 			
 			for child in value:
-				memoryValue = ""
-				try:
-					
-					# Specify the memory address and size you want to read
-					size = 32  # Adjust the size based on your data type (e.g., int, float)
-					
-					# Read memory and print the result
-					data = self.read_memory(process, target.ResolveLoadAddress(int(child.GetValue(), 16)), size)
-					
-					hex_string = ''.join("%02x" % byte for byte in data)
-					
-					formatted_hex_string = ' '.join(re.findall(r'.{2}', hex_string))
-					memoryValue = formatted_hex_string
-					
-				except Exception as e:
-	#                              				print(f"Error getting memory for addr: {e}")
-					pass
+#				memoryValue = ""
+#				try:
+#					
+#					# Specify the memory address and size you want to read
+#					size = 32  # Adjust the size based on your data type (e.g., int, float)
+#					
+#					# Read memory and print the result
+#					data = self.read_memory(process, target.ResolveLoadAddress(int(child.GetValue(), 16)), size)
+#					
+#					hex_string = ''.join("%02x" % byte for byte in data)
+#					
+#					formatted_hex_string = ' '.join(re.findall(r'.{2}', hex_string))
+#					memoryValue = formatted_hex_string
+#					
+#				except Exception as e:
+#	#                              				print(f"Error getting memory for addr: {e}")
+#					pass
 					
 	#									self.signals.loadRegisterValue.emit(currReg, child.GetName(), child.GetValue(), memoryValue)
 	#									QCoreApplication.self.processEvents()
-				registerDetailNode = QTreeWidgetItem(treDet, [child.GetName(), child.GetValue(), memoryValue])
+				registerDetailNode = QTreeWidgetItem(treDet, [child.GetName(), child.GetValue(), getMemoryValueAtAddress(target, process, child.GetValue())])
 		pass
 		
 	def convert_address(self, address):		
