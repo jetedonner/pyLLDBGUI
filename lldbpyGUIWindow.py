@@ -570,6 +570,65 @@ class LLDBPyGUIWindow(QMainWindow):
 				self.tblBPs.addRow(bp_cur.GetID(), idx, hex(bl.GetLoadAddress()), name, str(bp_cur.GetHitCount()), bp_cur.GetCondition())
 		pass
 		
+		
+	def reloadRegister(self, frame):
+		target = self.driver.getTarget()
+		process = target.GetProcess()
+#		if process:
+#			thread = process.GetThreadAtIndex(0)
+#			if thread:
+#				frame = thread.GetFrameAtIndex(0)
+#				if frame:
+		self.tabWidgetReg.clear()
+		registerList = frame.GetRegisters()
+		print(
+			"Frame registers (size of register set = %d):"
+			% registerList.GetSize()
+		)
+	#					self.sendProgressUpdate(30)
+		currReg = 0
+		for value in registerList:
+			# print value
+			print(
+				"%s (number of children = %d):"
+				% (value.GetName(), value.GetNumChildren())
+			)
+			tabDet = QWidget()
+			treDet = RegisterTreeWidget()
+	#						self.regTreeList.append(treDet)
+			tabDet.setLayout(QVBoxLayout())
+			tabDet.layout().addWidget(treDet)
+			
+			treDet.setFont(ConfigClass.font)
+			treDet.setHeaderLabels(['Registername', 'Value', 'Memory'])
+			treDet.header().resizeSection(0, 128)
+			treDet.header().resizeSection(1, 256)
+			self.tabWidgetReg.addTab(tabDet, value.GetName())
+			
+			for child in value:
+				memoryValue = ""
+				try:
+					
+					# Specify the memory address and size you want to read
+					size = 32  # Adjust the size based on your data type (e.g., int, float)
+					
+					# Read memory and print the result
+					data = self.read_memory(process, target.ResolveLoadAddress(int(child.GetValue(), 16)), size)
+					
+					hex_string = ''.join("%02x" % byte for byte in data)
+					
+					formatted_hex_string = ' '.join(re.findall(r'.{2}', hex_string))
+					memoryValue = formatted_hex_string
+					
+				except Exception as e:
+	#                              				print(f"Error getting memory for addr: {e}")
+					pass
+					
+	#									self.signals.loadRegisterValue.emit(currReg, child.GetName(), child.GetValue(), memoryValue)
+	#									QCoreApplication.self.processEvents()
+				registerDetailNode = QTreeWidgetItem(treDet, [child.GetName(), child.GetValue(), memoryValue])
+		pass
+		
 	def convert_address(self, address):		
 		# Convert the address to hex
 		converted_address = int(address, 16)
@@ -709,7 +768,9 @@ class LLDBPyGUIWindow(QMainWindow):
 #       instruction = frame
 		print(f'NEXT INSTRUCTION {hex(frame.GetPC())}')
 		self.txtMultiline.setPC(frame.GetPC())
+		self.reloadRegister(frame)
 		self.reloadBreakpoints()
+		
 ##       self.regTreeList.clear()
 #		for reg in self.regTreeList:
 #			reg.clear()
@@ -727,6 +788,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		frame = self.thread.GetFrameAtIndex(0)
 		print(f'NEXT INSTRUCTION {hex(frame.GetPC())}')
 		self.txtMultiline.setPC(frame.GetPC())
+		self.reloadRegister(frame)
 		self.reloadBreakpoints()
 		
 	def stepOut_clicked(self):
@@ -736,6 +798,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		frame = self.thread.GetFrameAtIndex(0)
 		print(f'NEXT INSTRUCTION {hex(frame.GetPC())}')
 		self.txtMultiline.setPC(frame.GetPC())
+		self.reloadRegister(frame)
 		self.reloadBreakpoints()
 		
 	def handle_loadSourceFinished(self, sourceCode):
