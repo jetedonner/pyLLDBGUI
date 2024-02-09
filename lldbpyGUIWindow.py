@@ -53,13 +53,15 @@ class LLDBPyGUIWindow(QMainWindow):
 	
 #	regTreeList = []
 	
+	driver = None
 	debugger = None
 	interruptEventListenerWorker = None
 	interruptLoadSourceWorker = None
 	process = None
 	
-	def __init__(self, debugger):
+	def __init__(self, debugger, driver = None):
 		super().__init__()
+		self.driver = driver
 		self.debugger = debugger
 		
 		self.setWindowTitle(APP_NAME + " " + APP_VERSION)
@@ -524,6 +526,50 @@ class LLDBPyGUIWindow(QMainWindow):
 						self.tblBPs.addRow(bp_cur.GetID(), idx, hex(bl.GetLoadAddress()), name, str(bp_cur.GetHitCount()), bp_cur.GetCondition())
 		#               print(f'LOADING BREAKPOINT AT ADDRESS: {hex(bl.GetLoadAddress())}')
 		
+	def reloadBreakpoints(self):
+		self.tblBPs.resetContent()
+		target = self.driver.getTarget()
+		print("======== START BP INTER =========")
+		for b in target.breakpoint_iter():
+			print(b)
+		print("========= END BP INTER ==========")
+	
+		idx = 0
+		for i in range(target.GetNumBreakpoints()):
+			idx += 1
+			bp_cur = target.GetBreakpointAtIndex(i)
+			print(bp_cur)
+			for bl in bp_cur:
+				# Make sure the name list has the remaining name:
+				name_list = lldb.SBStringList()
+				bp_cur.GetNames(name_list)
+				num_names = name_list.GetSize()
+	#               self.assertEquals(
+	#                   num_names, 1, "Name list has %d items, expected 1." % (num_names)
+	#               )
+				
+				name = name_list.GetStringAtIndex(0)
+	#               self.assertEquals(
+	#                   name,
+	#                   other_bkpt_name,
+	#                   "Remaining name was: %s expected %s." % (name, other_bkpt_name),
+	#               )
+	#               print(dir(bl))
+	#               bp_cur = lldbHelper.target.GetBreakpointAtIndex(i)
+	#               print(bl)
+	#               print(dir(bl))
+	#               print(bl.GetQueueName())
+	#               print(get_description(bp_cur))
+	#               print(dir(get_description(bp_cur)))
+				
+				
+#				self.txtMultiline.table.toggleBPAtAddress(hex(bl.GetLoadAddress()), False)
+				
+				
+	#						self.tblBPs.resetContent()
+				self.tblBPs.addRow(bp_cur.GetID(), idx, hex(bl.GetLoadAddress()), name, str(bp_cur.GetHitCount()), bp_cur.GetCondition())
+		pass
+		
 	def convert_address(self, address):		
 		# Convert the address to hex
 		converted_address = int(address, 16)
@@ -651,6 +697,11 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.thread.StepInstruction(True)
 		
 		frame = self.thread.GetFrameAtIndex(0)
+		
+#		for i in range(len(frame.register)):
+#			print(frame.register[i])
+#		rip = self.convert_address(frame.register["rip"].value)
+		
 #		print(f'DEEEEEEBBBBBUUUUUGGGG: {lldbHelper.thread} / {lldbHelper.thread.GetNumFrames()} / {frame}')
 #		print(f'NEXT STEP {frame.register["rip"].value}')
 		
@@ -658,7 +709,7 @@ class LLDBPyGUIWindow(QMainWindow):
 #       instruction = frame
 		print(f'NEXT INSTRUCTION {hex(frame.GetPC())}')
 		self.txtMultiline.setPC(frame.GetPC())
-		
+		self.reloadBreakpoints()
 ##       self.regTreeList.clear()
 #		for reg in self.regTreeList:
 #			reg.clear()
@@ -676,6 +727,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		frame = self.thread.GetFrameAtIndex(0)
 		print(f'NEXT INSTRUCTION {hex(frame.GetPC())}')
 		self.txtMultiline.setPC(frame.GetPC())
+		self.reloadBreakpoints()
 		
 	def stepOut_clicked(self):
 		print("Trying to step OUT ...")
@@ -684,6 +736,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		frame = self.thread.GetFrameAtIndex(0)
 		print(f'NEXT INSTRUCTION {hex(frame.GetPC())}')
 		self.txtMultiline.setPC(frame.GetPC())
+		self.reloadBreakpoints()
 		
 	def handle_loadSourceFinished(self, sourceCode):
 		if sourceCode != "":

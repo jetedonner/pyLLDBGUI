@@ -230,6 +230,8 @@ class AssemblerTextEdit(QWidget):
 			if self.table.item(row, 3).text() == hex(pc):
 				print("FOUND ROW")
 				self.table.item(row, 0).setText('>')
+				index = self.table.model().index(row, 0)
+				self.table.scrollTo(index)
 			else:
 				self.table.item(row, 0).setText('')
 		pass
@@ -422,6 +424,8 @@ class DisassemblyTableWidgetNG(QTableWidget):
 		# Insert the items into the row
 		self.setItem(row, col, item)
 		
+		
+# THIS ONE IS USED FOR NG IMPLEMENTATION !!!
 class AssemblerTextEditNG(QWidget):
 	
 	lineCountNG = 0
@@ -445,8 +449,11 @@ class AssemblerTextEditNG(QWidget):
 	def setPC(self, pc):
 		for row in range(self.table.rowCount()):
 			if self.table.item(row, 3).text() == hex(pc):
-				print("FOUND ROW")
+#				print("FOUND ROW")
 				self.table.item(row, 0).setText('>')
+#				index = self.table.model().index(row, 0)
+#				self.table.scrollTo(index)
+				self.table.scrollTo(self.table.model().index(row, 0))
 			else:
 				self.table.item(row, 0).setText('')
 		pass
