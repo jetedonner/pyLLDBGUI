@@ -527,6 +527,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		#               print(f'LOADING BREAKPOINT AT ADDRESS: {hex(bl.GetLoadAddress())}')
 		
 	def reloadBreakpoints(self):
+		self.updateStatusBar("Reloading breakpoints ...")
 		self.tblBPs.resetContent()
 		target = self.driver.getTarget()
 		print("======== START BP INTER =========")
@@ -534,9 +535,11 @@ class LLDBPyGUIWindow(QMainWindow):
 			print(b)
 		print("========= END BP INTER ==========")
 	
+		numBPs = target.GetNumBreakpoints()
 		idx = 0
-		for i in range(target.GetNumBreakpoints()):
+		for i in range(numBPs):
 			idx += 1
+			self.setProgressValue(100/numBPs*idx)
 			bp_cur = target.GetBreakpointAtIndex(i)
 			print(bp_cur)
 			for bl in bp_cur:
@@ -572,6 +575,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		
 	def reloadRegister(self, frame):
+		self.updateStatusBar("Reloading registers ...")
 		target = self.driver.getTarget()
 		process = target.GetProcess()
 #		if process:
@@ -586,8 +590,13 @@ class LLDBPyGUIWindow(QMainWindow):
 			% registerList.GetSize()
 		)
 	#					self.sendProgressUpdate(30)
+		numRegisters = registerList.GetSize()
+		numRegSeg = 100 / numRegisters
 		currReg = 0
 		for value in registerList:
+			currReg += 1
+			currRegSeg = 100 / numRegisters * currReg
+			self.setProgressValue(100 / numRegisters * currReg)
 			# print value
 			print(
 				"%s (number of children = %d):"
@@ -605,7 +614,11 @@ class LLDBPyGUIWindow(QMainWindow):
 			treDet.header().resizeSection(1, 256)
 			self.tabWidgetReg.addTab(tabDet, value.GetName())
 			
+			numChilds = len(value)
+			idx = 0
 			for child in value:
+				idx += 1
+				self.setProgressValue((100 / numRegisters * currReg) + (numRegSeg / numChilds * idx))
 #				memoryValue = ""
 #				try:
 #					
@@ -637,6 +650,10 @@ class LLDBPyGUIWindow(QMainWindow):
 #       print("Converted address:", hex(converted_address))
 		return hex(converted_address)
 	
+	def setProgressValue(self, newValue):
+		self.progressbar.setValue(newValue)
+		pass
+		
 	def updateStatusBar(self, msg):
 		self.statusBar.showMessage(msg)
 		
