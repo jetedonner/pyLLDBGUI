@@ -23,11 +23,14 @@ from PyQt6 import uic, QtWidgets
 
 from PyQt6.QConsoleTextEdit import *
 
-APP_NAME = "ConsoleTextEditWindow-TEST"
+#APP_NAME = "ConsoleTextEditWindow-TEST"
+#VERSION = "0.0.1"
+
+APP_NAME = "LLDB-PyGUI"
+APP_VERSION = "0.0.1"
+APP_BUILD = "689"
 PROMPT_TEXT = "LLDB-PyGUI"
 WINDOW_SIZE = 512
-
-APP_VERSION = "v0.0.1"
 
 try:
 	import keystone

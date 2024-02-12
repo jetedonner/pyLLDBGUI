@@ -2,7 +2,7 @@
 
 import lldb
 from lldbutil import print_stacktrace
-from inputHelper import FBInputHandler
+from helper.inputHelper import FBInputHandler
 import psutil
 import os
 import os.path
@@ -22,7 +22,7 @@ from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
 from PyQt6 import uic, QtWidgets
 
-import lldbHelper
+import helper.lldbHelper
 
 fname = "main"
 exe = "./hello_world_test"
@@ -71,7 +71,7 @@ class TargetLoadWorker(QRunnable):
 		self.data_receiver.interruptTargetLoadSignal.connect(self.handle_interrupt)
 		if lldbHelper.exec2Dbg is not None:
 			self.targetPath = lldbHelper.exec2Dbg
-			print(f'loading TARGETPATH: {self.targetPath}')
+#			print(f'loading TARGETPATH: {self.targetPath}')
 			
 		self.signals = TargetLoadWorkerSignals()
 		
@@ -83,16 +83,16 @@ class TargetLoadWorker(QRunnable):
 		self.interruptTargetLoad = True
 		pass
 		
-	def convert_address(self, address):
-		# Get the address to be converted
-#       address = "0x0000000100003f5f"
-		
-		# Convert the address to hex
-		converted_address = int(address, 16)
-		
-		# Print the converted address
-#       print("Converted address:", hex(converted_address))
-		return hex(converted_address)
+#	def convert_address(self, address):
+#		# Get the address to be converted
+##       address = "0x0000000100003f5f"
+#		
+#		# Convert the address to hex
+#		converted_address = int(address, 16)
+#		
+#		# Print the converted address
+##       print("Converted address:", hex(converted_address))
+#		return hex(converted_address)
 	
 #	def handle_readMemory(self, debugger, address = 0xdeadbeef, data_size = 0x1000):
 #		#       my_address = 0xdeadbeef  # change for some real address
@@ -110,7 +110,7 @@ class TargetLoadWorker(QRunnable):
 	
 	def print_source_code_for_frame(self, frame):
 		# Create the filespec for 'main.c'.
-		filespec = lldb.SBFileSpec('/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/hello_world/hello_world_test.c', False)
+		filespec = lldb.SBFileSpec('/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/hello_world_test.c', False)
 		source_mgr = lldbHelper.debugger.GetSourceManager()
 		# Use a string stream as the destination.
 		stream = lldb.SBStream()
@@ -169,7 +169,7 @@ class TargetLoadWorker(QRunnable):
 		
 		# When we step or continue, don't return from the function until the process
 		# stops. We do this by setting the async mode to false.
-		lldbHelper.debugger.SetAsync(False)
+#		lldbHelper.debugger.SetAsync(False)
 		
 #       for i in dir(debugger):
 #           print(i)
@@ -691,7 +691,7 @@ class TargetLoadWorker(QRunnable):
 #										for jete2 in range(sec.GetNumSubSections()):
 #											print(sec.GetSubSectionAtIndex(jete2).GetName())
 										
-									rip = self.convert_address(frame.register["rip"].value)
+									rip = lldbHelper.convert_address(frame.register["rip"].value)
 #									print(rip)
 									function = frame.GetFunction()
 									# See if we have debug info (a function)

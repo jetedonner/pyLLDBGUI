@@ -13,8 +13,12 @@ from PyQt6 import uic, QtWidgets
 from config import *
 		
 from ui.assemblerTextEdit import *
-from breakpointHelper import *
+from helper.breakpointHelper import *
 
+def breakpointHandlerAuto(dummy, frame, bpno, err):
+		print("breakpointHandlerAuto ...")
+		print("YESSSSSSS GETTTTTTTIIIIINNNNNNNGGGGG THERE!!!!!!")
+		
 class BreakpointsTableWidget(QTableWidget):
 	
 #	window() = None
@@ -25,12 +29,16 @@ class BreakpointsTableWidget(QTableWidget):
 #		self.setRowCount(0)
 #		#		self.initTable()
 #		pass
-		
+	
+	driver = None
+	
 	def handle_toggleBP(self):
 		if len(self.selectedItems()) > 0:
 			item = self.item(self.selectedItems()[0].row(), 0)
 			itemNum = self.item(self.selectedItems()[0].row(), 1)
+			addr = self.item(self.selectedItems()[0].row(), 2).text()
 			item.toggleBPOn()
+#			self.driver.handleCommand(f"breakpoint set -a {addr} -C bpcbauto")
 			self.window().updateStatusBar(f"Set breakpoint {itemNum.text()} status to {item.isBPEnabled}")
 		pass
 		
@@ -105,9 +113,13 @@ class BreakpointsTableWidget(QTableWidget):
 		if on and not bBPFound:
 			self.addRow(on, self.rowCount() + 1, address, '', '0', '')
 	
-	def __init__(self, window):
+	def __init__(self, driver):
 		super().__init__()
 #		self.window() = window()
+		self.driver = driver
+		
+#		self.driver.handleCommand("command script add -h '(lldbinit) The breakpoint callback function (auto).' --function breakpointTableWidget.breakpointHandlerAuto bpcbauto")
+		
 		self.initTable()
 		self.context_menu = QMenu(self)
 		actionToggleBP = self.context_menu.addAction("Toggle Breakpoint")

@@ -9,17 +9,33 @@
 
 import lldb
 import lldbutil
+from lldbutil import *
 import sys
 from threading import Thread
 
-global process
+from PyQt6.QtGui import *
+from PyQt6.QtCore import *
+
+from PyQt6 import uic, QtWidgets, QtCore
+#global process
 #process = None
 
+def breakpointHandlerDriver(dummy, frame, bpno, err):
+    print("breakpointHandlerDriver ...")
+    print("YESSSSSSS GETTTTTTTIIIIINNNNNNNGGGGG THERE!!!!!!")
+
+class DebuggerDriverSignals(QObject):
+    event_queued = QtCore.pyqtSignal(object)
+  
 class DebuggerDriver(Thread):
     """ Drives the debugger and responds to events. """
-
+    
+    
+    signals = None
+    
     def __init__(self, debugger, event_queue):
         Thread.__init__(self)
+        self.signals = DebuggerDriverSignals()
         self.event_queue = event_queue
         # This is probably not great because it does not give liblldb a chance
         # to clean up
@@ -27,6 +43,7 @@ class DebuggerDriver(Thread):
         self.initialize(debugger)
 
     def initialize(self, debugger):
+        print("INITIALISING DRIVER!!!")
         self.done = False
         self.debugger = debugger
         self.listener = debugger.GetListener()
@@ -118,6 +135,8 @@ class DebuggerDriver(Thread):
             desc = lldbutil.get_description(event)
             print('Event description:', desc)
             print('Event data flavor:', event.GetDataFlavor())
+#           if event.GetDataFlavor() == "Breakpoint::BreakpointEventData":
+#             print("GOT BREAKPOINT CHANGE!!!")
 #           global process
 #           print('Process state:', lldbutil.state_type_to_str(process.GetState()))
             print()
@@ -132,9 +151,10 @@ class DebuggerDriver(Thread):
                 continue
             elif not event.GetBroadcaster().IsValid():
                 continue
-
+            
             self.event_queue.put(event)
-
+            self.signals.event_queued.emit(event)
+            
     def run(self):
         self.eventLoop()
 

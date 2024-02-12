@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import *
 from PyQt6 import uic, QtWidgets
 from config import *
 
-class FileInfosTableWidget(QTableWidget):
+class VariablesTableWidget(QTableWidget):
 		
 	def __init__(self):
 		super().__init__()
@@ -24,13 +24,13 @@ class FileInfosTableWidget(QTableWidget):
 #		self.context_menu.addSeparator()
 		
 		self.setColumnCount(3)
-		self.setColumnWidth(0, 128)
-		self.setColumnWidth(1, 512)
-		self.setColumnWidth(2, 128)
+		self.setColumnWidth(0, 196)
+		self.setColumnWidth(1, 196)
+		self.setColumnWidth(2, 768)
 		self.verticalHeader().hide()
 		self.horizontalHeader().show()
 		self.horizontalHeader().setHighlightSections(False)
-		self.setHorizontalHeaderLabels(['Key', 'Value', 'Raw'])
+		self.setHorizontalHeaderLabels(['Name', 'Value', 'Type'])
 		self.horizontalHeaderItem(0).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
 		self.horizontalHeaderItem(1).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
 		self.horizontalHeaderItem(2).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
@@ -59,12 +59,12 @@ class FileInfosTableWidget(QTableWidget):
 		for row in range(self.rowCount(), 0):
 			self.removeRow(row)
 			
-	def addRow(self, key, value, raw):
+	def addRow(self, name, value, datatype):
 		currRowCount = self.rowCount()
 		self.setRowCount(currRowCount + 1)
-		self.addItem(currRowCount, 0, str(key))
+		self.addItem(currRowCount, 0, str(name))
 		self.addItem(currRowCount, 1, str(value))
-		self.addItem(currRowCount, 2, str(raw))
+		self.addItem(currRowCount, 2, str(datatype))
 		self.setRowHeight(currRowCount, 18)
 		
 		

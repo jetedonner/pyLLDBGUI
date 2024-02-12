@@ -15,3 +15,7 @@
 - <a href="https://www.flaticon.com/free-icons/triangle" title="triangle icons">Triangle icons created by Freepik - Flaticon</a>
 - <a href="https://www.flaticon.com/free-icons/pause" title="pause icons">Pause icons created by Freepik - Flaticon</a>
 - <a href="https://www.flaticon.com/free-icons/settings" title="settings icons">Settings icons created by Gregor Cresnar Premium - Flaticon</a>
+- <a href="https://www.flaticon.com/free-icons/info" title="info icons">Info icons created by Plastic Donut - Flaticon</a>
+- <a href="https://www.flaticon.com/free-icons/save" title="save icons">Save icons created by Flat Icons - Flaticon</a>
+- <a href="https://www.flaticon.com/free-icons/edit" title="edit icons">Edit icons created by Flat Icons - Flaticon</a>
+- <a href="https://www.flaticon.com/free-icons/recycle-bin" title="recycle bin icons">Recycle bin icons created by Uniconlabs - Flaticon</a>

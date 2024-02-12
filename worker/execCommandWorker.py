@@ -2,7 +2,7 @@
 
 import lldb
 from lldbutil import print_stacktrace
-from inputHelper import FBInputHandler
+from helper.inputHelper import FBInputHandler
 import psutil
 import os
 import os.path

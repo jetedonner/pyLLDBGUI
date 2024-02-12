@@ -2,7 +2,7 @@
 
 import lldb
 from lldbutil import print_stacktrace
-from inputHelper import FBInputHandler
+from helper.inputHelper import FBInputHandler
 import psutil
 import os
 import os.path
@@ -19,7 +19,7 @@ from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
 from PyQt6 import uic, QtWidgets
 
-import lldbHelper
+import helper.lldbHelper
 
 interruptLoadSourceCode = False
 

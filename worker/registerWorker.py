@@ -2,7 +2,7 @@
 
 import lldb
 from lldbutil import print_stacktrace
-from inputHelper import FBInputHandler
+from helper.inputHelper import FBInputHandler
 import psutil
 import os
 import os.path
@@ -22,7 +22,7 @@ from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
 from PyQt6 import uic, QtWidgets
 
-import lldbHelper
+import helper.lldbHelper
 
 fname = "main"
 exe = "./hello_world_test"
@@ -49,9 +49,10 @@ class RegisterLoadWorkerSignals(QObject):
 	
 class RegisterLoadWorker(QRunnable):
 	
-	targetPath = "/Users/dave/Downloads/hello_world/hello_world"
-	window = None
-	inputHandler = None
+#	targetPath = "/Users/dave/Downloads/hello_world/hello_world"
+#	window = None
+	driver = None
+#	inputHandler = None
 	
 #	debugger = None
 #	target = None
@@ -61,15 +62,15 @@ class RegisterLoadWorker(QRunnable):
 	def inputCallback(self, data):
 		print(data)
 		
-	def __init__(self, window_obj, target = "/Users/dave/Downloads/hello_world/hello_world"):
+	def __init__(self, driver):
 		super(RegisterLoadWorker, self).__init__()
 		self.isRegisterLoadActive = False
-		self.window = window_obj
-		self.targetPath = target
+#		self.window = window_obj
+		self.driver = driver
 		
-		if lldbHelper.exec2Dbg is not None:
-			self.targetPath = lldbHelper.exec2Dbg
-			print(f'loading TARGETPATH: {self.targetPath}')
+#		if lldbHelper.exec2Dbg is not None:
+#			self.targetPath = lldbHelper.exec2Dbg
+#			print(f'loading TARGETPATH: {self.targetPath}')
 			
 		self.signals = RegisterLoadWorkerSignals()
 		
@@ -111,144 +112,9 @@ class RegisterLoadWorker(QRunnable):
 		QCoreApplication.processEvents()
 		self.isRegisterLoadActive = True
 		
-		self.sendProgressUpdate(5)
-		
-		
-#		# Create a new debugger instance
-#		lldbHelper.debugger = lldb.SBDebugger.Create()
+#		self.sendProgressUpdate(5)
 #		
-##		global debugger
-##		debugger = self.debugger
-#		
-#		# When we step or continue, don't return from the function until the process
-#		# stops. We do this by setting the async mode to false.
-#		lldbHelper.debugger.SetAsync(False)
-#		
-##       for i in dir(debugger):
-##           print(i)
-##       {lldb.getVersion()}
-#		print(f"VEARSION: {sys.modules['lldb'].__file__} / {lldbHelper.debugger.GetVersionString()}")
-#		
-##       print(lldb)
-#		
-##       for i in dir(lldb):
-##           print(i)
-##       self.inputHandler = FBInputHandler(debugger, self.inputCallback)
-#		
-#		print(f'debugger: {lldbHelper.debugger}')
-#		# Create a target from a file and arch
-#		print("Creating a target for '%s'" % self.targetPath)
-#		
-#		
-#		lldbHelper.target = lldbHelper.debugger.CreateTargetWithFileAndArch(self.targetPath, None) # lldb.LLDB_ARCH_DEFAULT)
-##		global target
-##		target = self.target
-#		
-#		if lldbHelper.target:
-#			self.sendProgressUpdate(10)
-#			
-#			
-#			# If the target is valid set a breakpoint at main
-#			main_bp = lldbHelper.target.BreakpointCreateByName(fname, lldbHelper.target.GetExecutable().GetFilename())
-#			main_bp.AddName(fname)
-##			error = main_bp.SetScriptCallbackBody("\
-##			print 'Hit breakpoint callback'")
-##           main_bp.SetScriptCallbackFunction('disasm_ui.breakpoint_cb')
-##           main_bp.SetAutoContinue(auto_continue=True)
-#			print(main_bp)
-#			
-#			# Launch the process. Since we specified synchronous mode, we won't return
-#			# from this function until we hit the breakpoint at main
-#			
-#			lldbHelper.process = lldbHelper.target.LaunchSimple(None, None, os.getcwd())
-##			global process
-##			process = self.process
-##           process.Stop()
-##           self.inputHandler.start()
-##			print(self.process)
-#			
-#			# Make sure the launch went ok
-#			if lldbHelper.process:
-#				li = lldbHelper.target.GetLaunchInfo()
-#				statistics = lldbHelper.target.GetStatistics()
-#				stream = lldb.SBStream()
-#				success = statistics.GetAsJSON(stream)
-#				if success:
-#					self.signals.loadStats.emit(str(stream.GetData()))
-#					QCoreApplication.processEvents()
-##					print(stream.GetData())
-#				
-##				print(li.GetProcessID())
-##				for info in dir(lldbHelper.target.GetStatistics()):
-##					print(info)
-#					
-##				executable = lldbHelper.process.GetExecutable()
-##				self.executeCmd()
-##				self.handle_readMemory(self.debugger, 0x108a01b90, 0x100)
-#				
-##				for fun in dir(self.process):
-##					print(fun)
-##               for module in process.GetLoadedModules():
-##                   for symbol in module.GetSymbols():
-##                       if symbol.GetType() == lldb.SBSymbolType.ST_Import:
-##                           print(symbol.GetName())
-#					
-#					
-#				self.signals.loadProcess.emit(lldbHelper.process)
-#				QCoreApplication.processEvents()
-#				self.sendProgressUpdate(15)
-##				print("Process launched OK")
-#				# Print some simple process info
-#				state = lldbHelper.process.GetState()
-##				print(self.process)
-#				if True: #state == lldb.eStateStopped:
-#					print("state == lldb.eStateStopped")
-#					
-#					
-##					print(f'GetNumQueues: {self.process.GetNumQueues()}')
-##					for que in range(self.process.GetNumQueues()):
-##						print(f'process.GetQueueAtIndex({que}) {self.process.GetQueueAtIndex(que)}')
-##						
-##					print(f'GetNumThreads: {self.process.GetNumThreads()}')
-##					# Get the first thread
-##					for thrd in range(self.process.GetNumThreads()):
-##						print(f'process.GetThreadAtIndex({thrd}) {self.process.GetThreadAtIndex(thrd).GetIndexID()}')
-#						
-#					idxThread = 0
-#					
-#					
-#					lldbHelper.thread = lldbHelper.process.GetThreadAtIndex(0)
-##					global thread
-##					thread = self.thread
-#					if lldbHelper.thread:
-#						
-#						
-#						
-##                       # Get the current register state
-##                       register_state = thread.GetThreadState()
-##                   
-##                       # Get the RIP register value
-##                       rip_value = register_state.GetRegisterValue("rip")
-##                   
-##                       # Print the RIP value
-##                       print("Current RIP:", hex(rip_value))
-#						
-##                       # Get the current instruction address
-##                       instruction_address = thread.GetInstructionAddress()
-##                   
-##                       # Get the current instruction location
-##                       instruction_location = lldb.SBInstructionLocation(process, instruction_address)
-##                   
-##                       # Get the file and line number where the instruction is located
-##                       file_name, line_number = instruction_location.GetLineEntry().GetFileNameAndLine()
-##                   
-##                       # Print the file and line number
-##                       print("Current instruction location:", file_name, line_number)
-#						
-#						self.signals.loadThread.emit(idxThread, lldbHelper.thread)
-#						QCoreApplication.processEvents()
-#						idxThread += 1
-		self.sendProgressUpdate(20)
+#		self.sendProgressUpdate(20)
 		# Print some simple thread info
 #						print(self.thread)
 #						print_stacktrace(lldbHelper.thread)
@@ -387,19 +253,6 @@ class RegisterLoadWorker(QRunnable):
 		self.signals.finished.emit()
 		QCoreApplication.processEvents()
 		
-#	def executeCmd(self):
-#		# This causes an error and the callback is never called.
-#		opt = lldb.SBExpressionOptions()
-#		opt.SetIgnoreBreakpoints(False)
-#		
-#		global target
-#		print("EXECUTING COMMAND:")
-#		# Execute the "re read" command
-#		result = target.EvaluateExpression("re read", opt)
-#		
-#		# Print the result
-#		print(result.GetSummary())
-		
 	def sendProgressUpdate(self, progress):
 		self.signals.sendProgressUpdate.emit(int(progress))
 		QCoreApplication.processEvents()
@@ -435,11 +288,11 @@ class RegisterLoadWorker(QRunnable):
 			print("Error reading memory:", error)
 			return None
 		
-	def disassemble_instructions(self, insts, rip):
-#		global target
-		for i in insts:
-			address = self.extract_address(f'{i}')
-#           self.signals.addInstruction(.emit(f'0x{address}:\t{i.GetMnemonic(target)}\t{i.GetOperands(target)}', True, True, False, "black")
-			self.signals.addInstructionNG.emit(f'0x{address}', f'{i.GetMnemonic(lldbHelper.target)}\t{i.GetOperands(lldbHelper.target)}', f'{i.GetComment(lldbHelper.target)}', f'{i.GetData(lldbHelper.target)}', True, True, False, "black", rip)
-			
-			QCoreApplication.processEvents()
+#	def disassemble_instructions(self, insts, rip):
+##		global target
+#		for i in insts:
+#			address = self.extract_address(f'{i}')
+##           self.signals.addInstruction(.emit(f'0x{address}:\t{i.GetMnemonic(target)}\t{i.GetOperands(target)}', True, True, False, "black")
+#			self.signals.addInstructionNG.emit(f'0x{address}', f'{i.GetMnemonic(lldbHelper.target)}\t{i.GetOperands(lldbHelper.target)}', f'{i.GetComment(lldbHelper.target)}', f'{i.GetData(lldbHelper.target)}', True, True, False, "black", rip)
+#			
+#			QCoreApplication.processEvents()

@@ -21,9 +21,6 @@ try:
 except ImportError:
   import Queue as queue
 
-#global process
-#process = None
-
 import debuggerdriver
 
 from PyQt6.QtGui import *
@@ -39,7 +36,6 @@ from lldbpyGUIWindow import *
 
 from config import *
 
-
 # test terminal - idea from https://github.com/ant4g0nist/lisa.py/
 try:
     tty_rows, tty_columns = struct.unpack("hh", fcntl.ioctl(1, termios.TIOCGWINSZ, "1234"))
@@ -54,95 +50,19 @@ except Exception as e:
     print("[!] lldbinit is best experienced with a terminal size at least {}x{}\033[0m".format(MIN_COLUMNS, MIN_ROWS))
 
 
-def breakpointHandler(frame, bpno, err):
-    print("MLIR debugger attaching...")
-    print("IIIIIIIIINNNNNNNN CCCCAAQALLLLLLBBBAAACCKKKK")
-  
-#class QConsoleTextEditWindow(QMainWindow):
-#   
-#   mytext = "thread #1: tid = 0xa8f62d, 0x0000000100003f40 hello_world_test_loop`main, queue = \x1b[32m'com.apple.main-thread'\x1b[0m, stop reason = \x1b[31mbreakpoint 1.1\x1b[0m\nthread #2: tid = 0xa8f62d, 0x0000000100003f40 hello_world_test_loop`main, queue = \x1b[35m'com.apple.main-thread'\x1b[0m, stop reason = \x1b[36mbreakpoint 1.1\x1b[0m"
-#   debugger = None
-#
-#   def __init__(self, debugger):
-#       super().__init__()
-#       self.debugger = debugger
-#       self.setWindowTitle(APP_NAME + " " + APP_VERSION)
-#       self.setBaseSize(WINDOW_SIZE * 2, WINDOW_SIZE)
-#       self.setMinimumSize(WINDOW_SIZE * 2, WINDOW_SIZE + 72)
-#       
-#       self.layout = QVBoxLayout()
-#       # self.layoutV = QHBoxLayout()
-#
-#       self.centralWidget = QWidget(self)
-#       self.centralWidget.setLayout(self.layout)
-#       self.setCentralWidget(self.centralWidget)
-#       self.txtConsole = QConsoleTextEdit()
-#       self.cmdTest = QPushButton("CONTINUE")
-#       self.cmdTest.clicked.connect(self.interruptProcess)
-#       self.cmdTest2 = QPushButton("STEP NEXT")
-#       self.cmdTest2.clicked.connect(self.stepNextProcess)
-#       self.cmdTest3 = QPushButton("RE READ")
-#       self.cmdTest3.clicked.connect(self.readProcess)
-#       self.cmdTest4 = QPushButton("DI")
-#       self.cmdTest4.clicked.connect(self.disassembleLocation)
-#       self.cmdTest5 = QPushButton("Clear")
-#       self.cmdTest5.clicked.connect(self.clearTxt)
-#       self.layout.addWidget(self.cmdTest)
-#       self.layout.addWidget(self.cmdTest2)
-#       self.layout.addWidget(self.cmdTest3)
-#       self.layout.addWidget(self.cmdTest4)
-#       self.layout.addWidget(self.cmdTest5)
-#       self.txtOutput = QConsoleTextEdit()
-#       self.txtOutput.setFont(QFont("Courier New"))
-#       self.layout.addWidget(self.txtOutput)
-#       self.txtConsole.setText(self.mytext)
-#       # self.txtConsole.appendText(self.mytext)
-#       
-#   def interruptProcess(self):
-#       res = lldb.SBCommandReturnObject()
-#       ci = self.debugger.GetCommandInterpreter()
-#       # ci.HandleCommand("re read", res)
-#       ci.HandleCommand("continue", res)
-#       print(res.GetOutput())
-#       self.txtOutput.appendEscapedText(res.GetOutput())
-#       # ci.HandleCommand("n", res)
-#
-#   def stepNextProcess(self):
-#       res = lldb.SBCommandReturnObject()
-#       ci = self.debugger.GetCommandInterpreter()
-#       # ci.HandleCommand("re read", res)
-#       ci.HandleCommand("n", res)
-#       print(res.GetOutput())
-#       self.txtOutput.appendEscapedText(res.GetOutput())
-#       # ci.HandleCommand("n", res)
-#
-#   def readProcess(self):
-#       res = lldb.SBCommandReturnObject()
-#       ci = self.debugger.GetCommandInterpreter()
-#       # ci.HandleCommand("re read", res)
-#       ci.HandleCommand("re read", res)
-#       print(res.GetOutput())
-#       self.txtOutput.appendEscapedText(res.GetOutput())
-#       # ci.HandleCommand("n", res)
-#
-#   def disassembleLocation(self):
-#       res = lldb.SBCommandReturnObject()
-#       ci = self.debugger.GetCommandInterpreter()
-#       # ci.HandleCommand("re read", res)
-#       ci.HandleCommand("di", res)
-#       print(res.GetOutput())
-#       self.txtOutput.appendEscapedText(res.GetOutput())
-#       
-#   def clearTxt(self):
-#       self.txtOutput.setEscapedText("")
-#   
-#
-#   # we hook this so we have a chance to initialize/reset some stuff when targets are (re)run
-#
-#
-##def close_application():
-##   pass
-
+def breakpointHandlerNG(dummy, frame, bpno, err):
+#   print(dummy)
+#   print(frame)
+#   print(bpno)
+#   print(err)
+    global pymobiledevice3GUIWindow
+    pymobiledevice3GUIWindow.bpcp("YESSSSS!!!!!")
+#   print("MLIR debugger attaching...")
+#   print("IIIIIIIIINNNNNNNN CCCCAAQALLLLLLBBBAAACCKKKK")
+    
+#def breakpointHandler(frame, bpno, err):
+#   print("MLIR debugger attaching (KIM)...")
+#   print("IIIIIIIIINNNNNNNN CCCCAAQALLLLLLBBBAAACCKKKK")
 
 def __lldb_init_module(debugger, internal_dict):
     ''' we can execute lldb commands using debugger.HandleCommand() which makes all output to default
@@ -173,217 +93,25 @@ def __lldb_init_module(debugger, internal_dict):
         ci.HandleCommand("settings set disassembly-format " + CUSTOM_DISASSEMBLY_FORMAT, res)
 
     # the hook that makes everything possible :-)
-    ci.HandleCommand(f"command script add -h '({PROMPT_TEXT})' -f lldbpyGUI.TestCommand TestCommand", res)
+    ci.HandleCommand(f"command script add -h '({PROMPT_TEXT}) Start the python GUI.' -f lldbpyGUI.TestCommand TestCommand", res)
     ci.HandleCommand(f"command alias -h '({PROMPT_TEXT}) Start the python GUI.' -- pygui TestCommand", res)
 
     ci.HandleCommand(f"command script add -h '({PROMPT_TEXT}) Start the target and stop at entrypoint.' -f lldbpyGUI.cmd_run r", res)
     ci.HandleCommand(f"command alias -h '({PROMPT_TEXT}) Start the target and stop at entrypoint.' -- run r", res)
-
-    ci.HandleCommand(f"command script add -h '({PROMPT_TEXT})' -f lldbpyGUI.StartTestingEnv test", res)
     
-#   ci.HandleCommand(f"command script add -h '({PROMPT_TEXT})' -f lldbpyGUI.NG ng", res)
-    ci.HandleCommand(f"command alias -h '({PROMPT_TEXT}) Start the python GUI.' -- ng TestCommand", res)
-
-#processGlob = None
-
-def NG(debugger, command, result, dict):
-  print(f"#=================================================================================#")
-  print(f"| Starting TEST ENVIRONMENT for LLDB-PyGUI (Development Mode, ver. {APP_VERSION})        |")
-  print(f"|                                                                                 |")
-  print(f"| Desc:                                                                           |")
-  print(f"| This python script is for development of the LLDB python GUI - use at own risk! |")
-  print(f"|                                                                                 |")
-  print(f"| Author / Copyright:                                                             |")
-  print(f"| Kim David Hauser (JeTeDonner), (c) by kimhauser.ch 1991-2024                    |")
-  print(f"#=================================================================================#")
-  
-  print("LOADING TARGET: /Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/hello_world_test")
-  
-  global event_queue
-  event_queue = queue.Queue()
-
-#   global debuggerNG
-#   debuggerNG = debugger
-#   debugger = lldb.SBDebugger.Create()
-  global driver
-  driver = debuggerdriver.createDriver(debugger, event_queue)
-#   view = LLDBUI(screen, event_queue, driver)
-  driver.createTarget('/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/hello_world_test', '')
-  
-  print(f"TARGET-1: {debugger.GetTargetAtIndex(0)}")
-  target = debugger.GetTargetAtIndex(0)
-  
-  fname = "main"
-  main_bp = target.BreakpointCreateByName(fname, target.GetExecutable().GetFilename())
-  main_bp.AddName(fname)
-  print(main_bp)
-  
-  driver.start()
-  print("AFTER START DRIVER!!!!")
-  # hack to avoid hanging waiting for prompts!
-  driver.handleCommand("settings set auto-confirm true")
-  
-def StartTestingEnv(debugger, command, result, dict):
-  print(f"#=================================================================================#")
-  print(f"| Starting TEST ENVIRONMENT for LLDB-PyGUI (Development Mode, ver. {APP_VERSION})        |")
-  print(f"|                                                                                 |")
-  print(f"| Desc:                                                                           |")
-  print(f"| This python script is for development of the LLDB python GUI - use at own risk! |")
-  print(f"|                                                                                 |")
-  print(f"| Author / Copyright:                                                             |")
-  print(f"| Kim David Hauser (JeTeDonner), (c) by kimhauser.ch 1991-2024                    |")
-  print(f"#=================================================================================#")
-# res = lldb.SBCommandReturnObject()    
-  # must be set to true otherwise we don't get any output on the first stop hook related to this
-  debugger.SetAsync(True)
-  # imitate the original 'r' alias plus the stop at entry and pass everything else as target argv[]
-  print(f"NUM-TARGETS: {debugger.GetNumTargets()}")
-  if debugger.GetNumTargets() > 0:
-#   self.listener = debugger.GetListener()
-#   if not self.listener.IsValid():
-#     raise "Invalid listener"
-#   self.debugger = debugger
-#   self.listener.StartListeningForEventClass(self.debugger,
-#                                             lldb.SBTarget.GetBroadcasterClassName(),
-#                                             lldb.SBTarget.eBroadcastBitBreakpointChanged
-#                                             #| lldb.SBTarget.eBroadcastBitModuleLoaded
-#                                             #| lldb.SBTarget.eBroadcastBitModuleUnloaded
-#                                             | lldb.SBTarget.eBroadcastBitWatchpointChanged
-#                                             #| lldb.SBTarget.eBroadcastBitSymbolLoaded
-#                                             )
-#   
-#   self.listener.StartListeningForEventClass(self.debugger,
-#                                             lldb.SBThread.GetBroadcasterClassName(),
-#                                             lldb.SBThread.eBroadcastBitStackChanged
-#                                             #  lldb.SBThread.eBroadcastBitBreakpointChanged
-#                                             | lldb.SBThread.eBroadcastBitThreadSuspended
-#                                             | lldb.SBThread.eBroadcastBitThreadResumed
-#                                             | lldb.SBThread.eBroadcastBitSelectedFrameChanged
-#                                             | lldb.SBThread.eBroadcastBitThreadSelected
-#                                             )
-          
-    print(f"TARGET-1: {debugger.GetTargetAtIndex(0)}")
-    target = debugger.GetTargetAtIndex(0)
+    ci.HandleCommand(f"command alias -h '({PROMPT_TEXT}) Start the python GUI.' -H '({PROMPT_TEXT}) Start the python GUI.' -- ng TestCommand", res)
     
-    fname = "main"
-    main_bp = target.BreakpointCreateByName(fname, target.GetExecutable().GetFilename())
-    main_bp.AddName(fname)
-    print(main_bp)
+    ci.HandleCommand("command script add -h '(lldbinit) Display lldbinit banner.' --function lldbpyGUI.cmd_banner banner", res)
     
-    loop_bp = target.BreakpointCreateByAddress(0x100003f85) # 0x100003c90)
-    loop_bp.SetEnabled(True)
-    loop_bp.AddName("loop_bp")
-    loop_bp.SetScriptCallbackFunction("lldbpyGUI.breakpointHandler")
-    #   loop_bp.SetCondition("$eax == 0x00000005")
-    #   loop_bp.SetScriptCallbackFunction("disasm_ui.breakpointHandler")
-    print(loop_bp)
+    ci.HandleCommand("command script add -h '(lldbinit) The breakpoint callback function.' --function lldbpyGUI.breakpointHandlerNG bpcb", res)
     
-    loop_bp2 = target.BreakpointCreateByAddress(0x100003f6d) # 0x100003c90)
-    loop_bp2.SetEnabled(True)
-    loop_bp2.AddName("loop_bp2")
-    loop_bp2.SetCondition("$eax == 0x00000005")
-    loop_bp2.SetScriptCallbackFunction("lldbpyGUI.breakpointHandler")
-    print(loop_bp2)
+    ci.HandleCommand("command script add -h '(lldbinit) The breakpoint callback function (driver).' --function debuggerdriver.breakpointHandlerDriver bpcbdriver", res)
     
-#   global process
-    process = target.LaunchSimple(None, None, os.getcwd())
-    if process:
-#     pass
-#     processGlob = process
-      state = process.GetState()
-#				print(self.process)
-      if state == lldb.eStateStopped:
-        print("state == lldb.eStateStopped")
-      
-#     TestCommand(debugger, command, result, dict)
-      
-#     print("STARTING LLDB-PyGUI!!!")
-# #   debuggerNG = debugger
-# #   debugger.SetAsync(True)
-#     
-#     global event_queue
-#     event_queue = queue.Queue()
-#     
-# #   global debuggerNG
-# #   debuggerNG = debugger
-# #   debugger = lldb.SBDebugger.Create()
-#     global driver
-#     driver = debuggerdriver.createDriver(debugger, event_queue)
-# #   view = LLDBUI(screen, event_queue, driver)
-# #   driver.createTarget('/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/hello_world_test', '')
-#     driver.start()
-#     print("AFTER START DRIVER!!!!")
-#     # hack to avoid hanging waiting for prompts!
-#     driver.handleCommand("settings set auto-confirm true")
-#     
-# #   handle_args(driver, sys.argv)
-# #   view.eventLoop()
-#     
-#     global pymobiledevice3GUIApp
-#     pymobiledevice3GUIApp = QApplication([])
-#     pymobiledevice3GUIApp.aboutToQuit.connect(close_application)
-#     #
-#     ConfigClass.initIcons()
-#     pymobiledevice3GUIApp.setWindowIcon(ConfigClass.iconBugGreen)
-#     
-#     global pymobiledevice3GUIWindow
-#     pymobiledevice3GUIWindow = LLDBPyGUIWindow(debugger) # QConsoleTextEditWindow(debugger)
-#     pymobiledevice3GUIWindow.show()
-# ##   sys.exit(pymobiledevice3GUIApp.exec())
-# #   sys.exit(pymobiledevice3GUIApp.exec())
-#     pymobiledevice3GUIApp.exec()
-      
-      
-      
-#       fname = "main"
-#       main_bp = target.BreakpointCreateByName(fname, target.GetExecutable().GetFilename())
-#       main_bp.AddName(fname)
-#       print(main_bp)
-#       
-#       loop_bp = target.BreakpointCreateByAddress(0x100003f85) # 0x100003c90)
-#       loop_bp.SetEnabled(True)
-#       loop_bp.AddName("loop_bp")
-#       loop_bp.SetScriptCallbackFunction("lldbpyGUI.breakpointHandler")
-#   #   loop_bp.SetCondition("$eax == 0x00000005")
-#   #   loop_bp.SetScriptCallbackFunction("disasm_ui.breakpointHandler")
-#       print(loop_bp)
-#       
-#       loop_bp2 = target.BreakpointCreateByAddress(0x100003f6d) # 0x100003c90)
-#       loop_bp2.SetEnabled(True)
-#       loop_bp2.AddName("loop_bp2")
-#       loop_bp2.SetCondition("$eax == 0x00000005")
-#       loop_bp2.SetScriptCallbackFunction("lldbpyGUI.breakpointHandler")
-#       print(loop_bp2)
-        
-#       TestCommand(debugger, command, result, dict)
-# debugger.GetCommandInterpreter().HandleCommand("r", res)
-# print(f"Command 'r' succeeded? => {res.Succeeded()}")
-# print(res.GetOutput())
-# debugger.SetAsync(False)
-# debugger.GetCommandInterpreter().HandleCommand("b 4294983557", res)
-# print(f"Command 'b 4294983557' succeeded? => {res.Succeeded()}")
-# print(res.GetOutput())
-# debugger.GetCommandInterpreter().HandleCommand("continue", res)
-# print(f"Command 'continue' succeeded? => {res.Succeeded()}")
-# print(res.GetOutput())
-# debugger.GetCommandInterpreter().HandleCommand("pygui", res)
-# print(f"Command 'pygui' succeeded? => {res.Succeeded()}")
-# print(res.GetOutput())
-# pass
-
-#pymobiledevice3GUIWindow = None
-#pymobiledevice3GUIApp = None
-#debuggerNG = None
+    debugger.HandleCommand("banner")
     
-#def run_gui_thread():
-#   pymobiledevice3GUIApp = QApplication([])
-#   # pymobiledevice3GUIApp.aboutToQuit.connect(close_application)
-#   
-#   pymobiledevice3GUIWindow = QConsoleTextEditWindow(debuggerNG)
-#   pymobiledevice3GUIWindow.show()
-# 
-##   sys.exit(pymobiledevice3GUIApp.exec())
-#   pymobiledevice3GUIApp.exec()
+#   debugger.HandleCommand("br com a -F lldbpyGUI.breakpointHandler")
+    
+    return
 
 global pymobiledevice3GUIWindow
 pymobiledevice3GUIWindow = None
@@ -396,10 +124,6 @@ def close_application():
     pymobiledevice3GUIWindow.interruptLoadSourceWorker.interruptLoadSource.emit()
     QCoreApplication.processEvents()
     print("close_application()")
-    
-#   global debuggerNG
-#   debuggerNG.terminate()
-##   global process
 # # Stop all running tasks in the thread pool
     if pymobiledevice3GUIWindow.process:
 #   pymobiledevice3GUIWindow.interruptLoadWorker.interruptTargetLoadSignal.emit()
@@ -414,90 +138,95 @@ def close_application():
     global driver
     driver.terminate()
 #   sys.exit()
-    pass
-    
+
+def cmd_banner(debugger,command,result,dict):    
+  print(RED + "[+] Loaded " + APP_NAME + " version " + APP_VERSION + " (BUILD: " + APP_BUILD + ")" + RESET)
+  
 def TestCommand(debugger, command, result, dict):
-    print("STARTING LLDB-PyGUI!!!")
-#   debuggerNG = debugger
-#   debugger.SetAsync(True)
+    testTarget = "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/hello_world_test"
+    
+    print(f"" + GREEN + "#=================================================================================#")
+    print(f"| Starting TEST ENVIRONMENT for LLDB-PyGUI (Development Mode, ver. {APP_VERSION})        |")
+    print(f"|                                                                                 |")
+    print(f"| Desc:                                                                           |")
+    print(f"| This python script is for development and testing while development             |")
+    print(f"| of the LLDB python GUI (LLDBPyGUI.py) - use at own risk! No Warranty!           |")
+    print(f"|                                                                                 |")
+    print(f"| Credits:                                                                        |")
+    print(f"| - LLDB                                                                          |")
+    print(f"| - lldbutil.py                                                                   |")
+    print(f"| - lui.py                                                                        |")
+    print(f"|                                                                                 |")
+    print(f"| Author / Copyright:                                                             |")
+    print(f"| Kim David Hauser (JeTeDonner), (C.) by kimhauser.ch 1991-2024                   |")
+    print(f"#=================================================================================#" + RESET)
+  
+    print("LOADING TARGET: %s" % testTarget)
+#   debugger.SetAsync(False)
     
     global event_queue
     event_queue = queue.Queue()
 
-#   global debuggerNG
-#   debuggerNG = debugger
-#   debugger = lldb.SBDebugger.Create()
     global driver
     driver = debuggerdriver.createDriver(debugger, event_queue)
 #   view = LLDBUI(screen, event_queue, driver)
-    driver.createTarget('/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/hello_world_test')
-#   driver.start()
-#   print("AFTER START DRIVER!!!!")
-    debugger.SetAsync(False)
-    # imitate the original 'r' alias plus the stop at entry and pass everything else as target argv[]
-    print(f"NUM-TARGETS: {debugger.GetNumTargets()}")
+    driver.createTarget(testTarget)
+#   print(f"NUM-TARGETS: {debugger.GetNumTargets()}")
     if debugger.GetNumTargets() > 0:
-  #   self.listener = debugger.GetListener()
-  #   if not self.listener.IsValid():
-  #     raise "Invalid listener"
-  #   self.debugger = debugger
-  #   self.listener.StartListeningForEventClass(self.debugger,
-  #                                             lldb.SBTarget.GetBroadcasterClassName(),
-  #                                             lldb.SBTarget.eBroadcastBitBreakpointChanged
-  #                                             #| lldb.SBTarget.eBroadcastBitModuleLoaded
-  #                                             #| lldb.SBTarget.eBroadcastBitModuleUnloaded
-  #                                             | lldb.SBTarget.eBroadcastBitWatchpointChanged
-  #                                             #| lldb.SBTarget.eBroadcastBitSymbolLoaded
-  #                                             )
-  #   
-  #   self.listener.StartListeningForEventClass(self.debugger,
-  #                                             lldb.SBThread.GetBroadcasterClassName(),
-  #                                             lldb.SBThread.eBroadcastBitStackChanged
-  #                                             #  lldb.SBThread.eBroadcastBitBreakpointChanged
-  #                                             | lldb.SBThread.eBroadcastBitThreadSuspended
-  #                                             | lldb.SBThread.eBroadcastBitThreadResumed
-  #                                             | lldb.SBThread.eBroadcastBitSelectedFrameChanged
-  #                                             | lldb.SBThread.eBroadcastBitThreadSelected
-  #                                             )
-      
-      print(f"TARGET-1: {debugger.GetTargetAtIndex(0)}")
-      target = driver.getTarget() # debugger.GetTargetAtIndex(0)
+#     print(f"TARGET-1: {debugger.GetTargetAtIndex(0)}")
+      target = driver.getTarget()
       
       fname = "main"
       main_bp = target.BreakpointCreateByName(fname, target.GetExecutable().GetFilename())
       main_bp.AddName(fname)
-      print(main_bp)
+#     print(main_bp)
       
-      loop_bp = target.BreakpointCreateByAddress(0x100003f85) # 0x100003c90)
-      loop_bp.SetEnabled(True)
-      loop_bp.AddName("loop_bp")
-      loop_bp.SetScriptCallbackFunction("lldbpyGUI.breakpointHandler")
-      #   loop_bp.SetCondition("$eax == 0x00000005")
-      #   loop_bp.SetScriptCallbackFunction("disasm_ui.breakpointHandler")
-      print(loop_bp)
+#     loop_bp = target.BreakpointCreateByAddress(0x100003f85) # 0x100003c90)
+#     loop_bp.SetEnabled(True)
+#     loop_bp.AddName("loop_bp")
       
-      loop_bp2 = target.BreakpointCreateByAddress(0x100003f6d) # 0x100003c90)
-      loop_bp2.SetEnabled(True)
-      loop_bp2.AddName("loop_bp2")
-      loop_bp2.SetCondition("$eax == 0x00000005")
-      loop_bp2.SetScriptCallbackFunction("lldbpyGUI.breakpointHandler")
-      print(loop_bp2)
+#     loop_bp.SetScriptCallbackFunction("lldbpyGUI.breakpointHandler")
+#     loop_bp.SetCondition("$eax == 0x00000000")
+#     loop_bp.SetScriptCallbackFunction("disasm_ui.breakpointHandler")
+#     print(loop_bp)
       
-  #   global process
+#     loop_bp2 = target.BreakpointCreateByAddress(0x100003f6d) # 0x100003c90)
+#     loop_bp2.SetEnabled(True)
+#     loop_bp2.AddName("loop_bp2")
+#     loop_bp2.SetCondition("$eax == 0x00000000")
+#     loop_bp2.SetScriptCallbackFunction("lldbpyGUI.breakpointHandler")
+#     print(loop_bp2)
+      
       process = target.LaunchSimple(None, None, os.getcwd())
+      
+#     error = lldb.SBError()
+#     #     (lldb::SBLaunchInfo
+#     info = lldb.SBLaunchInfo(None)
+#     info.SetLaunchFlags(lldb.eLaunchFlagStopAtEntry)
+#     info.SetWorkingDirectory(os.getcwd())
+      #     info.SetArguments(None)
+      #     launchFlags = lldb.eLaunchFlagStopAtEntry
+      
+      
+#     driver.handleCommand("breakpoint set -n main -N main")
+#     driver.handleCommand("br com a -F lldbpyGUI.breakpointHandlerNG")
+      
+#     process.Continue()
+      
       if process:
-  #     pass
-  #     processGlob = process
         state = process.GetState()
-  #				print(self.process)
         if state == lldb.eStateStopped:
           print("state == lldb.eStateStopped")
           
-#       driver.start()
-#       print("AFTER START DRIVER!!!!")
+#         driver.handleCommand("b 0x100003f85")
+#         driver.handleCommand("br com a -F lldbpyGUI.breakpointHandlerNG")
+        
+        
+  #       driver.start()
+  #       print("AFTER START DRIVER!!!!")
         # hack to avoid hanging waiting for prompts!
         driver.handleCommand("settings set auto-confirm true")
-    
+  #       debugger.SetAsync(True)
     #   handle_args(driver, sys.argv)
     #   view.eventLoop()
         
@@ -510,18 +239,23 @@ def TestCommand(debugger, command, result, dict):
         
         global pymobiledevice3GUIWindow
         pymobiledevice3GUIWindow = LLDBPyGUIWindow(debugger, driver) # QConsoleTextEditWindow(debugger)
+  #     pymobiledevice3GUIWindow.loadTarget()
         pymobiledevice3GUIWindow.show()
+        pymobiledevice3GUIWindow.move(650, 20)
+        pymobiledevice3GUIWindow.tabWidgetMain.setCurrentIndex(2)
         driver.start()
         print("AFTER START DRIVER!!!!")
+  #     process = target.Launch(info, error)
+  #     if error:
+  #       print(error)
+        pymobiledevice3GUIWindow.loadTarget()
+  #     process.Continue()
+  #       driver.handleCommand("br com a -F lldbpyGUI.breakpointHandlerNG")
     ##   sys.exit(pymobiledevice3GUIApp.exec())
     #   sys.exit(pymobiledevice3GUIApp.exec())
         pymobiledevice3GUIApp.exec()
-    #   gui_thread = threading.Thread(target=run_gui_thread)
-    #   gui_thread.start()
-    # 
-    #   # Continue with other script tasks
-    #   time.sleep(5)  # Simulate other work
-    #   print("Script continues while GUI runs in a separate thread.")
+      #   gui_thread = threading.Thread(target=run_gui_thread)
+      #   gui_thread.start()
     
     return 0
     # also modify to stop at entry point since we can't set breakpoints before
@@ -542,6 +276,6 @@ Replaces the original r/run alias.
 
     res = lldb.SBCommandReturnObject()    
     # must be set to true otherwise we don't get any output on the first stop hook related to this
-    debugger.SetAsync(True)
+#   debugger.SetAsync(True)
     # imitate the original 'r' alias plus the stop at entry and pass everything else as target argv[]
     debugger.GetCommandInterpreter().HandleCommand("process launch -s -X true -- {}".format(command), res)

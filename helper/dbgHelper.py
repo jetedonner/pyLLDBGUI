@@ -19,15 +19,6 @@ dbgLogLevel = DbgLogLevel.STD
 def log(msg, dbgLogLevelOverwrite = DbgLogLevel.STD):
 	if dbgLogLevelOverwrite.value >= dbgLogLevel.value:
 		print(msg)
-#		flags = ""
-#		if flag and cls.MH_NOUNDEFS.value:
-#			flags += "MH_NOUNDEFS "
-#		if flag and cls.MH_INCRLINK.value:
-#			flags += "MH_INCRLINK "
-#		if flag and cls.MH_DYLDLINK.value:
-#			flags += "MH_DYLDLINK "
-#			
-#		return flags
 
 def read_memory(process, address, size):
 	error = lldb.SBError()

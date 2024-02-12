@@ -520,3 +520,74 @@ def SectionTypeString(secType):
 		return 'SwiftModules'
 	else:
 		return "Other"
+
+def SymbolTypeString(symType):
+	if symType == lldb.eSymbolTypeAny:
+		return "Any"	
+	elif symType == lldb.eSymbolTypeInvalid:
+		return "Invalid"
+	elif symType == lldb.eSymbolTypeAbsolute:
+		return "Absolute"
+	elif symType == lldb.eSymbolTypeCode:
+		return "Code"
+	elif symType == lldb.eSymbolTypeResolver:
+		return "Resolver"
+	elif symType == lldb.eSymbolTypeData:
+		return "Data"
+	elif symType == lldb.eSymbolTypeTrampoline:
+		return "Trampoline"
+	elif symType == lldb.eSymbolTypeRuntime:
+		return "Runtime"
+	elif symType == lldb.eSymbolTypeException:
+		return "Exception"
+	elif symType == lldb.eSymbolTypeSourceFile:
+		return "Source File"
+	elif symType == lldb.eSymbolTypeHeaderFile:
+		return "Header File"
+	elif symType == lldb.eSymbolTypeObjectFile:
+		return "Object File"
+	elif symType == lldb.eSymbolTypeCommonBlock:
+		return "Common Block"
+	elif symType == lldb.eSymbolTypeBlock:
+		return "Block"
+	elif symType == lldb.eSymbolTypeLocal:
+		return "Local"
+	elif symType == lldb.eSymbolTypeParam:
+		return "Param"
+	elif symType == lldb.eSymbolTypeVariable:
+		return "Variable"
+	elif symType == lldb.eSymbolTypeVariableType:
+		return "Variable Type"
+	elif symType == lldb.eSymbolTypeLineEntry:
+		return "Line Entry"
+	elif symType == lldb.eSymbolTypeLineHeader:
+		return "Line Header"
+	elif symType == lldb.eSymbolTypeScopeBegin:
+		return "Scope Begin"
+	elif symType == lldb.eSymbolTypeScopeEnd:
+		return "Scope End"
+	elif symType == lldb.eSymbolTypeAdditional:
+		return "Additional"
+	elif symType == lldb.eSymbolTypeCompiler:
+		return "Compiler"
+	elif symType == lldb.eSymbolTypeInstrumentation:
+		return "Instrumentation"
+	elif symType == lldb.eSymbolTypeUndefined:
+		return "Undefined"
+	elif symType == lldb.eSymbolTypeObjCClass:
+		return "ObjCClass"
+	elif symType == lldb.eSymbolTypeObjCMetaClass:
+		return "ObjCMetaClass"
+	elif symType == lldb.eSymbolTypeObjCIVar:
+		return "ObjCIVar"
+	elif symType == lldb.eSymbolTypeReExported:
+		return "ReExported"
+	else:
+		return "Unknown"
+
+def convert_address(address):
+	# Convert the address to hex
+	converted_address = int(address, 16)
+	
+	# Print the converted address
+	return hex(converted_address)
