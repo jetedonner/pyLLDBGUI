@@ -316,6 +316,28 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.tabWidgetDbg.addTab(self.gbpThreads, "Threads/Frames")
 		
+		self.hxtMemory = QHEXTextEditSplitter()
+		self.txtMemoryAddr = QLineEdit("0x100003f50")
+		self.txtMemorySize = QLineEdit("0x100")
+		self.hxtMemory.layoutTopPlaceholer.addWidget(QLabel("Address:"))
+		self.hxtMemory.layoutTopPlaceholer.addWidget(self.txtMemoryAddr)
+		self.hxtMemory.layoutTopPlaceholer.addWidget(QLabel("Size:"))
+		self.hxtMemory.layoutTopPlaceholer.addWidget(self.txtMemorySize)
+		self.cmdReadMemory = QPushButton("Read memory")
+		self.cmdReadMemory.clicked.connect(self.click_ReadMemory)
+		self.hxtMemory.layoutTopPlaceholer.addWidget(self.cmdReadMemory)
+		self.hxtMemory.txtMultiline.setFont(ConfigClass.font)
+		self.hxtMemory.txtMultilineHex.setFont(ConfigClass.font)
+		self.hxtMemory.txtMultilineHex.hexGrouping = HexGrouping.TwoChars
+	
+		self.tabMemory = QWidget()
+		self.tabMemory.setLayout(QVBoxLayout())
+	#       tabDet.layout().addWidget(treDet)
+		self.tabMemory.layout().addWidget(self.hxtMemory)
+		
+		
+		self.tabWidgetDbg.addTab(self.tabMemory, "Memory")
+		
 		self.tabWidgetMain = QTabWidget()
 		self.tabWidgetMain.addTab(self.splitter, "Debugger")
 		
@@ -571,12 +593,22 @@ class LLDBPyGUIWindow(QMainWindow):
 						
 #						self.start_eventListenerWorker(self.debugger, self.interruptEventListenerWorker)
 							context = frame.GetSymbolContext(lldb.eSymbolContextEverything)
-							print(f'.GetLineEntry() => {context.GetLineEntry()} => {context.GetLineEntry().GetLine()}')
+#							print(f'.GetLineEntry() => {context.GetLineEntry()} => {context.GetLineEntry().GetLine()}')
 							
 							self.start_loadSourceWorker(self.debugger, "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/hello_world_test.c", self.interruptLoadSourceWorker, context.GetLineEntry().GetLine())
 #						self.process.Continue()
 				
 				self.reloadBreakpoints(True)
+				
+#				stdout_stream = self.process.GetSTDOUT()
+#				stderr_stream = self.process.GetSTDERR()
+#				while self.process.IsRunning():
+#					data = stdout_stream.ReadBytes(1024)
+#					if data:
+#						print("STDOUT:", data.decode())
+#					data = stderr_stream.ReadBytes(1024)
+#					if data:
+#						print("STDERR:", data.decode())
 		
 	def handle_event_queued(self, event):
 		print("==============================================")
@@ -603,6 +635,28 @@ class LLDBPyGUIWindow(QMainWindow):
 				self.driver.handleCommand("br com a -F lldbpyGUI.breakpointHandlerNG")
 		print("==============================================")
 		pass
+		
+	def click_ReadMemory(self):
+		try:
+#           global debugger
+			self.handle_readMemory(self.driver.debugger, int(self.txtMemoryAddr.text(), 16), int(self.txtMemorySize.text(), 16))
+		except Exception as e:
+			print(f"Error while reading memory from process: {e}")
+			
+	def handle_readMemory(self, debugger, address, data_size = 0x100):
+		error_ref = lldb.SBError()
+		process = debugger.GetSelectedTarget().GetProcess()
+		memory = process.ReadMemory(address, data_size, error_ref)
+		if error_ref.Success():
+#           hex_string = binascii.hexlify(memory)
+			# `memory` is a regular byte string
+#           print(f'BYTES:\n{memory}\nHEX:\n{hex_string}')
+			self.hxtMemory.setTxtHexNG(memory, True, int(self.txtMemoryAddr.text(), 16))
+		else:
+			print(str(error_ref))
+				
+#	def click_ReadMemory(self):
+#		pass
 		
 	def click_saveBP(self):
 		filename = showSaveFileDialog()
@@ -901,7 +955,7 @@ class LLDBPyGUIWindow(QMainWindow):
 			self.reloadBreakpoints(False)
 #			self.driver.getTarget()
 			context = frm.GetSymbolContext(lldb.eSymbolContextEverything)
-			print(f'.GetLineEntry() => {context.GetLineEntry()} => {context.GetLineEntry().GetLine()}')
+#			print(f'.GetLineEntry() => {context.GetLineEntry()} => {context.GetLineEntry().GetLine()}')
 			self.start_loadSourceWorker(self.debugger, "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/hello_world_test.c", self.interruptLoadSourceWorker, context.GetLineEntry().GetLine())
 		else:
 			print(f"Debug STEP ({kind}) FAILED!!!")
@@ -978,10 +1032,56 @@ class LLDBPyGUIWindow(QMainWindow):
 	def handle_loadSourceFinished(self, sourceCode):
 		if sourceCode != "":
 #			log(sourceCode)
-			self.txtSource.setEscapedText(sourceCode) # 
+			horizontal_value = self.txtSource.horizontalScrollBar().value()
+			vertical_value = self.txtSource.verticalScrollBar().value()
+#			sourceCode = sourceCode.replace("=>", "<a name='scrollToMe' href='#word'>=></a>")
+#			sourceCode = sourceCode.replace("=&gt;", "<a name=\"scrollToMe\" href=\"#word\">=&gt;</a>")
+			self.txtSource.setEscapedText(sourceCode)
+			
+#			self.txtSource.scrollToAnchor("=>")
+#			if not self.is_line_visible(self.txtSource, "=>"):
+#				print("Line NOT visible!")
+#				# Example usage:
+#				line_text = "=>"
+#				scroll_to_line(self.txtSource, line_text)
+#				pass
+#			else:
+#				print("Line visible!")
+			self.txtSource.horizontalScrollBar().setValue(horizontal_value)
+			self.txtSource.verticalScrollBar().setValue(vertical_value)
+			
+			self.txtSource.scrollContentsBy(0, 1)
 		else:
 			self.txtSource.setText("<Source code NOT available>")
 		
+			
+	def is_line_visible(self, text_edit, line_text):
+		document = text_edit.document()
+		block = document.findBlockByLineNumber(document.find(line_text).blockNumber())  # Find the block with the desired line
+		
+		# Check if the block is within the currently visible block range
+		visible_top = text_edit.verticalScrollBar().value()
+		visible_bottom = visible_top + text_edit.viewport().height()
+		first_visible_block = text_edit.firstVisibleBlock()
+		last_visible_block = text_edit.lastVisibleBlock()
+		
+		return first_visible_block <= block <= last_visible_block
+	
+	def scroll_to_line(text_edit, line_text):
+		document = text_edit.document()
+		block = document.findBlockByLineNumber(document.find(line_text).blockNumber())  # Find the block with the desired line
+		
+		# Check if the block is visible, and adjust scroll as needed
+		visible_top = text_edit.verticalScrollBar().value()
+		visible_bottom = visible_top + text_edit.viewport().height()
+		visible_center = (visible_top + visible_bottom) // 2
+		
+		if not text_edit.blockVisible(block.blockNumber()):
+			block_top = block.position().line()
+			block_height = block.height()
+			new_scroll_value = max(0, min(block_top + block_height // 2 - visible_center, document.lineCount() - text_edit.viewport().height()))
+			text_edit.verticalScrollBar().setValue(new_scroll_value)
+	
 	def read_memory(self, process, address, size):
 		error = lldb.SBError()
 		target = process.GetTarget()

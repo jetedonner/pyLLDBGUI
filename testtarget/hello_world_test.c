@@ -35,18 +35,13 @@ int main() {
   // This msg will prompt the user to enter his / her secret
   printf("Hello test: %d / %s", testVar, hardcoded_string);
 
-//while(1)
-//  {
-////    testVar += 321;
-//    printf(".");
-//
-//    sleep(1);
-//    // sleep(1);
-//    // struct timespec ts;
-//    // ts.tv_sec = 0;
-//    // ts.tv_nsec = 200000000; // 200ms
-//    // nanosleep(&ts, NULL);
-//  }
+  while(1)
+    {
+      //    testVar += 321;
+      printf(".");
+
+      sleep(1);
+    }
 
   // // Will wait for user input and store the input in the variable "input"
   // scanf("%s", input);

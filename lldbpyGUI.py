@@ -1,7 +1,7 @@
 if __name__ == "__main__":
     print("Run only as script from LLDB... Not as standalone program!")
 
-import lldb    
+import lldb
 import sys
 import re
 import os
@@ -15,6 +15,8 @@ import termios
 import fcntl
 import json
 import hashlib
+
+from threading import Thread
 
 try:
   import queue
@@ -230,6 +232,9 @@ def TestCommand(debugger, command, result, dict):
     #   handle_args(driver, sys.argv)
     #   view.eventLoop()
         
+#       winTrd = WindowDriver(debugger, driver)
+#       winTrd.start()
+        
         global pymobiledevice3GUIApp
         pymobiledevice3GUIApp = QApplication([])
         pymobiledevice3GUIApp.aboutToQuit.connect(close_application)
@@ -239,24 +244,34 @@ def TestCommand(debugger, command, result, dict):
         
         global pymobiledevice3GUIWindow
         pymobiledevice3GUIWindow = LLDBPyGUIWindow(debugger, driver) # QConsoleTextEditWindow(debugger)
-  #     pymobiledevice3GUIWindow.loadTarget()
+        #     pymobiledevice3GUIWindow.loadTarget()
         pymobiledevice3GUIWindow.show()
         pymobiledevice3GUIWindow.move(650, 20)
         pymobiledevice3GUIWindow.tabWidgetMain.setCurrentIndex(2)
         driver.start()
         print("AFTER START DRIVER!!!!")
-  #     process = target.Launch(info, error)
-  #     if error:
-  #       print(error)
+        #     process = target.Launch(info, error)
+        #     if error:
+        #       print(error)
         pymobiledevice3GUIWindow.loadTarget()
-  #     process.Continue()
-  #       driver.handleCommand("br com a -F lldbpyGUI.breakpointHandlerNG")
-    ##   sys.exit(pymobiledevice3GUIApp.exec())
-    #   sys.exit(pymobiledevice3GUIApp.exec())
+        #     process.Continue()
+        #       driver.handleCommand("br com a -F lldbpyGUI.breakpointHandlerNG")
+        ##   sys.exit(pymobiledevice3GUIApp.exec())
+        #   sys.exit(pymobiledevice3GUIApp.exec())
         pymobiledevice3GUIApp.exec()
+        
+        
       #   gui_thread = threading.Thread(target=run_gui_thread)
       #   gui_thread.start()
-    
+#       stdout_stream = process.GetSTDOUT(lldb.eStreamBytes)
+#       stderr_stream = process.GetSTDERR(lldb.eStreamBytes)
+#       while process.IsRunning():
+#         data = stdout_stream.ReadBytes(1024)
+#         if data:
+#           print("STDOUT:", data.decode())
+#         data = stderr_stream.ReadBytes(1024)
+#         if data:
+#           print("STDERR:", data.decode())
     return 0
     # also modify to stop at entry point since we can't set breakpoints before
 
@@ -279,3 +294,78 @@ Replaces the original r/run alias.
 #   debugger.SetAsync(True)
     # imitate the original 'r' alias plus the stop at entry and pass everything else as target argv[]
     debugger.GetCommandInterpreter().HandleCommand("process launch -s -X true -- {}".format(command), res)
+    
+    
+class WindowDriver(Thread):
+    """ Drives the debugger and responds to events. """
+  
+    def __init__(self, debugger, driver):
+        Thread.__init__(self)
+        self.debugger = debugger
+        self.driver = driver
+        self.daemon = True
+        self.initialize(debugger)
+      
+    def initialize(self, debugger):
+        self.done = False
+  
+    def eventLoop(self):
+#       global process
+        while not self.isDone():
+          pass
+#           event = lldb.SBEvent()
+#           got_event = self.listener.WaitForEvent(lldb.UINT32_MAX, event)
+#           print(f'GOT-EVENT: {event} / {event.GetType()}')
+#           desc = lldbutil.get_description(event)
+#           print('Event description:', desc)
+#           print('Event data flavor:', event.GetDataFlavor())
+##           if event.GetDataFlavor() == "Breakpoint::BreakpointEventData":
+##             print("GOT BREAKPOINT CHANGE!!!")
+##           global process
+##           print('Process state:', lldbutil.state_type_to_str(process.GetState()))
+#           print()
+#         
+#           # eBroadcastBitSTDOUT
+##           if event.GetType() == lldb.SBProcess.eBroadcastBitSTDOUT:
+##             stdout = process.GetSTDOUT(256)
+##             if stdout is not None and len(stdout) > 0:
+##               message = {"status":"event", "type":"stdout", "output": "".join(["%02x" % ord(i) for i in stdout])}
+#           if got_event and not event.IsValid():
+#               self.winAddStr("Warning: Invalid or no event...")
+#               continue
+#           elif not event.GetBroadcaster().IsValid():
+#               continue
+#         
+#           self.event_queue.put(event)
+#           self.signals.event_queued.emit(event)
+          
+    def run(self):
+        global pymobiledevice3GUIApp
+        pymobiledevice3GUIApp = QApplication([])
+#       pymobiledevice3GUIApp.aboutToQuit.connect(close_application)
+        #
+        ConfigClass.initIcons()
+        pymobiledevice3GUIApp.setWindowIcon(ConfigClass.iconBugGreen)
+      
+        global pymobiledevice3GUIWindow
+        pymobiledevice3GUIWindow = LLDBPyGUIWindow(self. debugger, self.driver) # QConsoleTextEditWindow(debugger)
+  #     pymobiledevice3GUIWindow.loadTarget()
+        pymobiledevice3GUIWindow.show()
+        pymobiledevice3GUIWindow.move(650, 20)
+        pymobiledevice3GUIWindow.tabWidgetMain.setCurrentIndex(2)
+        self.driver.start()
+        print("AFTER START DRIVER!!!!")
+  #     process = target.Launch(info, error)
+  #     if error:
+  #       print(error)
+        pymobiledevice3GUIWindow.loadTarget()
+  #     process.Continue()
+  #       driver.handleCommand("br com a -F lldbpyGUI.breakpointHandlerNG")
+    ##   sys.exit(pymobiledevice3GUIApp.exec())
+    #   sys.exit(pymobiledevice3GUIApp.exec())
+        pymobiledevice3GUIApp.exec()
+        self.eventLoop()
+      
+    def terminate(self):
+#       lldb.SBDebugger.Terminate()
+        sys.exit(0)
