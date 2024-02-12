@@ -43,51 +43,10 @@ from helper.dbgHelper import *
 from helper.dialogHelper import *
 #from test.lldbutil import *
 
-APP_NAME = "LLDB-PyGUI"
-WINDOW_SIZE = 680
+#APP_NAME = "LLDB-PyGUI"
+#WINDOW_SIZE = 680
 
-APP_VERSION = "v0.0.1"
-
-#class UI(QDialog):
-#	def __init__(self):
-#		super().__init__()
-#		
-#		# loading the ui file with uic module
-#		project_root = dirname(realpath(__file__))
-#		helpDialogPath = os.path.join(project_root, 'resources', 'designer', 'helpDialog.ui')
-#		
-#		uic.loadUi(helpDialogPath, self)
-#		print("AFTER INIT helpDialog.ui")
-#		self.initTable()
-#		
-#	def initTable(self):
-#		self.setColumnCount(3)
-#		self.setColumnWidth(0, 48)
-#		self.setColumnWidth(1, 48)
-#		self.setColumnWidth(2, 512)
-##		self.setColumnWidth(3, 108)
-##		self.setColumnWidth(4, 32)
-##		self.setColumnWidth(5, 256)
-##		self.setColumnWidth(5, 324)
-##		self.setColumnWidth(6, 304)
-#		self.verticalHeader().hide()
-#		self.horizontalHeader().show()
-#		self.horizontalHeader().setHighlightSections(False)
-#		self.setHorizontalHeaderLabels(['Key', 'Value', 'Description'])#, 'Instruction', 'Hex', 'Comment'])
-#		self.horizontalHeaderItem(0).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
-#		self.horizontalHeaderItem(1).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
-#		self.horizontalHeaderItem(2).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
-##		self.horizontalHeaderItem(3).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
-##		self.horizontalHeaderItem(4).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
-##		self.horizontalHeaderItem(5).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
-##		self.horizontalHeaderItem(5).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
-##		self.horizontalHeaderItem(6).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
-##		self.setFont(ConfigClass.font)
-##		
-#		self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-#		self.setShowGrid(False)
-##		self.cellDoubleClicked.connect(self.on_double_click)
-#		pass
+#APP_VERSION = "v0.0.1"
 		
 class LLDBPyGUIWindow(QMainWindow):
 	"""PyMobiledevice3GUI's main window (GUI or view)."""
@@ -293,13 +252,11 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.wgtBPCtrls.layout().addWidget(self.cmdDeleteAllBP)
 #		self.wgtBPCtrls.layout().setContentsMargins(0, 0, 0, 0)
 		self.wgtBPCtrls.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
-#		self.wgtBPCtrls.layout().addSpacing(200)
 		self.gbpBPs = QGroupBox("Breakpoints")
 		self.gbpBPs.setLayout(QVBoxLayout())
 		self.gbpBPs.layout().addWidget(self.wgtBPCtrls)
 		self.gbpBPs.layout().addWidget(self.tblBPs)
 		self.gbpBPs.setContentsMargins(0, 0, 0, 0)
-#		self.gbpBPs.layout().add
 		
 		self.tabWidgetDbg.addTab(self.gbpBPs, "Break-/Watchpoints")
 		
@@ -332,9 +289,7 @@ class LLDBPyGUIWindow(QMainWindow):
 	
 		self.tabMemory = QWidget()
 		self.tabMemory.setLayout(QVBoxLayout())
-	#       tabDet.layout().addWidget(treDet)
 		self.tabMemory.layout().addWidget(self.hxtMemory)
-		
 		
 		self.tabWidgetDbg.addTab(self.tabMemory, "Memory")
 		
@@ -357,7 +312,6 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.splitterFileInfos.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 		self.splitterFileInfos.setOrientation(Qt.Orientation.Vertical)
 		
-#		self.splitterFileInfos.addWidget(self.gbFileInfo)
 		self.tabWidgetFileInfo.addTab(self.gbFileInfo, "File Header")
 		
 		
@@ -375,7 +329,6 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.gbFileStruct.layout().addWidget(self.tabWidgetStruct)
 		
-#		self.splitterFileInfos.addWidget(self.gbFileStruct)
 		self.tabWidgetFileInfo.addTab(self.gbFileStruct	, "File Structure")
 		
 		self.gbFileStats = QGroupBox("File Statistics")
@@ -390,13 +343,11 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.gbFileStats.layout().addWidget(self.tabWidgetStats)
 		
-#		self.splitterFileInfos.addWidget(self.gbFileStats)
 		self.tabWidgetFileInfo.addTab(self.gbFileStats, "File Statistics")
 		
 		self.tabWidgetFileInfos.layout().addWidget(self.tabWidgetFileInfo)
 		
 		self.tabWidgetMain.addTab(self.tabWidgetFileInfos, "File Info")
-#		self.tabWidgetMain.setTabEnabled(2)
 		self.wdgCmd = QWidget()
 		self.wdgConsole = QWidget()
 		self.layCmdParent = QVBoxLayout()
@@ -432,8 +383,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.layCmd.addWidget(self.cmdExecuteCmd)
 		self.layCmd.addWidget(self.swtAutoscroll)
 		self.layCmd.addWidget(self.cmdClear)
-		self.wdgCmd.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
-		
+		self.wdgCmd.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)		
 		
 		self.txtConsole = QConsoleTextEdit()
 		self.txtConsole.setReadOnly(True)
@@ -454,8 +404,6 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.interruptLoadSourceWorker = LoadSourceCodeReceiver()
 		
 		self.threadpool = QThreadPool()
-		
-#		print(f"NUM-TARGETS: {self.debugger.GetNumTargets()}")
 	
 	def loadTarget(self):
 		if self.debugger.GetNumTargets() > 0:
@@ -474,29 +422,19 @@ class LLDBPyGUIWindow(QMainWindow):
 					idx = 0
 					self.thread = self.process.GetThreadAtIndex(0)
 					if self.thread:
-						
-#						def BroadcastBitStackChanged(args):
-#							print(f"STACK Changed {args}")
-#							
-#						self.thread.eBroadcastBitStackChanged.connect(BroadcastBitStackChanged)
-						
-						
-#						for frame in self.thread:
-#							print(frame)
 							
 						self.treThreads.clear()
 						self.processNode = QTreeWidgetItem(self.treThreads, ["#0 " + str(self.process.GetProcessID()), hex(self.process.GetProcessID()) + "", self.process.GetTarget().GetExecutable().GetFilename(), '', ''])
 						
 						self.threadNode = QTreeWidgetItem(self.processNode, ["#" + str(idx) + " " + str(self.thread.GetThreadID()), hex(self.thread.GetThreadID()) + "", self.thread.GetQueueName(), '', ''])
 						
-				#       print(thread.GetNumFrames())
 						for idx2 in range(self.thread.GetNumFrames()):
 							frame = self.thread.GetFrameAtIndex(idx2)
-				#           print(dir(frame))
-							frameNode = QTreeWidgetItem(self.threadNode, ["#" + str(frame.GetFrameID()), "", str(frame.GetPCAddress()), str(hex(frame.GetPC())), lldbHelper.GuessLanguage(frame)]) # + " " + str(thread.GetThreadID()) + " (0x" + hex(thread.GetThreadID()) + ")", thread.GetQueueName()])
+							frameNode = QTreeWidgetItem(self.threadNode, ["#" + str(frame.GetFrameID()), "", str(frame.GetPCAddress()), str(hex(frame.GetPC())), lldbHelper.GuessLanguage(frame)])
+						
 						self.processNode.setExpanded(True)
 						self.threadNode.setExpanded(True)
-		#				pass
+						
 						print(f'self.thread.GetNumFrames() {self.thread.GetNumFrames()}')
 						frame = self.thread.GetFrameAtIndex(0)
 						if frame:
@@ -533,46 +471,9 @@ class LLDBPyGUIWindow(QMainWindow):
 								
 								self.disassemble_instructions(function.GetInstructions(target), target, rip)
 							
-							
-#							for symbol in frame.GetModule():
-#								name = symbol.GetName()
-#								saddr = symbol.GetStartAddress()
-#								eaddr = symbol.GetEndAddress()
-#								type = symbol.GetType()
-#								
-#								print(f'- SYM: {name} => {saddr} - {eaddr} ({type})')
-							
-							
 							module = frame.GetModule()
-#								self.signals.loadSections.emit(frame.GetModule())
-#								QCoreApplication.self.processEvents()
-							
-#							print('Number of sections: %d' % module.GetNumSections())
 							for sec in module.section_iter():
-#								print(sec)
-#								print(sec.GetName())
-#								print(f'GetFileByteSize() == {hex(sec.GetFileByteSize())}')
-#								print(f'GetByteSize() == {hex(sec.GetByteSize())}')
-#								
-#								print(f'GetSectionType: {sec.GetSectionType()} / {lldbHelper.SectionTypeString(sec.GetSectionType())}')
-								
-					#           for inin in dir(sec):
-					#               print(inin)
-								
 								sectionNode = QTreeWidgetItem(self.treFile, [sec.GetName(), str(hex(sec.GetFileAddress())), str(hex(sec.GetFileAddress() + sec.GetByteSize())), hex(sec.GetFileByteSize()), hex(sec.GetByteSize()), lldbHelper.SectionTypeString(sec.GetSectionType()) + " (" + str(sec.GetSectionType()) + ")"])
-					#           for jete in dir(sec):
-					#               print(jete)
-								INDENT = "\t"
-								INDENT2 = "\t\t"
-					#           if sec.GetName() == "__TEXT":
-								# Iterates the text section and prints each symbols within each sub-section.
-					#           for subsec2 in sec:
-					#               print(subsec2.GetName())
-					#               print(INDENT + repr(subsec2))
-					#               for sym in module.symbol_in_section_iter(subsec2):
-					#                   print(sym.GetName())
-					#                   print(INDENT2 + repr(sym))
-					#                   print(INDENT2 + 'symbol type: %s' % str(sym.GetType())) # symbol_type_to_str
 								
 								for idx3 in range(sec.GetNumSubSections()):
 #									print(sec.GetSubSectionAtIndex(idx3).GetName())
@@ -583,18 +484,11 @@ class LLDBPyGUIWindow(QMainWindow):
 									
 									for sym in module.symbol_in_section_iter(subSec):
 										subSectionNode2 = QTreeWidgetItem(subSectionNode, [sym.GetName(), str(hex(sym.GetStartAddress().GetFileAddress())), str(hex(sym.GetEndAddress().GetFileAddress())), hex(sym.GetSize()), '', f'{lldbHelper.SymbolTypeString(sym.GetType())} ({sym.GetType()})'])
-#										print(dir(sym))
-#										print(sym.GetName())
-#										print(INDENT2 + repr(sym))
-#										print(INDENT2 + 'symbol type: %s' % str(sym.GetType())) # symbol_type_to_str
-#							pass
 							
 							self.start_loadRegisterWorker()	
 						
 #						self.start_eventListenerWorker(self.debugger, self.interruptEventListenerWorker)
 							context = frame.GetSymbolContext(lldb.eSymbolContextEverything)
-#							print(f'.GetLineEntry() => {context.GetLineEntry()} => {context.GetLineEntry().GetLine()}')
-							
 							self.start_loadSourceWorker(self.debugger, "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/hello_world_test.c", self.interruptLoadSourceWorker, context.GetLineEntry().GetLine())
 #						self.process.Continue()
 				
@@ -630,15 +524,12 @@ class LLDBPyGUIWindow(QMainWindow):
 					print('breakpoint location load addr: %s' % hex(bl.GetLoadAddress()))
 					self.tblBPs.doBPOn(hex(bl.GetLoadAddress()), True)
 					self.txtMultiline.table.setBPAtAddress(hex(bl.GetLoadAddress()), True, False)
-#					print('breakpoint location condition: %s' % hex(bl.GetCondition()))
-#			print(f'GetBreakpoint() => {event.GetBreakpoint()}')
 				self.driver.handleCommand("br com a -F lldbpyGUI.breakpointHandlerNG")
 		print("==============================================")
 		pass
 		
 	def click_ReadMemory(self):
 		try:
-#           global debugger
 			self.handle_readMemory(self.driver.debugger, int(self.txtMemoryAddr.text(), 16), int(self.txtMemorySize.text(), 16))
 		except Exception as e:
 			print(f"Error while reading memory from process: {e}")
@@ -648,15 +539,9 @@ class LLDBPyGUIWindow(QMainWindow):
 		process = debugger.GetSelectedTarget().GetProcess()
 		memory = process.ReadMemory(address, data_size, error_ref)
 		if error_ref.Success():
-#           hex_string = binascii.hexlify(memory)
-			# `memory` is a regular byte string
-#           print(f'BYTES:\n{memory}\nHEX:\n{hex_string}')
 			self.hxtMemory.setTxtHexNG(memory, True, int(self.txtMemoryAddr.text(), 16))
 		else:
 			print(str(error_ref))
-				
-#	def click_ReadMemory(self):
-#		pass
 		
 	def click_saveBP(self):
 		filename = showSaveFileDialog()

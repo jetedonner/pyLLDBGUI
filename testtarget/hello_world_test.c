@@ -26,10 +26,10 @@
 int main() {
   
   int testVar = 123;
-  // // Variable to hold the user input
+  // Variable to hold the user input
   // char input[256];
 
-  // // The secret to check against the user input
+  // The secret to check against the user input
   char hardcoded_string[] = "S3CR3T";
 
   // This msg will prompt the user to enter his / her secret
@@ -37,19 +37,18 @@ int main() {
 
   while(1)
     {
-      //    testVar += 321;
       printf(".");
 
       sleep(1);
     }
 
-  // // Will wait for user input and store the input in the variable "input"
+  // Will wait for user input and store the input in the variable "input"
   // scanf("%s", input);
 
-  // // Compare the value of the variable "input" with the variable "hardcoded_string"
+  // Compare the value of the variable "input" with the variable "hardcoded_string"
   // int result = strcmp(input, hardcoded_string);
 
-  // // If the compare of the two values succeeds (or not) show a appropriate message
+  // If the compare of the two values succeeds (or not) show a appropriate message
   // if (result == 0) {
   //   printf("#=========================================================#\n");
   //   printf("|                       SUCCESS !!!!                      |\n");
