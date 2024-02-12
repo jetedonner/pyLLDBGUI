@@ -34,13 +34,15 @@ class LoadSourceCodeWorker(QRunnable):
 	
 	sourceFile = ''
 	debugger = None
+	lineNum = 1
 	
-	def __init__(self, debugger, sourceFile, data_receiver):
+	def __init__(self, debugger, sourceFile, data_receiver, lineNum):
 		super(LoadSourceCodeWorker, self).__init__()
 		self.isLoadSourceCodeActive = False
 		self.debugger = debugger
 		self.sourceFile = sourceFile
 		self.data_receiver = data_receiver
+		self.lineNum = lineNum
 		self.signals = LoadSourceCodeWorkerSignals()
 		self.data_receiver.interruptLoadSource.connect(self.handle_interruptLoadSourceCode)
 		
@@ -56,27 +58,12 @@ class LoadSourceCodeWorker(QRunnable):
 		QCoreApplication.processEvents()
 		self.isLoadSourceCodeActive = True
 		
-#		global debugger
-#		res = lldb.SBCommandReturnObject()
-#		
-#		
-#		# Get the command interpreter
-#		command_interpreter = lldbHelper.debugger.GetCommandInterpreter()
-#		
-#		# Execute the 'frame variable' command
-#		command_interpreter.HandleCommand(self.command, res)
-##       print(f'{res}')
-##       for i in dir(res):
-##           print(i)
-##       print(res.Succeeded())
-##       print(res.GetError())
-		
 		# Create the filespec for 'main.c'.
 		filespec = lldb.SBFileSpec(self.sourceFile, False)
 		source_mgr = self.debugger.GetSourceManager()
 		# Use a string stream as the destination.
 		stream = lldb.SBStream()
-		source_mgr.DisplaySourceLinesWithLineNumbers(filespec, 1, 0, 64, '=>', stream)
+		source_mgr.DisplaySourceLinesWithLineNumbers(filespec, self.lineNum, self.lineNum, 64, '=>', stream)
 #		print(stream.GetData())
 		
 		

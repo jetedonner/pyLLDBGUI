@@ -15,7 +15,7 @@ class StepKind(Enum):
 	Continue = 8
 	
 class DebugWorkerSignals(BaseWorkerSignals):
-	debugStepCompleted = pyqtSignal(object, bool, str)
+	debugStepCompleted = pyqtSignal(object, bool, str, object)
 #	debugValue = pyqtSignal(int, str, str, str)
 	updateRegisterValue = pyqtSignal(int, str, str, str)
 
@@ -68,11 +68,11 @@ class DebugWorker(BaseWorker):
 					numRegisters = registerList.GetSize()
 					if numRegisters > 0:
 #						print(f"DEBUGGER GOT NEXT REGISTER: {frame.register['rip'].value}")
-						self.signals.debugStepCompleted.emit(self.kind, True, frame.register["rip"].value)
+						self.signals.debugStepCompleted.emit(self.kind, True, frame.register["rip"].value, frame)
 						pass
 					else:
 #						print("DEBUGGER HAS NOOOOOOO REGISTER")
-						self.signals.debugStepCompleted.emit(self.kind, False, '')
+						self.signals.debugStepCompleted.emit(self.kind, False, '', frame)
 						pass
 #					numRegSeg = 100 / numRegisters
 #					currReg = 0

@@ -570,7 +570,10 @@ class LLDBPyGUIWindow(QMainWindow):
 							self.start_loadRegisterWorker()	
 						
 #						self.start_eventListenerWorker(self.debugger, self.interruptEventListenerWorker)
-						self.start_loadSourceWorker(self.debugger, "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/hello_world_test.c", self.interruptLoadSourceWorker)
+							context = frame.GetSymbolContext(lldb.eSymbolContextEverything)
+							print(f'.GetLineEntry() => {context.GetLineEntry()} => {context.GetLineEntry().GetLine()}')
+							
+							self.start_loadSourceWorker(self.debugger, "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/hello_world_test.c", self.interruptLoadSourceWorker, context.GetLineEntry().GetLine())
 #						self.process.Continue()
 				
 				self.reloadBreakpoints(True)
@@ -845,8 +848,8 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.threadpool.start(workerEventListener)
 		
-	def start_loadSourceWorker(self, debugger, sourceFile, event_listener):
-		self.workerLoadSource = LoadSourceCodeWorker(debugger, sourceFile, event_listener)
+	def start_loadSourceWorker(self, debugger, sourceFile, event_listener, lineNum = 1):
+		self.workerLoadSource = LoadSourceCodeWorker(debugger, sourceFile, event_listener, lineNum)
 		self.workerLoadSource.signals.finished.connect(self.handle_loadSourceFinished)
 		
 		self.threadpool.start(self.workerLoadSource)
@@ -888,7 +891,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.threadpool.start(self.workerDebug)
 		
-	def handle_debugStepCompleted(self, kind, success, rip):
+	def handle_debugStepCompleted(self, kind, success, rip, frm):
 		if success:
 #			print(f"Debug STEP ({kind}) completed SUCCESSFULLY")
 			self.txtMultiline.setPC(int(str(rip), 16))
@@ -896,8 +899,10 @@ class LLDBPyGUIWindow(QMainWindow):
 #			self.txtMultiline.setPC(frame.GetPC())
 			self.reloadRegister(False)
 			self.reloadBreakpoints(False)
-			
-			self.start_loadSourceWorker(self.debugger, "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/hello_world_test.c", self.interruptLoadSourceWorker)
+#			self.driver.getTarget()
+			context = frm.GetSymbolContext(lldb.eSymbolContextEverything)
+			print(f'.GetLineEntry() => {context.GetLineEntry()} => {context.GetLineEntry().GetLine()}')
+			self.start_loadSourceWorker(self.debugger, "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/hello_world_test.c", self.interruptLoadSourceWorker, context.GetLineEntry().GetLine())
 		else:
 			print(f"Debug STEP ({kind}) FAILED!!!")
 		pass
