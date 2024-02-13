@@ -25,21 +25,26 @@
 
 int main() {
   
+  // Variable for iteration counter
+  int idx = 0;
+  
+  // INT test variable for the disasseblers "Variable" view
   int testVar = 123;
   // Variable to hold the user input
   // char input[256];
 
-  // The secret to check against the user input
+  // Another test variable (char array) for the disasseblers "Variable" view
   char hardcoded_string[] = "S3CR3T";
 
   // This msg will prompt the user to enter his / her secret
   printf("Hello test: %d / %s", testVar, hardcoded_string);
-
+  
   while(1)
     {
       printf(".");
 
       sleep(1);
+      idx++;
     }
 
   // Will wait for user input and store the input in the variable "input"

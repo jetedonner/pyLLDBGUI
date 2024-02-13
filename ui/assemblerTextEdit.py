@@ -121,6 +121,8 @@ class DisassemblyTableWidgetNG(QTableWidget):
 		self.context_menu.addSeparator()
 		actionFindReferences = self.context_menu.addAction("Find references")
 		self.actionShowMemory = self.context_menu.addAction("Show memory")
+		self.actionShowMemoryFor = self.context_menu.addAction("Show memory for ...")
+		self.actionShowMemoryFor.triggered.connect(self.handle_showMemoryFor)
 		
 		self.setColumnCount(8)
 		self.setColumnWidth(0, 24)
@@ -134,7 +136,7 @@ class DisassemblyTableWidgetNG(QTableWidget):
 		self.verticalHeader().hide()
 		self.horizontalHeader().show()
 		self.horizontalHeader().setHighlightSections(False)
-		self.setHorizontalHeaderLabels(['PC', 'BP', '#', 'Address', 'Instruction', 'Args', 'Hex', 'Comment'])
+		self.setHorizontalHeaderLabels(['PC', 'BP', '#', 'Address', 'Mnemonic', 'Operands', 'Hex', 'Comment'])
 		self.horizontalHeaderItem(0).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
 		self.horizontalHeaderItem(1).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
 		self.horizontalHeaderItem(2).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
@@ -170,11 +172,195 @@ class DisassemblyTableWidgetNG(QTableWidget):
 	def contextMenuEvent(self, event):
 		for i in dir(event):
 			print(i)
-		print(event.pos())
-		print(self.itemAt(event.pos().x(), event.pos().y()))
-		print(self.selectedItems())
-		self.context_menu.exec(event.globalPos())
+#		print(event.pos())
+#		print(self.itemAt(event.pos().x(), event.pos().y()))
+#		print(self.selectedItems())
+		string = self.item(self.selectedItems()[0].row(), 5).text()
+#		print(f'CONTEXT MENU FOR OPERANDS: {string}')
 		
+		
+		parts = string.split(",")  # Split at the first comma
+		string1 = parts[0].strip()  # "Hello"
+		string2 = parts[1].strip()  # "world"
+#		print(f'string1: {string1}')
+#		print(f'string2: {string2}')
+		
+		
+		if string1.startswith("dword ptr"):
+#			print("String starts with 'dword'")
+			strOp = self.extractOperand(string1)
+			print(strOp)
+			strOp = strOp.replace(" ", "")
+			self.actionShowMemoryFor.setText("Show memory for: " + strOp)
+			# Example usage
+#			expression = strOp
+			address = self.get_memory_address(self.driver.debugger, strOp)
+			print(f"Memory address: 0x{address:X}")
+		elif string2.startswith("dword ptr"):
+#			print("String starts with 'dword'")
+			strOp = self.extractOperand(string2)
+			print(strOp)
+			strOp = strOp.replace(" ", "")
+			self.actionShowMemoryFor.setText("Show memory for: " + strOp)
+			# Example usage
+			#			expression = strOp
+			address = self.get_memory_address(self.driver.debugger, strOp)
+			print(f"Memory address: 0x{address:X}")
+		elif string1.startswith("word ptr"):
+#			print("String starts with 'dword'")
+			strOp = self.extractOperand(string1)
+			print(strOp)
+			strOp = strOp.replace(" ", "")
+			self.actionShowMemoryFor.setText("Show memory for: " + strOp)
+			# Example usage
+#			expression = strOp
+			address = self.get_memory_address(self.driver.debugger, strOp)
+			print(f"Memory address: 0x{address:X}")
+		elif string2.startswith("word ptr"):
+#			print("String starts with 'dword'")
+			strOp = self.extractOperand(string2)
+			print(strOp)
+			strOp = strOp.replace(" ", "")
+			self.actionShowMemoryFor.setText("Show memory for: " + strOp)
+			# Example usage
+			#			expression = strOp
+			address = self.get_memory_address(self.driver.debugger, strOp)
+			print(f"Memory address: 0x{address:X}")
+		else:
+			print("String does not start with 'dword'")
+			
+		self.context_menu.exec(event.globalPos())
+	
+	def get_memory_address(self, debugger, expression):
+		target = debugger.GetSelectedTarget()
+		process = target.GetProcess()
+		thread = process.GetSelectedThread()
+		frame = thread.GetSelectedFrame()
+		
+		isMinus = True
+		parts = expression.split("-")
+		if len(parts) <= 1:
+			parts = expression.split("+")
+			isMinus = False
+		
+		if len(parts) == 2:
+			# Get the value of "rbp" register
+			rbp_value = frame.EvaluateExpression(f"${parts[0]}").GetValueAsUnsigned()
+			print(f'rbp_value => {rbp_value}')
+			# Calculate the desired memory address
+			offset_value = int(parts[1].replace("0x", ""), 16)
+			if isMinus:
+				address = rbp_value - offset_value
+			else:
+				address = rbp_value + offset_value
+		
+		return address
+	
+	def extractOperand(self, string):
+#		string = "dword ptr [rbp - 0x8]"
+		pattern = r"\[([^\]]+)\]"  # Match anything within square brackets, excluding the brackets themselves
+		match = re.search(pattern, string)
+		
+		if match:
+			extracted_text = match.group(1)  # Access the captured group
+			print(extracted_text)  # Output: rbp - 0x8
+			return extracted_text
+		else:
+			print("No match found")
+			return ""
+		
+	def handle_showMemoryFor(self):
+		string = self.item(self.selectedItems()[0].row(), 5).text()
+#		print(f'CONTEXT MENU FOR OPERANDS: {string}')
+		
+		
+		parts = string.split(",")  # Split at the first comma
+		string1 = parts[0].strip()  # "Hello"
+		string2 = parts[1].strip()  # "world"
+#		print(f'string1: {string1}')
+#		print(f'string2: {string2}')
+		
+		
+		if string1.startswith("dword ptr"):
+#			print("String starts with 'dword'")
+			strOp = self.extractOperand(string1)
+			print(strOp)
+			strOp = strOp.replace(" ", "")
+#			self.actionShowMemoryFor.setText("Show memory for: " + strOp)
+			# Example usage
+#			expression = strOp
+			address = self.get_memory_address(self.driver.debugger, strOp)
+			print(f"Memory address: 0x{address:X}")
+			self.doReadMemory(address)
+		elif string2.startswith("dword ptr"):
+#			print("String starts with 'dword'")
+			strOp = self.extractOperand(string2)
+			print(strOp)
+			strOp = strOp.replace(" ", "")
+#			self.actionShowMemoryFor.setText("Show memory for: " + strOp)
+			# Example usage
+			#			expression = strOp
+			address = self.get_memory_address(self.driver.debugger, strOp)
+			print(f"Memory address: 0x{address:X}")
+			self.doReadMemory(address)
+		elif string1.startswith("word ptr"):
+#			print("String starts with 'dword'")
+			strOp = self.extractOperand(string1)
+			print(strOp)
+			strOp = strOp.replace(" ", "")
+#			self.actionShowMemoryFor.setText("Show memory for: " + strOp)
+			# Example usage
+#			expression = strOp
+			address = self.get_memory_address(self.driver.debugger, strOp)
+			print(f"Memory address: 0x{address:X}")
+			self.doReadMemory(address)
+		elif string2.startswith("word ptr"):
+#			print("String starts with 'dword'")
+			strOp = self.extractOperand(string2)
+			print(strOp)
+			strOp = strOp.replace(" ", "")
+#			self.actionShowMemoryFor.setText("Show memory for: " + strOp)
+			# Example usage
+			#			expression = strOp
+			address = self.get_memory_address(self.driver.debugger, strOp)
+			print(f"Memory address: 0x{address:X}")
+			self.doReadMemory(address)
+		pass
+#	def handle_showMemory(self):
+#		address = self.txtMultiline.table.item(self.txtMultiline.table.selectedItems()[0].row(), 3).text()
+#		self.doReadMemory(address)
+#		
+#	def readMemory_click(self):
+#		try:
+##           global debugger
+#			self.handle_readMemory(lldbHelper.debugger, int(self.txtMemoryAddr.text(), 16), int(self.txtMemorySize.text(), 16))
+#		except Exception as e:
+#			print(f"Error while reading memory from process: {e}")
+			
+	def doReadMemory(self, address, size = 0x100):
+		self.window().tabWidgetDbg.setCurrentWidget(self.window().tabMemory)
+#		self.txtMemoryAddr = QLineEdit("0x100003f50")
+#		self.txtMemorySize = QLineEdit("0x100")
+		self.window().txtMemoryAddr.setText(hex(address))
+		self.window().txtMemorySize.setText(hex(size))
+		try:
+#           global debugger
+			self.handle_readMemory(self.driver.debugger, int(self.window().txtMemoryAddr.text(), 16), int(self.window().txtMemorySize.text(), 16))
+		except Exception as e:
+			print(f"Error while reading memory from process: {e}")
+			
+	def handle_readMemory(self, debugger, address, data_size = 0x100):
+		error_ref = lldb.SBError()
+		process = debugger.GetSelectedTarget().GetProcess()
+		memory = process.ReadMemory(address, data_size, error_ref)
+		if error_ref.Success():
+#           hex_string = binascii.hexlify(memory)
+			# `memory` is a regular byte string
+#           print(f'BYTES:\n{memory}\nHEX:\n{hex_string}')
+			self.window().hxtMemory.setTxtHexNG(memory, True, int(self.window().txtMemoryAddr.text(), 16))
+		else:
+			print(str(error_ref))
+			
 	def toggleBPOn(self, row, updateBPWidget = True):
 #		print(f'TOGGLE BP: {self.item(row, 3).text()}')
 		item = self.item(row, 1)

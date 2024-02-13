@@ -41,6 +41,7 @@ from lldbutil import *
 from config import *
 from helper.dbgHelper import *
 from helper.dialogHelper import *
+from lldbpyGUIConfig import *
 #from test.lldbutil import *
 
 #APP_NAME = "LLDB-PyGUI"
@@ -275,7 +276,9 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.hxtMemory = QHEXTextEditSplitter()
 		self.txtMemoryAddr = QLineEdit("0x100003f50")
+		self.txtMemoryAddr.returnPressed.connect(self.click_ReadMemory)
 		self.txtMemorySize = QLineEdit("0x100")
+		self.txtMemorySize.returnPressed.connect(self.click_ReadMemory)
 		self.hxtMemory.layoutTopPlaceholer.addWidget(QLabel("Address:"))
 		self.hxtMemory.layoutTopPlaceholer.addWidget(self.txtMemoryAddr)
 		self.hxtMemory.layoutTopPlaceholer.addWidget(QLabel("Size:"))
@@ -934,38 +937,76 @@ class LLDBPyGUIWindow(QMainWindow):
 #				print("Line visible!")
 			self.txtSource.horizontalScrollBar().setValue(horizontal_value)
 			self.txtSource.verticalScrollBar().setValue(vertical_value)
+#			self.txtSource.setCurs
+#			self.txtSource.scrollContentsBy(0, 1)
+			# Example usage:
+			line_text = "=>"
+			self.scroll_to_line(self.txtSource, line_text)
 			
-			self.txtSource.scrollContentsBy(0, 1)
 		else:
 			self.txtSource.setText("<Source code NOT available>")
 		
-			
-	def is_line_visible(self, text_edit, line_text):
-		document = text_edit.document()
-		block = document.findBlockByLineNumber(document.find(line_text).blockNumber())  # Find the block with the desired line
-		
-		# Check if the block is within the currently visible block range
-		visible_top = text_edit.verticalScrollBar().value()
-		visible_bottom = visible_top + text_edit.viewport().height()
-		first_visible_block = text_edit.firstVisibleBlock()
-		last_visible_block = text_edit.lastVisibleBlock()
-		
-		return first_visible_block <= block <= last_visible_block
 	
-	def scroll_to_line(text_edit, line_text):
+	def scroll_to_line(self, text_edit, line_text):
+#		document = text_edit.document()
+#		block = document.findBlockByLineNumber(document.find(line_text, Qt.CaseSensitivity.CaseSensitive))  # Find the block with the desired line
 		document = text_edit.document()
 		block = document.findBlockByLineNumber(document.find(line_text).blockNumber())  # Find the block with the desired line
-		
-		# Check if the block is visible, and adjust scroll as needed
-		visible_top = text_edit.verticalScrollBar().value()
-		visible_bottom = visible_top + text_edit.viewport().height()
-		visible_center = (visible_top + visible_bottom) // 2
-		
-		if not text_edit.blockVisible(block.blockNumber()):
-			block_top = block.position().line()
-			block_height = block.height()
-			new_scroll_value = max(0, min(block_top + block_height // 2 - visible_center, document.lineCount() - text_edit.viewport().height()))
-			text_edit.verticalScrollBar().setValue(new_scroll_value)
+		print("========= BLOCK / CURSOR ==========")
+		print(block)
+		print(block.firstLineNumber())
+		print(block.position())
+		print(dir(block))
+#		
+#		if block:
+##			text_edit.setC
+##			text_edit.scrollTo(block.cursor(), QTextCursor.SelectionType.LineCenter)  # Scroll to center of the line
+##			text_edit.scrollTo(block.cursor(), QTextCursor.SelectionType.LineCenter)  # Scroll to center of the line
+#			# Set the cursor position based on line number and character index
+#			block.cursor().setPosition(block.position().line(), 1)
+		c = text_edit.textCursor()
+		print(c)
+		print(dir(c))
+		print("========= BLOCK / CURSOR - END ==========")
+##		c.clearSelection()
+#		txtLen = len(self.txtMultiline.toPlainText())
+#		startPos = int(cursor.selectionStart() / 3)
+#		if startPos > txtLen:
+#			startPos -= 1
+		c.setPosition(25)
+#		endPos = int((cursor.selectionEnd() + 1) / 3)
+#		if endPos > txtLen:
+#			endPos -= 1
+#		print(f"txtLen = {txtLen}")
+#		c.setPosition(endPos, QTextCursor.MoveMode.KeepAnchor)
+	
+	
+#	def is_line_visible(self, text_edit, line_text):
+#		document = text_edit.document()
+#		block = document.findBlockByLineNumber(document.find(line_text).blockNumber())  # Find the block with the desired line
+#		
+#		# Check if the block is within the currently visible block range
+#		visible_top = text_edit.verticalScrollBar().value()
+#		visible_bottom = visible_top + text_edit.viewport().height()
+#		first_visible_block = text_edit.firstVisibleBlock()
+#		last_visible_block = text_edit.lastVisibleBlock()
+#		
+#		return first_visible_block <= block <= last_visible_block
+#	
+#	def scroll_to_line(text_edit, line_text):
+#		document = text_edit.document()
+#		block = document.findBlockByLineNumber(document.find(line_text).blockNumber())  # Find the block with the desired line
+#		
+#		# Check if the block is visible, and adjust scroll as needed
+#		visible_top = text_edit.verticalScrollBar().value()
+#		visible_bottom = visible_top + text_edit.viewport().height()
+#		visible_center = (visible_top + visible_bottom) // 2
+#		
+#		if not text_edit.blockVisible(block.blockNumber()):
+#			block_top = block.position().line()
+#			block_height = block.height()
+#			new_scroll_value = max(0, min(block_top + block_height // 2 - visible_center, document.lineCount() - text_edit.viewport().height()))
+#			text_edit.verticalScrollBar().setValue(new_scroll_value)
 	
 	def read_memory(self, process, address, size):
 		error = lldb.SBError()

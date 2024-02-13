@@ -246,8 +246,9 @@ def TestCommand(debugger, command, result, dict):
         pymobiledevice3GUIWindow = LLDBPyGUIWindow(debugger, driver) # QConsoleTextEditWindow(debugger)
         #     pymobiledevice3GUIWindow.loadTarget()
         pymobiledevice3GUIWindow.show()
-        pymobiledevice3GUIWindow.move(650, 20)
-        pymobiledevice3GUIWindow.tabWidgetMain.setCurrentIndex(2)
+        
+#       pymobiledevice3GUIWindow.move(650, 20)
+#       pymobiledevice3GUIWindow.tabWidgetMain.setCurrentIndex(2)
         driver.start()
         print("AFTER START DRIVER!!!!")
         #     process = target.Launch(info, error)
