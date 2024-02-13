@@ -142,10 +142,10 @@ class DebuggerDriver(Thread):
             print()
             
             # eBroadcastBitSTDOUT
-#           if event.GetType() == lldb.SBProcess.eBroadcastBitSTDOUT:
-#             stdout = process.GetSTDOUT(256)
-#             if stdout is not None and len(stdout) > 0:
-#               message = {"status":"event", "type":"stdout", "output": "".join(["%02x" % ord(i) for i in stdout])}
+            if event.GetType() == lldb.SBProcess.eBroadcastBitSTDOUT:
+              stdout = self.getTarget().GetProcess().GetSTDOUT(256)
+              if stdout is not None and len(stdout) > 0:
+                message = {"status":"event", "type":"stdout", "output": "".join(["%02x" % ord(i) for i in stdout])}
             if got_event and not event.IsValid():
                 self.winAddStr("Warning: Invalid or no event...")
                 continue

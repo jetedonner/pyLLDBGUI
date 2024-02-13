@@ -14,7 +14,7 @@ from PyQt6 import uic, QtWidgets
 
 class ConfigClass():
 	
-	initialCommand = "breakpoint set -a 0x100003f6b" # re read
+	initialCommand = "breakpoint set -a 0x100003f6a" # re read
 	font = QFont("Courier New")
 #	font.setFixedPitch(True)
 	

@@ -26,6 +26,7 @@ from ui.threadFrameTreeView import *
 from ui.variablesTableWidget import *
 from ui.clickLabel import *
 from ui.helpDialog import *
+from ui.settingsDialog import *
 
 from worker.eventListenerWorker import *
 from worker.loadSourceWorker import *
@@ -107,10 +108,21 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.load_action.triggered.connect(self.load_clicked)
 		self.toolbar.addAction(self.load_action)
 		
+		self.settings_action = QAction(ConfigClass.iconSettings, 'Settings', self)
+		self.settings_action.setStatusTip('Settings')
+		self.settings_action.setShortcut('Ctrl+O')
+		self.settings_action.triggered.connect(self.settings_clicked)
+#		self.toolbar.addAction(self.settings_action)
+#		self.toolbar.addAction(self.settings_action)
+		
 		menu = self.menuBar()
+		
+		main_menu = menu.addMenu("Main")
+		main_menu.addAction(self.settings_action)
 		
 		file_menu = menu.addMenu("&Load Action")
 		file_menu.addAction(self.load_action)
+#		file_menu.addAction(self.settings_action)
 		
 		self.help_action = QAction(ConfigClass.iconInfo, '&Show Help', self)
 		self.help_action.setStatusTip('Show Help')
@@ -148,8 +160,8 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.step_restart = QAction(ConfigClass.iconRestart, '&Restart', self)
 		self.step_restart.setStatusTip('Restart')
-#		self.load_resume.setShortcut('Ctrl+L')
-#		self.load_resume.triggered.connect(self.load_clicked)
+		self.load_resume.setShortcut('Ctrl+R')
+		self.step_restart.triggered.connect(self.click_restartTarget)
 		self.toolbar.addAction(self.step_restart)
 		
 		self.stop = QAction(ConfigClass.iconStop, '&Stop', self)
@@ -157,6 +169,10 @@ class LLDBPyGUIWindow(QMainWindow):
 #		self.load_resume.setShortcut('Ctrl+L')
 		self.stop.triggered.connect(self.handle_stopThread)
 		self.toolbar.addAction(self.stop)
+		
+		self.toolbar.addAction(self.settings_action)
+		
+		file_menu.addAction(self.settings_action)
 		
 		self.statusBar = QStatusBar()
 		self.setStatusBar(self.statusBar)
@@ -204,11 +220,11 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.splitter.addWidget(self.txtMultiline)
 		
 		self.tabWidgetDbg = QTabWidget()
-		
+		self.tabWidgetDbg.setContentsMargins(0, 0, 0, 0)
 		self.splitter.addWidget(self.tabWidgetDbg)
 		
 		self.tabWidgetReg = QTabWidget()
-		
+		self.tabWidgetReg.setContentsMargins(0, 0, 0, 0)
 		self.tabWidgetDbg.addTab(self.tabWidgetReg, "Register")
 		
 		self.tblVariables = VariablesTableWidget()
@@ -276,17 +292,26 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.hxtMemory = QHEXTextEditSplitter()
 		self.txtMemoryAddr = QLineEdit("0x100003f50")
+		self.txtMemoryAddr.setContentsMargins(0, 0, 0, 0)
 		self.txtMemoryAddr.returnPressed.connect(self.click_ReadMemory)
 		self.txtMemorySize = QLineEdit("0x100")
+		self.txtMemorySize.setContentsMargins(0, 0, 0, 0)
 		self.txtMemorySize.returnPressed.connect(self.click_ReadMemory)
-		self.hxtMemory.layoutTopPlaceholer.addWidget(QLabel("Address:"))
+		self.lblMemoryAddr = QLabel("Address:")
+		self.lblMemoryAddr.setContentsMargins(0, 0, 0, 0)
+		self.hxtMemory.layoutTopPlaceholer.addWidget(self.lblMemoryAddr)
 		self.hxtMemory.layoutTopPlaceholer.addWidget(self.txtMemoryAddr)
-		self.hxtMemory.layoutTopPlaceholer.addWidget(QLabel("Size:"))
+		self.lblMemorySize = QLabel("Size:")
+		self.lblMemorySize.setContentsMargins(0, 0, 0, 0)
+		self.hxtMemory.layoutTopPlaceholer.addWidget(self.lblMemorySize)
 		self.hxtMemory.layoutTopPlaceholer.addWidget(self.txtMemorySize)
+		self.hxtMemory.layoutTopPlaceholer.setContentsMargins(0, 0, 0, 0)
 		self.cmdReadMemory = QPushButton("Read memory")
 		self.cmdReadMemory.clicked.connect(self.click_ReadMemory)
+		self.cmdReadMemory.setContentsMargins(0, 0, 0, 0)
 		self.hxtMemory.layoutTopPlaceholer.addWidget(self.cmdReadMemory)
 		self.hxtMemory.txtMultiline.setFont(ConfigClass.font)
+		self.hxtMemory.txtMultiline.setContentsMargins(0, 0, 0, 0)
 		self.hxtMemory.txtMultilineHex.setFont(ConfigClass.font)
 		self.hxtMemory.txtMultilineHex.hexGrouping = HexGrouping.TwoChars
 	
@@ -530,7 +555,15 @@ class LLDBPyGUIWindow(QMainWindow):
 				self.driver.handleCommand("br com a -F lldbpyGUI.breakpointHandlerNG")
 		print("==============================================")
 		pass
-		
+	
+	def click_restartTarget(self):
+		target = self.driver.getTarget()
+		launch_info = target.GetLaunchInfo()
+#		target.Terminate()
+		target.GetProcess().Kill()
+		error = lldb.SBError()
+		target.Launch(launch_info, error)
+
 	def click_ReadMemory(self):
 		try:
 			self.handle_readMemory(self.driver.debugger, int(self.txtMemoryAddr.text(), 16), int(self.txtMemorySize.text(), 16))
@@ -740,6 +773,28 @@ class LLDBPyGUIWindow(QMainWindow):
 		if self.swtAutoscroll.isChecked():
 			self.sb = self.txtConsole.verticalScrollBar()
 			self.sb.setValue(self.sb.maximum())
+	
+	def settings_clicked(self, s):
+		print("Opening Settings ...")
+		self.updateStatusBar("Opening Settings ...")
+		
+#		project_root = dirname(realpath(__file__))
+#		helpDialogPath = os.path.join(project_root, 'resources', 'designer', 'helpDialog.ui')
+#		
+#		window = uic.loadUi(helpDialogPath)
+		settingsWindow = SettingsDialog()
+		settingsWindow.exec()
+		
+#		dialog = QFileDialog(None, "Select executable or library", "", "All Files (*.*)")
+#		dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
+#		dialog.setNameFilter("Executables (*.exe *.com *.bat *);;Libraries (*.dll *.so *.dylib)")
+#		
+#		if dialog.exec():
+#			filename = dialog.selectedFiles()[0]
+#			print(filename)
+##			self.start_workerLoadTarget(filename)
+#		else:
+#			return None
 		
 	def load_clicked(self, s):
 		dialog = QFileDialog(None, "Select executable or library", "", "All Files (*.*)")
