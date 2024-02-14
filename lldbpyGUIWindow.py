@@ -27,6 +27,7 @@ from ui.variablesTableWidget import *
 from ui.clickLabel import *
 from ui.helpDialog import *
 from ui.settingsDialog import *
+from ui.testTableWidget import *
 
 from worker.eventListenerWorker import *
 from worker.loadSourceWorker import *
@@ -203,7 +204,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.layout = QVBoxLayout()
 		
-		self.txtMultiline = AssemblerTextEditNG(self.driver)
+		self.txtMultiline = AssemblerTextEdit(self.driver)
 #		self.txtMultiline.table.actionShowMemory.triggered.connect(self.handle_showMemory)
 #		self.txtMultiline.table.sigEnableBP.connect(self.handle_enableBP)
 #		self.txtMultiline.table.sigBPOn.connect(self.handle_BPOn)
@@ -323,6 +324,10 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.tabWidgetMain = QTabWidget()
 		self.tabWidgetMain.addTab(self.splitter, "Debugger")
+		
+#		self.tblTest = TestTableWidgetNG()
+#		self.tabWidgetMain.addTab(self.tblTest, "TEST")
+#		self.tblTest.addRow(1, "0x10000", "HELLO", "ARGS", "COMMENT", "DATA", "0x10000")
 		
 		self.tblFileInfos = FileInfosTableWidget()
 		self.tabWidgetFileInfos = QWidget()
@@ -829,7 +834,7 @@ class LLDBPyGUIWindow(QMainWindow):
 #			print(i)
 			idx += 1
 #			print(i.GetData(target))
-			self.txtMultiline.appendAsmTextNG(hex(int(str(i.GetAddress().GetFileAddress()), 10)), i.GetMnemonic(target),  i.GetOperands(target), i.GetComment(target), str(i.GetData(target)).replace("                             ", "\t\t").replace("		            ", "\t\t\t").replace("		         ", "\t\t").replace("		      ", "\t\t").replace("			   ", "\t\t\t"), True, rip)
+			self.txtMultiline.appendAsmText(hex(int(str(i.GetAddress().GetFileAddress()), 10)), i.GetMnemonic(target),  i.GetOperands(target), i.GetComment(target), str(i.GetData(target)).replace("                             ", "\t\t").replace("		            ", "\t\t\t").replace("		         ", "\t\t").replace("		      ", "\t\t").replace("			   ", "\t\t\t"), True, rip)
 			
 	def loadFileStats(self, target):
 		statistics = target.GetStatistics()

@@ -86,6 +86,9 @@
           <property name="checkState">
            <enum>Checked</enum>
           </property>
+          <property name="flags">
+           <set>ItemIsSelectable|ItemIsUserCheckable|ItemIsEnabled</set>
+          </property>
          </item>
         </widget>
        </item>

@@ -61,7 +61,7 @@ class DisassemblyImageTableWidgetItem(QTableWidgetItem):
 		pass
 		
 		
-class DisassemblyTableWidgetNG(QTableWidget):
+class DisassemblyTableWidget(QTableWidget):
 	
 	sigEnableBP = pyqtSignal(str, bool)
 	sigBPOn = pyqtSignal(str, bool)
@@ -102,6 +102,9 @@ class DisassemblyTableWidgetNG(QTableWidget):
 	
 	def __init__(self, driver):
 		super().__init__()
+#	def __init__(self, *args, **kwargs):
+#		super().__init__(*args, **kwargs)
+		
 		self.driver = driver
 		self.context_menu = QMenu(self)
 		actionToggleBP = self.context_menu.addAction("Toggle Breakpoint")
@@ -162,7 +165,94 @@ class DisassemblyTableWidgetNG(QTableWidget):
 		
 		self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
 		self.setShowGrid(False)
+		self.setMouseTracking(True)
 		self.cellDoubleClicked.connect(self.on_double_click)
+		
+	itemOld = None
+	
+	def mouseMoveEvent(self, event):
+#		# Access mouse cursor position using event.globalX() and event.globalY()
+#		# Get the cell under the cursor using self.itemAt(event.pos())
+#		# Perform your desired custom logic based on cell position and mouse movement
+#		
+#		# Example: Print cell coordinates and mouse position
+#		pos = event.pos()
+#		item = self.itemAt(pos)
+#		if item != None and self.itemOld != item:
+#			row, col = item.row(), item.column()
+#			print(f"Cell: ({row}, {col}), Mouse: ({pos.x()}, {pos.y()})")
+#			
+#			if col == 5:
+#				parts = item.text().split(",")  # Split at the first comma
+#				string1 = parts[0].strip()  # "Hello"
+#				string2 = parts[1].strip()  # "world"
+#		#		print(f'string1: {string1}')
+#		#		print(f'string2: {string2}')
+#				
+#				address = 0
+#				if string1.startswith("dword ptr"):
+#		#			print("String starts with 'dword'")
+#					strOp = self.extractOperand(string1)
+#					print(strOp)
+#					strOp = strOp.replace(" ", "")
+#		#			self.actionShowMemoryFor.setText("Show memory for: " + strOp)
+#					# Example usage
+#		#			expression = strOp
+#					address = self.get_memory_address(self.driver.debugger, strOp)
+#					print(f"Memory address: 0x{address:X}")
+#	#				self.doReadMemory(address)
+#				elif string2.startswith("dword ptr"):
+#		#			print("String starts with 'dword'")
+#					strOp = self.extractOperand(string2)
+#					print(strOp)
+#					strOp = strOp.replace(" ", "")
+#		#			self.actionShowMemoryFor.setText("Show memory for: " + strOp)
+#					# Example usage
+#					#			expression = strOp
+#					address = self.get_memory_address(self.driver.debugger, strOp)
+#					print(f"Memory address: 0x{address:X}")
+#	#				self.doReadMemory(address)
+#				elif string1.startswith("word ptr"):
+#		#			print("String starts with 'dword'")
+#					strOp = self.extractOperand(string1)
+#					print(strOp)
+#					strOp = strOp.replace(" ", "")
+#		#			self.actionShowMemoryFor.setText("Show memory for: " + strOp)
+#					# Example usage
+#		#			expression = strOp
+#					address = self.get_memory_address(self.driver.debugger, strOp)
+#					print(f"Memory address: 0x{address:X}")
+#	#				self.doReadMemory(address)
+#				elif string2.startswith("word ptr"):
+#		#			print("String starts with 'dword'")
+#					strOp = self.extractOperand(string2)
+#					print(strOp)
+#					strOp = strOp.replace(" ", "")
+#		#			self.actionShowMemoryFor.setText("Show memory for: " + strOp)
+#					# Example usage
+#					#			expression = strOp
+#					address = self.get_memory_address(self.driver.debugger, strOp)
+#					print(f"Memory address: 0x{address:X}")
+#					
+#				if address != 0:
+#					error_ref = lldb.SBError()
+#					process = self.driver.debugger.GetSelectedTarget().GetProcess()
+#					memory = process.ReadMemory(address, 0x20, error_ref)
+#					if error_ref.Success():
+#			#           hex_string = binascii.hexlify(memory)
+#						# `memory` is a regular byte string
+#			#           print(f'BYTES:\n{memory}\nHEX:\n{hex_string}')
+#	#					self.window().hxtMemory.setTxtHexNG(memory, True, int(self.window().txtMemoryAddr.text(), 16))
+#						item.setToolTip(str(memory))
+#					else:
+#						print(str(error_ref))
+#			self.itemOld = item
+		
+		# Modify cell data or appearance within this method as needed
+		# Handle other mouse events (e.g., click, drag) if necessary
+		
+		# Call the original method to ensure default behavior continues
+		super().mouseMoveEvent(event)
 		
 	def on_double_click(self, row, col):
 		if col in range(3):
@@ -170,67 +260,30 @@ class DisassemblyTableWidgetNG(QTableWidget):
 #			self.sigBPOn.emit(self.item(self.selectedItems()[0].row(), 3).text(), self.item(self.selectedItems()[0].row(), 1).isBPOn)
 			
 	def contextMenuEvent(self, event):
-		for i in dir(event):
-			print(i)
-#		print(event.pos())
-#		print(self.itemAt(event.pos().x(), event.pos().y()))
-#		print(self.selectedItems())
-		string = self.item(self.selectedItems()[0].row(), 5).text()
-#		print(f'CONTEXT MENU FOR OPERANDS: {string}')
-		
-		
-		parts = string.split(",")  # Split at the first comma
-		string1 = parts[0].strip()  # "Hello"
-		string2 = parts[1].strip()  # "world"
-#		print(f'string1: {string1}')
-#		print(f'string2: {string2}')
-		
-		
-		if string1.startswith("dword ptr"):
-#			print("String starts with 'dword'")
-			strOp = self.extractOperand(string1)
-			print(strOp)
-			strOp = strOp.replace(" ", "")
-			self.actionShowMemoryFor.setText("Show memory for: " + strOp)
-			# Example usage
-#			expression = strOp
-			address = self.get_memory_address(self.driver.debugger, strOp)
-			print(f"Memory address: 0x{address:X}")
-		elif string2.startswith("dword ptr"):
-#			print("String starts with 'dword'")
-			strOp = self.extractOperand(string2)
-			print(strOp)
-			strOp = strOp.replace(" ", "")
-			self.actionShowMemoryFor.setText("Show memory for: " + strOp)
-			# Example usage
-			#			expression = strOp
-			address = self.get_memory_address(self.driver.debugger, strOp)
-			print(f"Memory address: 0x{address:X}")
-		elif string1.startswith("word ptr"):
-#			print("String starts with 'dword'")
-			strOp = self.extractOperand(string1)
-			print(strOp)
-			strOp = strOp.replace(" ", "")
-			self.actionShowMemoryFor.setText("Show memory for: " + strOp)
-			# Example usage
-#			expression = strOp
-			address = self.get_memory_address(self.driver.debugger, strOp)
-			print(f"Memory address: 0x{address:X}")
-		elif string2.startswith("word ptr"):
-#			print("String starts with 'dword'")
-			strOp = self.extractOperand(string2)
-			print(strOp)
-			strOp = strOp.replace(" ", "")
-			self.actionShowMemoryFor.setText("Show memory for: " + strOp)
-			# Example usage
-			#			expression = strOp
-			address = self.get_memory_address(self.driver.debugger, strOp)
-			print(f"Memory address: 0x{address:X}")
-		else:
-			print("String does not start with 'dword'")
+		self.actionShowMemoryFor.setText("Show memory for:")
+		self.actionShowMemoryFor.setEnabled(False)
+		parts = self.item(self.selectedItems()[0].row(), 5).text().split(",")
+		if len(parts) >= 2:
+			string1 = parts[0].strip()
+			string2 = parts[1].strip()
+			
+			if string1.startswith(("dword ptr", "word ptr", "byte ptr")):
+				address, strOp = self.get_memory_addressAndOperands(self.driver.debugger, string1)
+				self.actionShowMemoryFor.setText("Show memory for: " + strOp)
+				self.actionShowMemoryFor.setEnabled(True)
+			elif string2.startswith(("dword ptr", "word ptr", "byte ptr")):
+				address, strOp = self.get_memory_addressAndOperands(self.driver.debugger, string2)
+				self.actionShowMemoryFor.setText("Show memory for: " + strOp)
+				self.actionShowMemoryFor.setEnabled(True)
+			else:
+				pass
 			
 		self.context_menu.exec(event.globalPos())
 	
+	def get_memory_addressAndOperands(self, debugger, operands):
+		strOp = self.extractOperand(operands)
+		return self.get_memory_address(self.driver.debugger, strOp), strOp
+		
 	def get_memory_address(self, debugger, expression):
 		target = debugger.GetSelectedTarget()
 		process = target.GetProcess()
@@ -244,9 +297,8 @@ class DisassemblyTableWidgetNG(QTableWidget):
 			isMinus = False
 		
 		if len(parts) == 2:
-			# Get the value of "rbp" register
 			rbp_value = frame.EvaluateExpression(f"${parts[0]}").GetValueAsUnsigned()
-			print(f'rbp_value => {rbp_value}')
+#			print(f'rbp_value => {rbp_value}')
 			# Calculate the desired memory address
 			offset_value = int(parts[1].replace("0x", ""), 16)
 			if isMinus:
@@ -254,6 +306,7 @@ class DisassemblyTableWidgetNG(QTableWidget):
 			else:
 				address = rbp_value + offset_value
 		
+		print(f"Memory address: 0x{address:X}")
 		return address
 	
 	def extractOperand(self, string):
@@ -264,7 +317,7 @@ class DisassemblyTableWidgetNG(QTableWidget):
 		if match:
 			extracted_text = match.group(1)  # Access the captured group
 			print(extracted_text)  # Output: rbp - 0x8
-			return extracted_text
+			return extracted_text.replace(" ", "")
 		else:
 			print("No match found")
 			return ""
@@ -422,7 +475,7 @@ class DisassemblyTableWidgetNG(QTableWidget):
 		
 		
 # THIS ONE IS USED FOR NG IMPLEMENTATION !!!
-class AssemblerTextEditNG(QWidget):
+class AssemblerTextEdit(QWidget):
 	
 	lineCountNG = 0
 	table = None
@@ -432,7 +485,7 @@ class AssemblerTextEditNG(QWidget):
 		self.table.resetContent()
 		pass
 		
-	def appendAsmTextNG(self, addr, instr, args, comment, data, addLineNum = True, rip = ""):
+	def appendAsmText(self, addr, instr, args, comment, data, addLineNum = True, rip = ""):
 		if addLineNum:
 			self.lineCountNG += 1
 			self.table.addRow(self.lineCountNG, addr, instr, args, comment, data, rip)
@@ -466,7 +519,7 @@ class AssemblerTextEditNG(QWidget):
 		self.vlayout = QHBoxLayout()
 		self.frame.setLayout(self.vlayout)
 		
-		self.table = DisassemblyTableWidgetNG(self.driver)
+		self.table = DisassemblyTableWidget(self.driver)
 		
 		self.vlayout.addWidget(self.table)
 		
