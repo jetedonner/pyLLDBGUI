@@ -268,25 +268,33 @@ class BreakpointsTableWidget(QTableWidget):
 	
 	def item_changed_handler(self, row, col):
 		if not self.ommitCellChanged:
-			if col == 3:
+			
+			if col == 3: # Name changed
 				target = self.driver.getTarget()
-#				idx = 0
-				for i in range(target.GetNumBreakpoints()):
-#					idx += 1
-					bp_cur = target.GetBreakpointAtIndex(i)
-					for bl in bp_cur:
-						name_list = lldb.SBStringList()
-						bp_cur.GetNames(name_list)
-						num_names = name_list.GetSize()
-#						print(f'num_names: {num_names}')
-#						oldName = "main"
-						name_list.AppendString("")
-						num_names = 1
-						for j in range(num_names):
-							name = name_list.GetStringAtIndex(j)
-#							print(name + " / " + self.oldBPName)
-							if name == self.oldBPName:
-								bp_cur.RemoveName(self.oldBPName)
-								bp_cur.AddName(self.item(row, 3).text())
-								break
-			pass
+				bpFound = False
+#				for i in range(target.GetNumBreakpoints()):
+				bp_cur = target.GetBreakpointAtIndex(row)
+				for bl in bp_cur:
+					name_list = lldb.SBStringList()
+					bp_cur.GetNames(name_list)
+					num_names = name_list.GetSize()
+					name_list.AppendString("")
+					num_names = 1
+					for j in range(num_names):
+						name = name_list.GetStringAtIndex(j)
+						if name == self.oldBPName:
+							bp_cur.RemoveName(self.oldBPName)
+							bp_cur.AddName(self.item(row, 3).text())
+							bpFound = True
+							break
+					if bpFound:
+						break
+#					if bpFound:
+#						break
+					
+			elif col == 5: # Condition changed
+				target = self.driver.getTarget()
+				bp_cur = target.GetBreakpointAtIndex(row)
+				bp_cur.SetCondition(self.item(row, 5).text())
+				pass
+				

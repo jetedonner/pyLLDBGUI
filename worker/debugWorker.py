@@ -25,11 +25,7 @@ class DebugWorker(BaseWorker):
 	
 	def __init__(self, driver, kind):
 		super(DebugWorker, self).__init__(driver)
-#		print("INIT DEBUGWORKER")
 		self.kind = kind
-#		self.initTabs = initTabs
-#		self.driver = drivers
-		
 		self.signals = DebugWorkerSignals()
 		
 	def workerFunc(self):
@@ -39,88 +35,39 @@ class DebugWorker(BaseWorker):
 		target = self.driver.getTarget()
 		process = target.GetProcess()
 		if process:
-#			print("HAS PROCESS")
 			thread = process.GetThreadAtIndex(0)
 			if thread:
-#				print("HAS THREAD")
-				
 				if self.kind == StepKind.StepInto:
+					print("Trying to StepInto ...")
 					thread.StepInstruction(False)
+					print("After StepInto ...")
 				elif self.kind == StepKind.Continue:
-#					thread.Continue()
+					print("Trying to Continue ...")
 					error = process.Continue()
-#					self.start_debugWorker(self.driver, StepKind.Continue)
 					print("After Continue ...")
 					if error:
 						print(error)
 				else:
+					print("Trying to StepOver ...")
 					thread.StepInstruction(True)
-					
-#				print("HAS THREAD - STEPPED")
+					print("After StepOver ...")
+
 				frame = thread.GetFrameAtIndex(0)
 				if frame:
-#					print("HAS FRAME")
 					registerList = frame.GetRegisters()
-#					print(
-#						"Frame registers (size of register set = %d):"
-#						% registerList.GetSize()
-#					)
 					numRegisters = registerList.GetSize()
 					if numRegisters > 0:
 						print(f'GetPCAddress => {hex(frame.GetPCAddress().GetFileAddress())}')
-##						print(f"DEBUGGER GOT NEXT REGISTER: {frame.register['rip'].value}")
-##						rip_value = thread.GetFrameAtIndex(0).GetPC()
-##						current_instruction_address = rip_value - 1
-##						frame = thread.GetFrameAtIndex(0)
-#						module = frame.GetModule()
-#						disassembler = module.GetDisassembler()
-#						
-#						# Disassemble the current instruction
-#						current_address = frame.GetPC()
-#						instruction = disassembler.DisassembleInstruction(current_address)
-#						
-#						# Get the size of the current instruction
-#						current_size = instruction.GetByteSize()
-#						
-#						# Calculate the address of the previous instruction
-#						previous_address = current_address - current_size
-#						
-#						print("Current instruction address:", hex(previous_address))
-						
 						self.signals.debugStepCompleted.emit(self.kind, True, frame.register["rip"].value, frame)
 						pass
 					else:
-#						print("DEBUGGER HAS NOOOOOOO REGISTER")
 						self.signals.debugStepCompleted.emit(self.kind, False, '', frame)
 						pass
-#					numRegSeg = 100 / numRegisters
-#					currReg = 0
-#					for value in registerList:
-#						currReg += 1
-#						currRegSeg = 100 / numRegisters * currReg
-#						self.sendProgressUpdate(100 / numRegisters * currReg, f'Loading registers for {value.GetName()} ...')
-#						# print value
-##						print(
-##							"%s (number of children = %d):"
-##							% (value.GetName(), value.GetNumChildren())
-##						)
-#						if self.initTabs:
-#							self.signals.Debug.emit(value.GetName())
-#						
-#						numChilds = len(value)
-#						idx = 0
-#						for child in value:
-#							idx += 1
-#							self.sendProgressUpdate((100 / numRegisters * currReg) + (numRegSeg / numChilds * idx), f'Loading registers value {child.GetName()} ...')
-#							if self.initTabs:
-#								self.signals.DebugValue.emit(currReg - 1, child.GetName(), child.GetValue(), getMemoryValueAtAddress(target, process, child.GetValue()))
-#							else:
-#								self.signals.updateRegisterValue.emit(currReg - 1, child.GetName(), child.GetValue(), getMemoryValueAtAddress(target, process, child.GetValue()))
 				else:
 					print("NO FRAME")
 			else:
 				print("NO THREAD")
 		else:
 			print("NO PROCESS")
-		self.signals.finished.emit()
+#		self.signals.finished.emit()
 		pass

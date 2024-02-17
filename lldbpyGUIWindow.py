@@ -647,6 +647,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.txtConsole.setText("")
 	
 	def start_loadBreakpointsWorker(self, initTable = True):
+		print(">>>> start_loadBreakpointsWorker")
 		self.loadBreakpointsWorker = LoadBreakpointsWorker(self.driver, initTable)
 		self.loadBreakpointsWorker.signals.finished.connect(self.handle_loadBreakpointsFinished)
 		self.loadBreakpointsWorker.signals.sendStatusBarUpdate.connect(self.handle_statusBarUpdate)
@@ -669,7 +670,7 @@ class LLDBPyGUIWindow(QMainWindow):
 #		if initTable:
 #			self.txtMultiline.table.setBPAtAddress(loadAddr, True, False)
 		self.tblBPs.updateRow(bpId, idx, loadAddr, name, str(hitCount), condition)
-		print("Reloading BPs ...")
+#		print("Reloading BPs ...")
 		
 	def handle_loadBreakpointsFinished(self):
 		print("handle_loadBreakpointsFinished")
@@ -873,6 +874,7 @@ class LLDBPyGUIWindow(QMainWindow):
 	
 	def handle_enableBP(self, address, enable):
 		self.tblBPs.doEnableBP(address, enable)
+		self.driver.handleCommand("br com a -F lldbpyGUI.breakpointHandlerNG")
 #		pass
 	
 	def handle_BPOn(self, address, on):
@@ -886,11 +888,11 @@ class LLDBPyGUIWindow(QMainWindow):
 #		pass
 		
 	def handle_resumeThread(self):
-		print("Trying to Continue ...")
+#		print("Trying to Continue ...")
 #		error = self.process.Continue()
 		self.start_debugWorker(self.driver, StepKind.Continue)
 		self.load_resume.setIcon(ConfigClass.iconPause)
-		print("After Continue ...")
+#		print("After Continue ...")
 #		if error:
 #			print(error)
 			
@@ -1023,37 +1025,38 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 	
 	def scroll_to_line(self, text_edit, line_text):
+		pass
+##		document = text_edit.document()
+##		block = document.findBlockByLineNumber(document.find(line_text, Qt.CaseSensitivity.CaseSensitive))  # Find the block with the desired line
 #		document = text_edit.document()
-#		block = document.findBlockByLineNumber(document.find(line_text, Qt.CaseSensitivity.CaseSensitive))  # Find the block with the desired line
-		document = text_edit.document()
-		block = document.findBlockByLineNumber(document.find(line_text).blockNumber())  # Find the block with the desired line
-		print("========= BLOCK / CURSOR ==========")
-		print(block)
-		print(block.firstLineNumber())
-		print(block.position())
-		print(dir(block))
-#		
-#		if block:
-##			text_edit.setC
-##			text_edit.scrollTo(block.cursor(), QTextCursor.SelectionType.LineCenter)  # Scroll to center of the line
-##			text_edit.scrollTo(block.cursor(), QTextCursor.SelectionType.LineCenter)  # Scroll to center of the line
-#			# Set the cursor position based on line number and character index
-#			block.cursor().setPosition(block.position().line(), 1)
-		c = text_edit.textCursor()
-		print(c)
-		print(dir(c))
-		print("========= BLOCK / CURSOR - END ==========")
-##		c.clearSelection()
-#		txtLen = len(self.txtMultiline.toPlainText())
-#		startPos = int(cursor.selectionStart() / 3)
-#		if startPos > txtLen:
-#			startPos -= 1
-		c.setPosition(25)
-#		endPos = int((cursor.selectionEnd() + 1) / 3)
-#		if endPos > txtLen:
-#			endPos -= 1
-#		print(f"txtLen = {txtLen}")
-#		c.setPosition(endPos, QTextCursor.MoveMode.KeepAnchor)
+#		block = document.findBlockByLineNumber(document.find(line_text).blockNumber())  # Find the block with the desired line
+#		print("========= BLOCK / CURSOR ==========")
+#		print(block)
+#		print(block.firstLineNumber())
+#		print(block.position())
+#		print(dir(block))
+##		
+##		if block:
+###			text_edit.setC
+###			text_edit.scrollTo(block.cursor(), QTextCursor.SelectionType.LineCenter)  # Scroll to center of the line
+###			text_edit.scrollTo(block.cursor(), QTextCursor.SelectionType.LineCenter)  # Scroll to center of the line
+##			# Set the cursor position based on line number and character index
+##			block.cursor().setPosition(block.position().line(), 1)
+#		c = text_edit.textCursor()
+#		print(c)
+#		print(dir(c))
+#		print("========= BLOCK / CURSOR - END ==========")
+###		c.clearSelection()
+##		txtLen = len(self.txtMultiline.toPlainText())
+##		startPos = int(cursor.selectionStart() / 3)
+##		if startPos > txtLen:
+##			startPos -= 1
+#		c.setPosition(25)
+##		endPos = int((cursor.selectionEnd() + 1) / 3)
+##		if endPos > txtLen:
+##			endPos -= 1
+##		print(f"txtLen = {txtLen}")
+##		c.setPosition(endPos, QTextCursor.MoveMode.KeepAnchor)
 	
 	
 #	def is_line_visible(self, text_edit, line_text):

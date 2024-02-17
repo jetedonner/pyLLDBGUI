@@ -79,7 +79,7 @@ class LoadRegisterWorker(BaseWorker):
 					
 					QCoreApplication.processEvents()
 						
-		self.signals.finished.emit()
+#		self.signals.finished.emit()
 		pass
 		
 	def char_array_to_string(self, char_array_value):

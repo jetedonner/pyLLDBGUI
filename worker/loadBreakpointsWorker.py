@@ -74,5 +74,5 @@ class LoadBreakpointsWorker(BaseWorker):
 				else:
 					self.signals.updateBreakpointsValue.emit(bp_cur.GetID(), idx, hex(bl.GetLoadAddress()), name, bp_cur.GetHitCount(), bp_cur.GetCondition(), self.initTable)
 								
-		self.signals.finished.emit()
+#		self.signals.finished.emit()
 		pass
