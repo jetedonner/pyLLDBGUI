@@ -22,8 +22,18 @@
 // For sleep()
 #include <unistd.h>
 #include <time.h>
+#include <signal.h>
+
+int shouldNotExit = 1;
+
+void signal_handler(int signum) {
+  shouldNotExit = 0;
+  printf("shouldNotExit = 0;");
+}
 
 int main() {
+  
+  signal(SIGINT, signal_handler);
   
   // Variable for iteration counter
   int idx = 0;
@@ -39,10 +49,10 @@ int main() {
   // This msg will prompt the user to enter his / her secret
   printf("Hello test: %d / %s", testVar, hardcoded_string);
   
-  while(1)
+  while(shouldNotExit)
     {
-      printf(".");
-
+      printf("...");
+      fflush(stdout);
       sleep(1);
       idx++;
     }

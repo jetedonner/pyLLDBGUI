@@ -15,6 +15,7 @@ import termios
 import fcntl
 import json
 import hashlib
+import os
 
 from threading import Thread
 
@@ -24,6 +25,7 @@ except ImportError:
   import Queue as queue
 
 import debuggerdriver
+from debuggerdriver import *
 
 from PyQt6.QtGui import *
 from PyQt6.QtCore import *
@@ -122,22 +124,35 @@ global pymobiledevice3GUIApp
 pymobiledevice3GUIApp = None
 
 def close_application():
+    global driver
+    
+  
 #   pymobiledevice3GUIWindow.interruptEventListenerWorker.interruptEventListener.emit()
-    pymobiledevice3GUIWindow.interruptLoadSourceWorker.interruptLoadSource.emit()
-    QCoreApplication.processEvents()
+#   pymobiledevice3GUIWindow.interruptLoadSourceWorker.interruptLoadSource.emit()
+#   QCoreApplication.processEvents()
     print("close_application()")
 # # Stop all running tasks in the thread pool
-    if pymobiledevice3GUIWindow.process:
+    if pymobiledevice3GUIWindow.driver.getTarget().GetProcess(): #pymobiledevice3GUIWindow.process:
 #   pymobiledevice3GUIWindow.interruptLoadWorker.interruptTargetLoadSignal.emit()
 #   QCoreApplication.processEvents()
         print("KILLING PROCESS")
-        pymobiledevice3GUIWindow.process.Kill()
+        
+        driver.aborted = True
+        print("Aborted sent")
+        os._exit(1)
+#       sys.exit(0)
+#       pymobiledevice3GUIWindow.process.Kill()
+#       global driver
+#       driver.terminate()
+#       pymobiledevice3GUIWindow.driver.getTarget().GetProcess().Stop()
+#       print("Process stopped")        
+        pymobiledevice3GUIWindow.driver.getTarget().GetProcess().Kill()
+        print("Process killed")
+#       QCoreApplication.processEvents()
     else:
         print("NO PROCESS TO KILL!!!")
     global pymobiledevice3GUIApp
     pymobiledevice3GUIApp.quit()
-    
-    global driver
     driver.terminate()
 #   sys.exit()
 
@@ -250,7 +265,8 @@ def TestCommand(debugger, command, result, dict):
         
 #       pymobiledevice3GUIWindow.move(650, 20)
 #       pymobiledevice3GUIWindow.tabWidgetMain.setCurrentIndex(2)
-        driver.start()
+#       driver.start()
+#       interctive_loop(debugger)
         print("AFTER START DRIVER!!!!")
         #     process = target.Launch(info, error)
         #     if error:
@@ -260,7 +276,14 @@ def TestCommand(debugger, command, result, dict):
         #       driver.handleCommand("br com a -F lldbpyGUI.breakpointHandlerNG")
         ##   sys.exit(pymobiledevice3GUIApp.exec())
         #   sys.exit(pymobiledevice3GUIApp.exec())
+        #         process = debugger.GetSelectedTarget().GetProcess()
+        
+#       global event_thread
+        event_thread = LLDBListenerThread(process)
+        event_thread.start()
+#       interctive_loop(debugger)
         pymobiledevice3GUIApp.exec()
+        
         
         
       #   gui_thread = threading.Thread(target=run_gui_thread)

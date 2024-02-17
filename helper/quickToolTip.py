@@ -95,8 +95,28 @@ class QuickToolTip:
 			memory = process.ReadMemory(address, 0x20, error_ref)
 			if error_ref.Success():
 				dataTillNull = self.extract_data_until_null(memory)
+				print(dataTillNull)
 				string = codecs.decode(dataTillNull, 'utf-8', errors='ignore')
-				if dataTillNull != b'\x00' and string != '':
+				
+#				isNum = False
+#				try:
+#					float(string[0])
+##					testint = ord(string[0])
+#					isNum = True
+#				except ValueError:
+#					isNum = False
+##				if len(string) == 2:
+##					string2 = "Hello, world!"
+##					first_char_int = ord(string2[0])  # Get the ASCII code using ord()
+##					
+##					print(first_char_int)  # Output: 72 (ASCII code for 'H')
+##					print(f'len({string}) == {len(string)} => ord({string[0]}) == {ord(string[0])}')
+				
+#				first_byte_hex = f"{dataTillNull[0]:02x}"
+#				print(f'CHAR: ({first_byte_hex} / {int(first_byte_hex, 16)})')
+#				
+#				print(f'STRING: ({string})')
+				if dataTillNull != b'\x00' and string != '': # and not isNum:
 					tooltip += f'\nString:\t{string}'
 					
 				try:
@@ -106,10 +126,10 @@ class QuickToolTip:
 #					print(f'Error extracting INT: {e}')
 					pass
 					
-					if len(dataTillNull) <= 1:
-						tooltip += f'\nBytes:\t{str(dataTillNull)}'
-					else:
-						tooltip += f'\nBytes:\t{str(dataTillNull[:-1])}'
+#				if len(dataTillNull) <= 1:
+				tooltip += f'\nBytes:\t{dataTillNull}'
+#				else:
+#					tooltip += f'\nBytes:\t{dataTillNull[:-1]}'
 			else:
 				print(str(error_ref))
 				tooltip = str(error_ref)

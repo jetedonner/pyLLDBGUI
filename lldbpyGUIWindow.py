@@ -71,6 +71,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		super().__init__()
 		self.driver = driver
 		self.driver.signals.event_queued.connect(self.handle_event_queued)
+		self.driver.signals.event_output.connect(self.handle_output)
 		
 		self.debugger = debugger
 		
@@ -322,6 +323,14 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.tabWidgetDbg.addTab(self.tabMemory, "Memory")
 		
+		self.txtOutput = QConsoleTextEdit()
+		self.txtOutput.setFont(ConfigClass.font)
+		self.txtOutput.setReadOnly(True)
+		self.gbpOutput = QGroupBox("Output")
+		self.gbpOutput.setLayout(QHBoxLayout())
+		self.gbpOutput.layout().addWidget(self.txtOutput)
+		self.tabWidgetDbg.addTab(self.gbpOutput, "Terminal")
+		
 		self.tabWidgetMain = QTabWidget()
 		self.tabWidgetMain.addTab(self.splitter, "Debugger")
 		
@@ -537,6 +546,12 @@ class LLDBPyGUIWindow(QMainWindow):
 #					if data:
 #						print("STDERR:", data.decode())
 		
+	def handle_output(self, output):
+		print(f">>>>>> OUTPUT: {output}")
+		byte_array = bytearray.fromhex(output)
+		string_value = byte_array.decode('utf-8')
+		self.txtOutput.appendEscapedText(string_value, False)
+		
 	def handle_event_queued(self, event):
 		print("==============================================")
 		print(event)
@@ -558,6 +573,23 @@ class LLDBPyGUIWindow(QMainWindow):
 					self.tblBPs.doBPOn(hex(bl.GetLoadAddress()), True)
 					self.txtMultiline.table.setBPAtAddress(hex(bl.GetLoadAddress()), True, False)
 				self.driver.handleCommand("br com a -F lldbpyGUI.breakpointHandlerNG")
+				
+		# eBroadcastBitSTDOUT
+#		if event.GetType() == lldb.SBProcess.eBroadcastBitSTDOUT:
+#			stdout = self.driver.getTarget().GetProcess().GetSTDOUT(256)
+#			if stdout is not None and len(stdout) > 0:
+#				message = {"status":"event", "type":"stdout", "output": "".join(["%02x" % ord(i) for i in stdout])}
+#				print(message)
+#				if event.GetDataFlavor() == "Process::ProcessEventData":
+#					proc = SBProcess.GetProcessFromEvent(event)
+#					if proc:
+#						print(proc)
+#					pass
+#		if got_event and not event.IsValid():
+##               self.winAddStr("Warning: Invalid or no event...")
+#				continue
+#		elif not event.GetBroadcaster().IsValid():
+#				continue
 		print("==============================================")
 		pass
 	
