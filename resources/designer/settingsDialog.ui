@@ -33,7 +33,7 @@
           <bool>false</bool>
          </property>
          <attribute name="horizontalHeaderDefaultSectionSize">
-          <number>200</number>
+          <number>256</number>
          </attribute>
          <attribute name="horizontalHeaderStretchLastSection">
           <bool>true</bool>
@@ -49,6 +49,11 @@
          <row>
           <property name="text">
            <string>ConfirmQuit</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>DisassemblerShowQuickTooltip</string>
           </property>
          </row>
          <column>
@@ -88,6 +93,19 @@
           </property>
           <property name="flags">
            <set>ItemIsSelectable|ItemIsUserCheckable|ItemIsEnabled</set>
+          </property>
+         </item>
+         <item row="2" column="0">
+          <property name="text">
+           <string>Disassembler show Quick-ToolTip</string>
+          </property>
+         </item>
+         <item row="2" column="1">
+          <property name="text">
+           <string/>
+          </property>
+          <property name="checkState">
+           <enum>Checked</enum>
           </property>
          </item>
         </widget>

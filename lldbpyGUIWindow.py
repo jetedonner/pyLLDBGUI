@@ -27,7 +27,7 @@ from ui.variablesTableWidget import *
 from ui.clickLabel import *
 from ui.helpDialog import *
 from ui.settingsDialog import *
-from ui.testTableWidget import *
+#from ui.testTableWidget import *
 
 from worker.eventListenerWorker import *
 from worker.loadSourceWorker import *
@@ -663,6 +663,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		print("Reloading BPs ...")
 		
 	def handle_loadBreakpointsFinished(self):
+		print("handle_loadBreakpointsFinished")
 		pass
 		
 	def start_loadRegisterWorker(self, initTabs = True):
@@ -684,7 +685,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 	def handle_loadRegisterFinished(self):
 		self.setProgressValue(100)
-		self.updateStatusBar("Loading register finished")
+		self.updateStatusBar("handle_loadRegisterFinished")
 		
 	def handle_statusBarUpdate(self, txt):
 		self.updateStatusBar(txt)
@@ -846,7 +847,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 	def start_eventListenerWorker(self, debugger, event_listener):
 		workerEventListener = EventListenerWorker(debugger, event_listener)
-#		workerEventListener.signals.finished.connect(self.handle_commandFinished)
+#		workerEventListe	ner.signals.finished.connect(self.handle_commandFinished)
 		
 		self.threadpool.start(workerEventListener)
 		

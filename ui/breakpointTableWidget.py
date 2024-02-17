@@ -32,6 +32,21 @@ class BreakpointsTableWidget(QTableWidget):
 	
 	driver = None
 	
+	def handle_deleteBP(self):
+		if len(self.selectedItems()) > 0:
+#			print(f'SELECTED ITEMS: {reversed(range(len(self.selectedItems())))}')
+#			for i in reversed(range(len(self.selectedItems()))):
+#				print(f'I== {i}')
+#			item = self.item(self.selectedItems()[0].row(), 0)
+			itemNum = self.item(self.selectedItems()[0].row(), 1).text()
+#			addr = self.item(self.selectedItems()[0].row(), 2).text()
+#			item.toggleBPOn()
+#			self.driver.handleCommand(f"breakpoint set -a {addr} -C bpcbauto")
+			self.removeRow(self.selectedItems()[0].row())
+			self.window().updateStatusBar(f"Deleted breakpoint #{itemNum}")
+				
+		pass
+		
 	def handle_toggleBP(self):
 		if len(self.selectedItems()) > 0:
 			item = self.item(self.selectedItems()[0].row(), 0)
@@ -122,6 +137,8 @@ class BreakpointsTableWidget(QTableWidget):
 		
 		self.initTable()
 		self.context_menu = QMenu(self)
+		actionDeleteBP = self.context_menu.addAction("Delete Breakpoint")
+		actionDeleteBP.triggered.connect(self.handle_deleteBP)
 		actionToggleBP = self.context_menu.addAction("Toggle Breakpoint")
 		actionToggleBP.triggered.connect(self.handle_toggleBP)
 		actionDisableBP = self.context_menu.addAction("Enable / Disable Breakpoint")
@@ -201,7 +218,7 @@ class BreakpointsTableWidget(QTableWidget):
 		item = DisassemblyImageTableWidgetItem()
 #		
 #		self.addItem(currRowCount, 0, ('>' if rip == address else ''))
-		item.toggleBPOn()
+		item.setBPOn(state)
 		self.setItem(currRowCount, 0, item)
 		self.addItem(currRowCount, 1, "#" + str(num))
 		self.addItem(currRowCount, 2, address)

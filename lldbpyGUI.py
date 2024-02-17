@@ -148,7 +148,7 @@ def TestCommand(debugger, command, result, dict):
     testTarget = "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/hello_world_test"
     
     print(f"" + GREEN + "#=================================================================================#")
-    print(f"| Starting TEST ENVIRONMENT for LLDB-PyGUI (Development Mode, ver. {APP_VERSION})        |")
+    print(f"| Starting TEST ENVIRONMENT for LLDB-PyGUI (Development Mode, ver. {APP_VERSION})         |")
     print(f"|                                                                                 |")
     print(f"| Desc:                                                                           |")
     print(f"| This python script is for development and testing while development             |")

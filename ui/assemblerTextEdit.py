@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import *
 from PyQt6 import uic, QtWidgets
 from config import *
 from helper.breakpointHelper import *
+from helper.quickToolTip import *
 		
 class DisassemblyImageTableWidgetItem(QTableWidgetItem):
 	
@@ -67,6 +68,7 @@ class DisassemblyTableWidget(QTableWidget):
 	sigBPOn = pyqtSignal(str, bool)
 	
 	actionShowMemory = None
+	quickToolTip = QuickToolTip()
 	
 	def handle_copyHexValue(self):
 		item = self.item(self.selectedItems()[0].row(), 5)
@@ -170,86 +172,15 @@ class DisassemblyTableWidget(QTableWidget):
 		
 	itemOld = None
 	
-	def mouseMoveEvent(self, event):
-#		# Access mouse cursor position using event.globalX() and event.globalY()
-#		# Get the cell under the cursor using self.itemAt(event.pos())
-#		# Perform your desired custom logic based on cell position and mouse movement
-#		
-#		# Example: Print cell coordinates and mouse position
-#		pos = event.pos()
-#		item = self.itemAt(pos)
-#		if item != None and self.itemOld != item:
-#			row, col = item.row(), item.column()
-#			print(f"Cell: ({row}, {col}), Mouse: ({pos.x()}, {pos.y()})")
-#			
-#			if col == 5:
-#				parts = item.text().split(",")  # Split at the first comma
-#				string1 = parts[0].strip()  # "Hello"
-#				string2 = parts[1].strip()  # "world"
-#		#		print(f'string1: {string1}')
-#		#		print(f'string2: {string2}')
-#				
-#				address = 0
-#				if string1.startswith("dword ptr"):
-#		#			print("String starts with 'dword'")
-#					strOp = self.extractOperand(string1)
-#					print(strOp)
-#					strOp = strOp.replace(" ", "")
-#		#			self.actionShowMemoryFor.setText("Show memory for: " + strOp)
-#					# Example usage
-#		#			expression = strOp
-#					address = self.get_memory_address(self.driver.debugger, strOp)
-#					print(f"Memory address: 0x{address:X}")
-#	#				self.doReadMemory(address)
-#				elif string2.startswith("dword ptr"):
-#		#			print("String starts with 'dword'")
-#					strOp = self.extractOperand(string2)
-#					print(strOp)
-#					strOp = strOp.replace(" ", "")
-#		#			self.actionShowMemoryFor.setText("Show memory for: " + strOp)
-#					# Example usage
-#					#			expression = strOp
-#					address = self.get_memory_address(self.driver.debugger, strOp)
-#					print(f"Memory address: 0x{address:X}")
-#	#				self.doReadMemory(address)
-#				elif string1.startswith("word ptr"):
-#		#			print("String starts with 'dword'")
-#					strOp = self.extractOperand(string1)
-#					print(strOp)
-#					strOp = strOp.replace(" ", "")
-#		#			self.actionShowMemoryFor.setText("Show memory for: " + strOp)
-#					# Example usage
-#		#			expression = strOp
-#					address = self.get_memory_address(self.driver.debugger, strOp)
-#					print(f"Memory address: 0x{address:X}")
-#	#				self.doReadMemory(address)
-#				elif string2.startswith("word ptr"):
-#		#			print("String starts with 'dword'")
-#					strOp = self.extractOperand(string2)
-#					print(strOp)
-#					strOp = strOp.replace(" ", "")
-#		#			self.actionShowMemoryFor.setText("Show memory for: " + strOp)
-#					# Example usage
-#					#			expression = strOp
-#					address = self.get_memory_address(self.driver.debugger, strOp)
-#					print(f"Memory address: 0x{address:X}")
-#					
-#				if address != 0:
-#					error_ref = lldb.SBError()
-#					process = self.driver.debugger.GetSelectedTarget().GetProcess()
-#					memory = process.ReadMemory(address, 0x20, error_ref)
-#					if error_ref.Success():
-#			#           hex_string = binascii.hexlify(memory)
-#						# `memory` is a regular byte string
-#			#           print(f'BYTES:\n{memory}\nHEX:\n{hex_string}')
-#	#					self.window().hxtMemory.setTxtHexNG(memory, True, int(self.window().txtMemoryAddr.text(), 16))
-#						item.setToolTip(str(memory))
-#					else:
-#						print(str(error_ref))
-#			self.itemOld = item
-		
-		# Modify cell data or appearance within this method as needed
-		# Handle other mouse events (e.g., click, drag) if necessary
+	def mouseMoveEvent(self, event):	
+		pos = event.pos()
+		item = self.itemAt(pos)
+		if item != None and self.itemOld != item:
+			row, col = item.row(), item.column()
+			if col == 5:
+#				print(f"Cell: ({row}, {col}), Mouse: ({pos.x()}, {pos.y()})")
+				item.setToolTip(self.quickToolTip.getQuickToolTip(item.text(), self.driver.debugger))
+			self.itemOld = item
 		
 		# Call the original method to ensure default behavior continues
 		super().mouseMoveEvent(event)
@@ -262,138 +193,71 @@ class DisassemblyTableWidget(QTableWidget):
 	def contextMenuEvent(self, event):
 		self.actionShowMemoryFor.setText("Show memory for:")
 		self.actionShowMemoryFor.setEnabled(False)
-		parts = self.item(self.selectedItems()[0].row(), 5).text().split(",")
-		if len(parts) >= 2:
-			string1 = parts[0].strip()
-			string2 = parts[1].strip()
-			
-			if string1.startswith(("dword ptr", "word ptr", "byte ptr")):
-				address, strOp = self.get_memory_addressAndOperands(self.driver.debugger, string1)
-				self.actionShowMemoryFor.setText("Show memory for: " + strOp)
-				self.actionShowMemoryFor.setEnabled(True)
-			elif string2.startswith(("dword ptr", "word ptr", "byte ptr")):
-				address, strOp = self.get_memory_addressAndOperands(self.driver.debugger, string2)
-				self.actionShowMemoryFor.setText("Show memory for: " + strOp)
-				self.actionShowMemoryFor.setEnabled(True)
-			else:
-				pass
+		self.actionShowMemoryFor.setData("")
+		
+		operandsText = self.quickToolTip.getOperandsText(self.item(self.selectedItems()[0].row(), 5).text())
+		if operandsText != "":
+			self.actionShowMemoryFor.setText("Show memory for: " + operandsText)
+			self.actionShowMemoryFor.setEnabled(True)
+			self.actionShowMemoryFor.setData(operandsText)
 			
 		self.context_menu.exec(event.globalPos())
 	
-	def get_memory_addressAndOperands(self, debugger, operands):
-		strOp = self.extractOperand(operands)
-		return self.get_memory_address(self.driver.debugger, strOp), strOp
-		
-	def get_memory_address(self, debugger, expression):
-		target = debugger.GetSelectedTarget()
-		process = target.GetProcess()
-		thread = process.GetSelectedThread()
-		frame = thread.GetSelectedFrame()
-		
-		isMinus = True
-		parts = expression.split("-")
-		if len(parts) <= 1:
-			parts = expression.split("+")
-			isMinus = False
-		
-		if len(parts) == 2:
-			rbp_value = frame.EvaluateExpression(f"${parts[0]}").GetValueAsUnsigned()
-#			print(f'rbp_value => {rbp_value}')
-			# Calculate the desired memory address
-			offset_value = int(parts[1].replace("0x", ""), 16)
-			if isMinus:
-				address = rbp_value - offset_value
-			else:
-				address = rbp_value + offset_value
-		
-		print(f"Memory address: 0x{address:X}")
-		return address
-	
-	def extractOperand(self, string):
-#		string = "dword ptr [rbp - 0x8]"
-		pattern = r"\[([^\]]+)\]"  # Match anything within square brackets, excluding the brackets themselves
-		match = re.search(pattern, string)
-		
-		if match:
-			extracted_text = match.group(1)  # Access the captured group
-			print(extracted_text)  # Output: rbp - 0x8
-			return extracted_text.replace(" ", "")
-		else:
-			print("No match found")
-			return ""
+#	def get_memory_addressAndOperands(self, debugger, operands):
+#		strOp = self.extractOperand(operands)
+#		return self.get_memory_address(self.driver.debugger, strOp), strOp
+#		
+#	def get_memory_address(self, debugger, expression):
+#		target = debugger.GetSelectedTarget()
+#		process = target.GetProcess()
+#		thread = process.GetSelectedThread()
+#		frame = thread.GetSelectedFrame()
+#		
+#		isMinus = True
+#		parts = expression.split("-")
+#		if len(parts) <= 1:
+#			parts = expression.split("+")
+#			isMinus = False
+#		
+#		if len(parts) == 2:
+#			rbp_value = frame.EvaluateExpression(f"${parts[0]}").GetValueAsUnsigned()
+##			print(f'rbp_value => {rbp_value}')
+#			# Calculate the desired memory address
+#			offset_value = int(parts[1].replace("0x", ""), 16)
+#			if isMinus:
+#				address = rbp_value - offset_value
+#			else:
+#				address = rbp_value + offset_value
+#		
+#		print(f"Memory address: 0x{address:X}")
+#		return address
+#	
+#	def extractOperand(self, string):
+##		string = "dword ptr [rbp - 0x8]"
+#		pattern = r"\[([^\]]+)\]"  # Match anything within square brackets, excluding the brackets themselves
+#		match = re.search(pattern, string)
+#		
+#		if match:
+#			extracted_text = match.group(1)  # Access the captured group
+#			print(extracted_text)  # Output: rbp - 0x8
+#			return extracted_text.replace(" ", "")
+#		else:
+#			print("No match found")
+#			return ""
 		
 	def handle_showMemoryFor(self):
-		string = self.item(self.selectedItems()[0].row(), 5).text()
-#		print(f'CONTEXT MENU FOR OPERANDS: {string}')
-		
-		
-		parts = string.split(",")  # Split at the first comma
-		string1 = parts[0].strip()  # "Hello"
-		string2 = parts[1].strip()  # "world"
-#		print(f'string1: {string1}')
-#		print(f'string2: {string2}')
-		
-		
-		if string1.startswith("dword ptr"):
-#			print("String starts with 'dword'")
-			strOp = self.extractOperand(string1)
-			print(strOp)
-			strOp = strOp.replace(" ", "")
-#			self.actionShowMemoryFor.setText("Show memory for: " + strOp)
-			# Example usage
-#			expression = strOp
-			address = self.get_memory_address(self.driver.debugger, strOp)
-			print(f"Memory address: 0x{address:X}")
-			self.doReadMemory(address)
-		elif string2.startswith("dword ptr"):
-#			print("String starts with 'dword'")
-			strOp = self.extractOperand(string2)
-			print(strOp)
-			strOp = strOp.replace(" ", "")
-#			self.actionShowMemoryFor.setText("Show memory for: " + strOp)
-			# Example usage
-			#			expression = strOp
-			address = self.get_memory_address(self.driver.debugger, strOp)
-			print(f"Memory address: 0x{address:X}")
-			self.doReadMemory(address)
-		elif string1.startswith("word ptr"):
-#			print("String starts with 'dword'")
-			strOp = self.extractOperand(string1)
-			print(strOp)
-			strOp = strOp.replace(" ", "")
-#			self.actionShowMemoryFor.setText("Show memory for: " + strOp)
-			# Example usage
-#			expression = strOp
-			address = self.get_memory_address(self.driver.debugger, strOp)
-			print(f"Memory address: 0x{address:X}")
-			self.doReadMemory(address)
-		elif string2.startswith("word ptr"):
-#			print("String starts with 'dword'")
-			strOp = self.extractOperand(string2)
-			print(strOp)
-			strOp = strOp.replace(" ", "")
-#			self.actionShowMemoryFor.setText("Show memory for: " + strOp)
-			# Example usage
-			#			expression = strOp
-			address = self.get_memory_address(self.driver.debugger, strOp)
-			print(f"Memory address: 0x{address:X}")
-			self.doReadMemory(address)
-		pass
-#	def handle_showMemory(self):
-#		address = self.txtMultiline.table.item(self.txtMultiline.table.selectedItems()[0].row(), 3).text()
-#		self.doReadMemory(address)
-#		
-#	def readMemory_click(self):
-#		try:
-##           global debugger
-#			self.handle_readMemory(lldbHelper.debugger, int(self.txtMemoryAddr.text(), 16), int(self.txtMemorySize.text(), 16))
-#		except Exception as e:
-#			print(f"Error while reading memory from process: {e}")
+		sender = self.sender()  # get the sender object
+		if isinstance(sender, QAction):
+			action = sender  # it's the QAction itself
+		else:
+			# Find the QAction within the sender (e.g., QMenu or QToolBar)
+			action = sender.findChild(QAction)
+			
+		self.doReadMemory(self.quickToolTip.get_memory_address(self.driver.debugger, action.data()))
+#		print(f"Triggering QAction: {action.text()}")
 			
 	def doReadMemory(self, address, size = 0x100):
 		self.window().tabWidgetDbg.setCurrentWidget(self.window().tabMemory)
-#		self.txtMemoryAddr = QLineEdit("0x100003f50")
-#		self.txtMemorySize = QLineEdit("0x100")
 		self.window().txtMemoryAddr.setText(hex(address))
 		self.window().txtMemorySize.setText(hex(size))
 		try:

@@ -61,17 +61,18 @@ class LoadRegisterWorker(BaseWorker):
 					# Load VARIABLES
 					vars = frame.GetVariables(True, True, False, True)  # type of SBValueList
 					for var in vars:
-						hexVal = ""
+#						hexVal = ""
 						string_value = var.GetValue()
 						if var.GetTypeName() == "int":
-							hexVal = " (" + hex(int(var.GetValue())) + ")"
+							string_value = hex(int(var.GetValue())) + " (" + string_value + ")"
+#							hexVal = " (" + hex(int(var.GetValue())) + ")"
 						if var.GetTypeName().startswith("char"):
 							string_value = self.char_array_to_string(var)
 							
 						if self.initTabs:
-							self.signals.loadVariableValue.emit(str(var.GetName()), str(string_value) + hexVal, str(var.GetTypeName()))
+							self.signals.loadVariableValue.emit(str(var.GetName()), str(string_value), str(var.GetTypeName()))
 						else:
-							self.signals.updateVariableValue.emit(str(var.GetName()), str(string_value) + hexVal, str(var.GetTypeName()))
+							self.signals.updateVariableValue.emit(str(var.GetName()), str(string_value), str(var.GetTypeName()))
 					
 					QCoreApplication.processEvents()
 						
