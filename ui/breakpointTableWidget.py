@@ -21,6 +21,8 @@ def breakpointHandlerAuto(dummy, frame, bpno, err):
 		
 class BreakpointsTableWidget(QTableWidget):
 	
+	ommitCellChanged = False
+	
 #	window() = None
 	
 #	def resetContentNG(self):
@@ -150,6 +152,8 @@ class BreakpointsTableWidget(QTableWidget):
 		actionCopyAddress = self.context_menu.addAction("Copy address")
 		actionCopyAddress.triggered.connect(self.handle_copyAddress)
 		
+		self.cellChanged.connect(self.item_changed_handler)
+		
 #		actionCopyInstruction = self.context_menu.addAction("Copy instruction")
 #		actionCopyHex = self.context_menu.addAction("Copy hex value")
 #		self.context_menu.addSeparator()
@@ -183,22 +187,23 @@ class BreakpointsTableWidget(QTableWidget):
 #		
 		self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
 		self.setShowGrid(False)
-#		self.cellDoubleClicked.connect(self.on_double_click)
+		self.cellDoubleClicked.connect(self.on_double_click)
 		pass
 		
+	oldBPName = ""
+	
 	def on_double_click(self, row, col):
-#		if col in range(3):
-#			self.toggleBPOn(row)
+		if col == 3:
+			self.oldBPName = self.item(row, 3).text()
 		pass
 			
 	def contextMenuEvent(self, event):
-		for i in dir(event):
-			print(i)
+#		for i in dir(event):
+#			print(i)
 #			print(event.pos())
 #			print(self.itemAt(event.pos().x(), event.pos().y()))
 #			print(self.selectedItems())
 		self.context_menu.exec(event.globalPos())
-		pass
 		
 	def toggleBPOn(self, row):
 #		item = self.item(row, 1)
@@ -209,31 +214,76 @@ class BreakpointsTableWidget(QTableWidget):
 		for row in range(self.rowCount(), 0):
 			self.removeRow(row)
 		self.setRowCount(0)
-		pass
-			
-	def addRow(self, state, num, address, nme, hitcount, condition):
+	
+	def updateRow(self, state, num, address, name, hitcount, condition):
+		self.ommitCellChanged = True
+
+		for i in range(self.rowCount()):
+			if self.item(i, 1).text() == "#" + str(num):
+				self.item(i, 0).setBPOn(state)
+				self.item(i, 2).setText(address)
+				self.item(i, 3).setText(name)
+				self.item(i, 4).setText(hitcount)
+				self.item(i, 5).setText(condition)
+				break
+		self.ommitCellChanged = False
+		
+#		currRowCount = self.rowCount()
+#		self.setRowCount(currRowCount + 1)
+#		item = DisassemblyImageTableWidgetItem()
+		
+#		item.setBPOn(state)
+#		self.setItem(currRowCount, 0, item)
+#		self.addItem(currRowCount, 1, "#" + str(num))
+#		self.addItem(currRowCount, 2, address)
+#		self.addItem(currRowCount, 3, name)
+#		self.addItem(currRowCount, 4, hitcount)
+#		self.addItem(currRowCount, 5, condition)
+#		self.setRowHeight(currRowCount, 18)
+#		self.ommitCellChanged = False
+		
+	def addRow(self, state, num, address, name, hitcount, condition):
+		self.ommitCellChanged = True
 		currRowCount = self.rowCount()
 		self.setRowCount(currRowCount + 1)
-#		
 		item = DisassemblyImageTableWidgetItem()
-#		
-#		self.addItem(currRowCount, 0, ('>' if rip == address else ''))
+
 		item.setBPOn(state)
 		self.setItem(currRowCount, 0, item)
 		self.addItem(currRowCount, 1, "#" + str(num))
 		self.addItem(currRowCount, 2, address)
-		self.addItem(currRowCount, 3, nme)
+		self.addItem(currRowCount, 3, name)
 		self.addItem(currRowCount, 4, hitcount)
 		self.addItem(currRowCount, 5, condition)
-#		self.addItem(currRowCount, 6, comment)
-#		
 		self.setRowHeight(currRowCount, 18)
-		pass
+		self.ommitCellChanged = False
 		
 	def addItem(self, row, col, txt):
 		item = QTableWidgetItem(txt, QTableWidgetItem.ItemType.Type)
-		item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable) #Qt.ItemFlag.ItemIsSelectable)
+		if col != 3 and col != 5:
+			item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable) #Qt.ItemFlag.ItemIsSelectable)
 		
 		# Insert the items into the row
 		self.setItem(row, col, item)
-		pass
+	
+	def item_changed_handler(self, row, col):
+		if not self.ommitCellChanged:
+			if col == 3:
+				target = self.driver.getTarget()
+#				idx = 0
+				for i in range(target.GetNumBreakpoints()):
+#					idx += 1
+					bp_cur = target.GetBreakpointAtIndex(i)
+					for bl in bp_cur:
+						name_list = lldb.SBStringList()
+						bp_cur.GetNames(name_list)
+						num_names = name_list.GetSize()
+#						oldName = "main"
+						for j in range(num_names):
+							name = name_list.GetStringAtIndex(j)
+							print(name + " / " + self.oldBPName)
+							if name == self.oldBPName:
+								bp_cur.RemoveName(self.oldBPName)
+								bp_cur.AddName(self.item(row, 3).text())
+								break
+			pass

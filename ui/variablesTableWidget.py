@@ -12,7 +12,9 @@ from PyQt6 import uic, QtWidgets
 from config import *
 
 class VariablesTableWidget(QTableWidget):
-		
+	
+	ommitCellChanged = False
+	
 	def __init__(self):
 		super().__init__()
 		self.context_menu = QMenu(self)
@@ -91,8 +93,6 @@ class VariablesTableWidget(QTableWidget):
 		
 		# Insert the items into the row
 		self.setItem(row, col, item)
-	
-	ommitCellChanged = False
 	
 	def item_changed_handler(self, row, col):
 		if not self.ommitCellChanged:

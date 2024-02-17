@@ -21,7 +21,7 @@ from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
 from PyQt6 import uic, QtWidgets
 
-from PyQt6.QConsoleTextEdit import *
+from QConsoleTextEdit import *
 
 #APP_NAME = "ConsoleTextEditWindow-TEST"
 #VERSION = "0.0.1"

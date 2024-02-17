@@ -10,9 +10,9 @@ from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
 from PyQt6 import uic, QtWidgets
 
-from PyQt6.QConsoleTextEdit import *
-from PyQt6.QSwitch import *
-from PyQt6.QHEXTextEditSplitter import *
+from QConsoleTextEdit import *
+from QSwitch import *
+from QHEXTextEditSplitter import *
 
 from ui.assemblerTextEdit import *
 #from ui.registerTreeView import *
@@ -619,7 +619,8 @@ class LLDBPyGUIWindow(QMainWindow):
 	def reloadBreakpoints(self, initTable = True):
 		self.updateStatusBar("Reloading breakpoints ...")
 #		if initTable: # TODO: Implement Update instead of complete refresh
-		self.tblBPs.resetContent()
+		if initTable:
+			self.tblBPs.resetContent()
 		self.start_loadBreakpointsWorker(initTable)
 		
 	def reloadRegister(self, initTabs = True):
@@ -653,6 +654,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 #		self.loadBreakpointsWorker.signals.loadRegister.connect(self.handle_loadRegisterLoadRegister)
 		self.loadBreakpointsWorker.signals.loadBreakpointsValue.connect(self.handle_loadBreakpointsLoadBreakpointValue)
+		self.loadBreakpointsWorker.signals.updateBreakpointsValue.connect(self.handle_updateBreakpointsLoadBreakpointValue)
 #		self.loadBreakpointsWorker.signals.updateRegisterValue.connect(self.handle_loadRegisterUpdateRegisterValue)
 		
 		self.threadpool.start(self.loadBreakpointsWorker)
@@ -661,6 +663,12 @@ class LLDBPyGUIWindow(QMainWindow):
 		if initTable:
 			self.txtMultiline.table.setBPAtAddress(loadAddr, True, False)
 		self.tblBPs.addRow(bpId, idx, loadAddr, name, str(hitCount), condition)
+		print("Reloading BPs ...")
+	
+	def handle_updateBreakpointsLoadBreakpointValue(self, bpId, idx, loadAddr, name, hitCount, condition, initTable):
+#		if initTable:
+#			self.txtMultiline.table.setBPAtAddress(loadAddr, True, False)
+		self.tblBPs.updateRow(bpId, idx, loadAddr, name, str(hitCount), condition)
 		print("Reloading BPs ...")
 		
 	def handle_loadBreakpointsFinished(self):
