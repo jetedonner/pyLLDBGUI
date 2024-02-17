@@ -23,22 +23,26 @@ class VariablesTableWidget(QTableWidget):
 #		
 #		self.context_menu.addSeparator()
 		
-		self.setColumnCount(3)
+		self.setColumnCount(4)
 		self.setColumnWidth(0, 196)
 		self.setColumnWidth(1, 196)
-		self.setColumnWidth(2, 768)
+		self.setColumnWidth(2, 196)
+		self.setColumnWidth(3, 768)
 		self.verticalHeader().hide()
 		self.horizontalHeader().show()
 		self.horizontalHeader().setHighlightSections(False)
-		self.setHorizontalHeaderLabels(['Name', 'Value', 'Type'])
+		self.setHorizontalHeaderLabels(['Name', 'Value', 'Data', 'Type'])
+		
 		self.horizontalHeaderItem(0).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
 		self.horizontalHeaderItem(1).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
 		self.horizontalHeaderItem(2).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
+		self.horizontalHeaderItem(3).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
 		self.setFont(ConfigClass.font)
 		
 		self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
 		self.setShowGrid(False)
 		self.cellDoubleClicked.connect(self.on_double_click)
+		self.cellChanged.connect(self.item_changed_handler)
 		
 	def on_double_click(self, row, col):
 #		if col in range(3):
@@ -58,19 +62,52 @@ class VariablesTableWidget(QTableWidget):
 	def resetContent(self):
 		for row in range(self.rowCount(), 0):
 			self.removeRow(row)
-			
-	def addRow(self, name, value, datatype):
+	
+	def updateRow(self, name, value, data, datatype):
+		self.ommitCellChanged = True
+		for i in range(self.rowCount()):
+			if self.item(i, 0).text() == name:
+				self.item(i, 1).setText(value)
+				self.item(i, 2).setText(data)
+				self.item(i, 3).setText(datatype)
+				break
+		self.ommitCellChanged = False
+		
+	def addRow(self, name, value, data, datatype):
+		self.ommitCellChanged = True
 		currRowCount = self.rowCount()
 		self.setRowCount(currRowCount + 1)
 		self.addItem(currRowCount, 0, str(name))
-		self.addItem(currRowCount, 1, str(value))
-		self.addItem(currRowCount, 2, str(datatype))
+		self.addItem(currRowCount, 1, str(value), True if str(datatype) == "int" else False)
+		self.addItem(currRowCount, 2, str(data), True if str(datatype) == "int" else False)
+		self.addItem(currRowCount, 3, str(datatype))
 		self.setRowHeight(currRowCount, 18)
+		self.ommitCellChanged = False
 		
-		
-	def addItem(self, row, col, txt):
+	def addItem(self, row, col, txt, editable = False):
 		item = QTableWidgetItem(txt, QTableWidgetItem.ItemType.Type)
-		item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable) #Qt.ItemFlag.ItemIsSelectable)
+		if not editable: # or (col != 1 and col != 2):
+			item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable) #Qt.ItemFlag.ItemIsSelectable)
 		
 		# Insert the items into the row
 		self.setItem(row, col, item)
+	
+	ommitCellChanged = False
+	
+	def item_changed_handler(self, row, col):
+		if not self.ommitCellChanged:
+			if self.item(row, 3).text() == "int":
+				if col == 1 or col == 2:
+					changedItem = self.item(row, col)
+#					print(f"Item changed: {row} / {col} => NewVal: {changedItem.text()}")
+					newVal = 0
+					if col == 1:
+						newVal = int(changedItem.text())
+						self.item(row, 2).setText(hex(newVal))
+					else:
+						newVal = int(changedItem.text(), 16)
+						self.item(row, 1).setText(str(newVal))
+					
+					varName = self.item(row, 0).text()
+					self.window().driver.handleCommand(f"expr {varName}={newVal}")
+					self.window().updateStatusBar(f"Updated value of variable '{varName}' to '{newVal}'")

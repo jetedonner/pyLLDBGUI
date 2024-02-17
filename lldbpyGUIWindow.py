@@ -588,8 +588,9 @@ class LLDBPyGUIWindow(QMainWindow):
 		filename = showSaveFileDialog()
 		if filename != None:
 			print(f'Saving to: {filename} ...')
+			BreakpointHelper().handle_saveBreakpoints(self.driver.getTarget(), filename)
 			self.updateStatusBar(f"Saving breakpoints to {filename} ...")
-			self.driver.handleCommand(f"breakpoint write -f {filename}")
+#			self.driver.handleCommand(f"breakpoint write -f {filename}")
 		pass
 		
 		
@@ -719,16 +720,20 @@ class LLDBPyGUIWindow(QMainWindow):
 				tblWdgt.item(i, 2).setText(value)
 				break
 			
-	def handle_loadRegisterLoadVariableValue(self, name, value, valType):
-		self.tblVariables.addRow(name, value, valType)
+	def handle_loadRegisterLoadVariableValue(self, name, value, data, valType):
+		self.tblVariables.addRow(name, value, data, valType)
 		
-	def handle_loadRegisterUpdateVariableValue(self, name, value, valType):
-		tblWdgt = self.tblVariables
-		for i in range(tblWdgt.rowCount()):
-			if tblWdgt.item(i, 0).text() == name:
-				tblWdgt.item(i, 1).setText(value)
-				tblWdgt.item(i, 2).setText(valType)
-				break
+	def handle_loadRegisterUpdateVariableValue(self, name, value, data, valType):
+		self.tblVariables.updateRow(name, value, data, valType)
+#		tblWdgt = self.tblVariables
+#		tblWdgt.ommitCellChanged = True
+#		for i in range(tblWdgt.rowCount()):
+#			if tblWdgt.item(i, 0).text() == name:
+#				tblWdgt.item(i, 1).setText(value)
+#				tblWdgt.item(i, 2).setText(data)
+#				tblWdgt.item(i, 3).setText(valType)
+#				break
+#		tblWdgt.ommitCellChanged = False
 	
 	def handle_execCommand(self):
 		self.do_execCommand()
@@ -830,7 +835,8 @@ class LLDBPyGUIWindow(QMainWindow):
 	def disassemble_instructions(self, insts, target, rip):
 		idx = 0
 		for i in insts:
-#			if idx == 0:
+			if idx == 0:
+				self.txtMultiline.setInstsAndAddr(insts, hex(int(str(i.GetAddress().GetFileAddress()), 10)))
 #				print(dir(i))
 #			print(i)
 			idx += 1

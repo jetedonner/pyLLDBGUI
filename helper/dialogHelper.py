@@ -24,7 +24,28 @@ class ConfirmDialog(QDialog):
 		self.layout.addWidget(message)
 		self.layout.addWidget(self.buttonBox)
 		self.setLayout(self.layout)
-	
+
+class InputDialog(QDialog):
+	def __init__(self, title, prompt, preset = ""):
+		super().__init__()
+		
+		self.setWindowTitle(title)
+		
+		QBtn = QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+		
+		self.buttonBox = QDialogButtonBox(QBtn)
+		self.buttonBox.accepted.connect(self.accept)
+		self.buttonBox.rejected.connect(self.reject)
+		
+		self.layout = QVBoxLayout()
+		self.message = QLabel(prompt)
+		self.txtInput = QLineEdit()
+		self.txtInput.setText(preset)
+		self.layout.addWidget(self.message)
+		self.layout.addWidget(self.txtInput)
+		self.layout.addWidget(self.buttonBox)
+		self.setLayout(self.layout)
+		self.txtInput.setFocus()
 
 def showQuestionDialog(parent, title, question):
 	dlg = QMessageBox(parent)

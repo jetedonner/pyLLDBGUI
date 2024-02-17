@@ -5,7 +5,7 @@ import codecs
 import struct
 
 class QuickToolTip:
-	operandMemPrefixes = ("dword ptr", "word ptr", "byte ptr")
+	operandMemPrefixes = ("dword ptr", "word ptr", "byte ptr", "[")
 		
 	def get_memory_addressAndOperands(self, debugger, operands):
 		strOp = self.extractOperand(operands)
@@ -89,29 +89,27 @@ class QuickToolTip:
 			address = self.get_memory_address(debugger, operandsText)
 
 		if address != 0:
+			tooltip = f'Addr:\t{hex(address)}'
 			error_ref = lldb.SBError()
 			process = debugger.GetSelectedTarget().GetProcess()
 			memory = process.ReadMemory(address, 0x20, error_ref)
 			if error_ref.Success():
 				dataTillNull = self.extract_data_until_null(memory)
-#				tooltip = str(memory)
-#				
-#				print(tooltip)
 				string = codecs.decode(dataTillNull, 'utf-8', errors='ignore')
-				tooltip = f'String:\t{string}'
-#				print(string)
-				
-				try:
-					# Unpack the byte data as an unsigned short integer
-					value = struct.unpack('<H', self.extract_data_until_null(memory))[0]
+				if dataTillNull != b'\x00' and string != '':
+					tooltip += f'\nString:\t{string}'
 					
-#					print(value)
+				try:
+					value = struct.unpack('<H', dataTillNull)[0]
 					tooltip += f'\nInt:\t{value}'
 				except Exception as e:
 #					print(f'Error extracting INT: {e}')
 					pass
 					
-				tooltip += f'\nBytes:\t{str(dataTillNull[:-1])}'
+					if len(dataTillNull) <= 1:
+						tooltip += f'\nBytes:\t{str(dataTillNull)}'
+					else:
+						tooltip += f'\nBytes:\t{str(dataTillNull[:-1])}'
 			else:
 				print(str(error_ref))
 				tooltip = str(error_ref)

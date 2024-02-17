@@ -29,6 +29,21 @@ class SettingsDialog(QDialog):
 		
 		name = settings.value("TestSetting", "")
 		print(name)
+		print(f'SETTINGS-FILE: {settings.fileName()}')
+		
+#		QStatusBar *b = new QStatusBar;
+#		l->addWidget(b);
+#		b->showMessage("XXX");
+#		l->setMargin(0);
+#		l->setSpacing(0);
+		
+#		self.stb = QStatusBar()
+#		self.layStb = QHBoxLayout()
+#		self.layStb.addWidget(self.stb)
+#		self.stb.showMessage(settings.fileName(), 5000)
+#		self.wgtStb = QWidget()
+#		self.wgtStb.setLayout(self.layStb)
+#		self.layout().addWidget(self.wgtStb)
 #		self.initTable()
 		
 #	def initTable(self):

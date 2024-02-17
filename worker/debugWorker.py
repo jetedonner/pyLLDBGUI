@@ -67,7 +67,26 @@ class DebugWorker(BaseWorker):
 #					)
 					numRegisters = registerList.GetSize()
 					if numRegisters > 0:
-#						print(f"DEBUGGER GOT NEXT REGISTER: {frame.register['rip'].value}")
+						print(f'GetPCAddress => {hex(frame.GetPCAddress().GetFileAddress())}')
+##						print(f"DEBUGGER GOT NEXT REGISTER: {frame.register['rip'].value}")
+##						rip_value = thread.GetFrameAtIndex(0).GetPC()
+##						current_instruction_address = rip_value - 1
+##						frame = thread.GetFrameAtIndex(0)
+#						module = frame.GetModule()
+#						disassembler = module.GetDisassembler()
+#						
+#						# Disassemble the current instruction
+#						current_address = frame.GetPC()
+#						instruction = disassembler.DisassembleInstruction(current_address)
+#						
+#						# Get the size of the current instruction
+#						current_size = instruction.GetByteSize()
+#						
+#						# Calculate the address of the previous instruction
+#						previous_address = current_address - current_size
+#						
+#						print("Current instruction address:", hex(previous_address))
+						
 						self.signals.debugStepCompleted.emit(self.kind, True, frame.register["rip"].value, frame)
 						pass
 					else:

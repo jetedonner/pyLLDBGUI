@@ -18,6 +18,11 @@ class BreakpointHelper():
 	colNum = 1
 	colCond = 5
 	
+	def handle_saveBreakpoints(self, target, filepath):
+		path_spec = lldb.SBFileSpec(filepath)
+		target.BreakpointsWriteToFile(path_spec)
+		pass
+		
 #	@staticmethod
 	def handle_editCondition(self, table, colNum, colCond):
 		if len(table.selectedItems()) > 0:
@@ -40,6 +45,11 @@ class BreakpointHelper():
 			if dialog.exec():
 				# OK pressed
 	#			print(f'self.table.window =====>>>> {self.table.window()}')
+#				idx = 0
+#				for i in range(target.GetNumBreakpoints()):
+#					idx += 1
+				bp_cur = self.table.window().driver.getTarget().GetBreakpointAtIndex(self.table.selectedItems()[0].row())
+				bp_cur.SetCondition(itemCond.text())
 				print(self.table.window().updateStatusBar(f"Breakpoint ({itemNum.text()}) condition changed successfully"))
 				pass
 			else:

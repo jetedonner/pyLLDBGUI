@@ -9,8 +9,8 @@ class LoadRegisterWorkerSignals(BaseWorkerSignals):
 	loadRegister = pyqtSignal(str)
 	loadRegisterValue = pyqtSignal(int, str, str, str)
 	updateRegisterValue = pyqtSignal(int, str, str, str)
-	loadVariableValue = pyqtSignal(str, str, str)
-	updateVariableValue = pyqtSignal(str, str, str)
+	loadVariableValue = pyqtSignal(str, str, str, str)
+	updateVariableValue = pyqtSignal(str, str, str, str)
 	
 
 class LoadRegisterWorker(BaseWorker):
@@ -63,16 +63,19 @@ class LoadRegisterWorker(BaseWorker):
 					for var in vars:
 #						hexVal = ""
 						string_value = var.GetValue()
+						data = ""
 						if var.GetTypeName() == "int":
-							string_value = hex(int(var.GetValue())) + " (" + string_value + ")"
+							string_value = str(string_value)
+							data = hex(int(var.GetValue()))
 #							hexVal = " (" + hex(int(var.GetValue())) + ")"
 						if var.GetTypeName().startswith("char"):
 							string_value = self.char_array_to_string(var)
+							data = var.GetPointeeData(0, var.GetByteSize())
 							
 						if self.initTabs:
-							self.signals.loadVariableValue.emit(str(var.GetName()), str(string_value), str(var.GetTypeName()))
+							self.signals.loadVariableValue.emit(str(var.GetName()), str(string_value), str(data), str(var.GetTypeName()))
 						else:
-							self.signals.updateVariableValue.emit(str(var.GetName()), str(string_value), str(var.GetTypeName()))
+							self.signals.updateVariableValue.emit(str(var.GetName()), str(string_value), str(data), str(var.GetTypeName()))
 					
 					QCoreApplication.processEvents()
 						
@@ -81,7 +84,7 @@ class LoadRegisterWorker(BaseWorker):
 		
 	def char_array_to_string(self, char_array_value):
 		byte_array = char_array_value.GetPointeeData(0, char_array_value.GetByteSize())
-		print(char_array_value.GetByteSize())
+#		print(char_array_value.GetByteSize())
 		error = lldb.SBError()
 		sRet = byte_array.GetString(error, 0)
 		return "" if sRet == 0 else sRet

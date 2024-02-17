@@ -13,6 +13,7 @@ from PyQt6 import uic, QtWidgets
 from config import *
 from helper.breakpointHelper import *
 from helper.quickToolTip import *
+from helper.dialogHelper import *
 		
 class DisassemblyImageTableWidgetItem(QTableWidgetItem):
 	
@@ -100,6 +101,17 @@ class DisassemblyTableWidget(QTableWidget):
 	def handle_editCondition(self):
 		BreakpointHelper().handle_editCondition(self, 2, 6)
 		
+	def handle_setPC(self):
+		dlg = InputDialog("Set new PC", "Please enter address for PC", self.item(self.selectedItems()[0].row(), 3).text())
+		if dlg.exec():
+			print(f'dlg.txtInput: {dlg.txtInput.text()}')
+			
+			frame = self.driver.getTarget().GetProcess().GetThreadAtIndex(0).GetFrameAtIndex(0)
+			if frame:
+				newPC = int(str(dlg.txtInput.text()), 16)
+				frame.SetPC(newPC)
+				self.window().txtMultiline.setPC(newPC)
+		
 	driver = None
 	
 	def __init__(self, driver):
@@ -127,7 +139,11 @@ class DisassemblyTableWidget(QTableWidget):
 		actionFindReferences = self.context_menu.addAction("Find references")
 		self.actionShowMemory = self.context_menu.addAction("Show memory")
 		self.actionShowMemoryFor = self.context_menu.addAction("Show memory for ...")
+		self.actionShowMemoryFor.setStatusTip("Show memory for ...")
 		self.actionShowMemoryFor.triggered.connect(self.handle_showMemoryFor)
+		self.context_menu.addSeparator()
+		self.actionSetPC = self.context_menu.addAction("Set new PC")
+		self.actionSetPC.triggered.connect(self.handle_setPC)
 		
 		self.setColumnCount(8)
 		self.setColumnWidth(0, 24)
@@ -202,48 +218,6 @@ class DisassemblyTableWidget(QTableWidget):
 			self.actionShowMemoryFor.setData(operandsText)
 			
 		self.context_menu.exec(event.globalPos())
-	
-#	def get_memory_addressAndOperands(self, debugger, operands):
-#		strOp = self.extractOperand(operands)
-#		return self.get_memory_address(self.driver.debugger, strOp), strOp
-#		
-#	def get_memory_address(self, debugger, expression):
-#		target = debugger.GetSelectedTarget()
-#		process = target.GetProcess()
-#		thread = process.GetSelectedThread()
-#		frame = thread.GetSelectedFrame()
-#		
-#		isMinus = True
-#		parts = expression.split("-")
-#		if len(parts) <= 1:
-#			parts = expression.split("+")
-#			isMinus = False
-#		
-#		if len(parts) == 2:
-#			rbp_value = frame.EvaluateExpression(f"${parts[0]}").GetValueAsUnsigned()
-##			print(f'rbp_value => {rbp_value}')
-#			# Calculate the desired memory address
-#			offset_value = int(parts[1].replace("0x", ""), 16)
-#			if isMinus:
-#				address = rbp_value - offset_value
-#			else:
-#				address = rbp_value + offset_value
-#		
-#		print(f"Memory address: 0x{address:X}")
-#		return address
-#	
-#	def extractOperand(self, string):
-##		string = "dword ptr [rbp - 0x8]"
-#		pattern = r"\[([^\]]+)\]"  # Match anything within square brackets, excluding the brackets themselves
-#		match = re.search(pattern, string)
-#		
-#		if match:
-#			extracted_text = match.group(1)  # Access the captured group
-#			print(extracted_text)  # Output: rbp - 0x8
-#			return extracted_text.replace(" ", "")
-#		else:
-#			print("No match found")
-#			return ""
 		
 	def handle_showMemoryFor(self):
 		sender = self.sender()  # get the sender object
@@ -343,6 +317,13 @@ class AssemblerTextEdit(QWidget):
 	
 	lineCountNG = 0
 	table = None
+	insts = None
+	addr = 0
+	
+	def setInstsAndAddr(self, insts, addr):
+		self.insts = insts
+		self.addr = addr
+		print(f'CURRENT ADDRESS: {self.addr}')
 	
 	def clear(self):
 		self.lineCountNG = 0
