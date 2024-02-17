@@ -278,10 +278,13 @@ class BreakpointsTableWidget(QTableWidget):
 						name_list = lldb.SBStringList()
 						bp_cur.GetNames(name_list)
 						num_names = name_list.GetSize()
+#						print(f'num_names: {num_names}')
 #						oldName = "main"
+						name_list.AppendString("")
+						num_names = 1
 						for j in range(num_names):
 							name = name_list.GetStringAtIndex(j)
-							print(name + " / " + self.oldBPName)
+#							print(name + " / " + self.oldBPName)
 							if name == self.oldBPName:
 								bp_cur.RemoveName(self.oldBPName)
 								bp_cur.AddName(self.item(row, 3).text())
