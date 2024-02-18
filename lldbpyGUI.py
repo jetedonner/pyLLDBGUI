@@ -51,9 +51,8 @@ try:
         print("[!] lldbinit is best experienced with a terminal size at least {}x{}\033[0m".format(MIN_COLUMNS, MIN_ROWS))
 except Exception as e:
     print("\033[1m\033[31m[-] failed to find out terminal size.")
-    print("[!] lldbinit is best experienced with a terminal size at least {}x{}\033[0m".format(MIN_COLUMNS, MIN_ROWS))
-
-
+    print("[!] lldbinit is best experienced with a terminal size at least {}x{}\033[0m".format(MIN_COLUMNS, MIN_ROWS))  
+  
 def breakpointHandlerNG(dummy, frame, bpno, err):
 #   print(dummy)
 #   print(frame)
@@ -97,6 +96,8 @@ def __lldb_init_module(debugger, internal_dict):
         ci.HandleCommand("settings set disassembly-format " + CUSTOM_DISASSEMBLY_FORMAT, res)
 
     # the hook that makes everything possible :-)
+    ci.HandleCommand(f"command script add -h '({PROMPT_TEXT}) Start the LLDBPyGUI.' -f lldbpyGUI.StartLLDBPyGUI spg", res)
+  
     ci.HandleCommand(f"command script add -h '({PROMPT_TEXT}) Start the python GUI.' -f lldbpyGUI.TestCommand TestCommand", res)
     ci.HandleCommand(f"command alias -h '({PROMPT_TEXT}) Start the python GUI.' -- pygui TestCommand", res)
 
@@ -106,6 +107,8 @@ def __lldb_init_module(debugger, internal_dict):
     ci.HandleCommand(f"command alias -h '({PROMPT_TEXT}) Start the python GUI.' -H '({PROMPT_TEXT}) Start the python GUI.' -- ng TestCommand", res)
     
     ci.HandleCommand("command script add -h '(lldbinit) Display lldbinit banner.' --function lldbpyGUI.cmd_banner banner", res)
+    
+    ci.HandleCommand("command script add -h '(lldbpygui) Display lldbpygui banner2.' --function lldbpyGUI.cmd_banner2 banner2", res)
     
     ci.HandleCommand("command script add -h '(lldbinit) The breakpoint callback function.' --function lldbpyGUI.breakpointHandlerNG bpcb", res)
     
@@ -158,12 +161,10 @@ def close_application():
 
 def cmd_banner(debugger,command,result,dict):    
   print(RED + "[+] Loaded " + APP_NAME + " version " + APP_VERSION + " (BUILD: " + APP_BUILD + ")" + RESET)
-  
-def TestCommand(debugger, command, result, dict):
-    testTarget = "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/hello_world_test"
-    
+
+def cmd_banner2(debugger,command,result,dict):    
     print(f"" + GREEN + "#=================================================================================#")
-    print(f"| Starting TEST ENVIRONMENT for LLDB-PyGUI (Development Mode, ver. {APP_VERSION})         |")
+    print(f"| Starting TEST ENVIRONMENT for {APP_NAME} (ver. {APP_VERSION})            |")
     print(f"|                                                                                 |")
     print(f"| Desc:                                                                           |")
     print(f"| This python script is for development and testing while development             |")
@@ -178,6 +179,58 @@ def TestCommand(debugger, command, result, dict):
     print(f"| Kim David Hauser (JeTeDonner), (C.) by kimhauser.ch 1991-2024                   |")
     print(f"#=================================================================================#" + RESET)
   
+
+def StartLLDBPyGUI(debugger, command, result, dict):
+    testTarget = "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/hello_world_test"
+    cmd_banner2(debugger, command, result, dict)
+    
+    global pymobiledevice3GUIApp
+    pymobiledevice3GUIApp = QApplication([])
+    pymobiledevice3GUIApp.aboutToQuit.connect(close_application)
+    #
+    ConfigClass.initIcons()
+    pymobiledevice3GUIApp.setWindowIcon(ConfigClass.iconBugGreen)
+    
+    global event_queue
+    event_queue = queue.Queue()
+  
+    global driver
+    driver = debuggerdriver.createDriver(debugger, event_queue)
+    
+    global pymobiledevice3GUIWindow
+    pymobiledevice3GUIWindow = LLDBPyGUIWindow(debugger, driver) # QConsoleTextEditWindow(debugger)
+    #     pymobiledevice3GUIWindow.loadTarget()
+    pymobiledevice3GUIWindow.show()
+
+#       pymobiledevice3GUIWindow.move(650, 20)
+#       pymobiledevice3GUIWindow.tabWidgetMain.setCurrentIndex(2)
+#       driver.start()
+#       interctive_loop(debugger)
+#   print("AFTER START DRIVER!!!!")
+    #     process = target.Launch(info, error)
+    #     if error:
+    #       print(error)
+#   pymobiledevice3GUIWindow.loadTarget()
+    #     process.Continue()
+    #       driver.handleCommand("br com a -F lldbpyGUI.breakpointHandlerNG")
+    ##   sys.exit(pymobiledevice3GUIApp.exec())
+    #   sys.exit(pymobiledevice3GUIApp.exec())
+    #         process = debugger.GetSelectedTarget().GetProcess()
+
+#       global event_thread
+#   event_thread = LLDBListenerThread(process)
+#   event_thread.start()
+#       interctive_loop(debugger)
+    t = QtCore.QTimer()
+    t.singleShot(0, pymobiledevice3GUIWindow.onQApplicationStarted)
+#   pymobiledevice3GUIApp.exec()
+    sys.exit(pymobiledevice3GUIApp.exec())
+#   print("AFTER EXEC GUI-APP")
+    pass
+  
+def TestCommand(debugger, command, result, dict):
+    testTarget = "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/hello_world_test"
+    cmd_banner2(debugger, command, result, dict)
     print("LOADING TARGET: %s" % testTarget)
 #   debugger.SetAsync(False)
     

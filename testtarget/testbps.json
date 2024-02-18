@@ -1,0 +1,64 @@
+[
+  {
+    "Breakpoint" : {
+      "BKPTOptions" : {
+        "AutoContinue" : false,
+        "BKPTCMDData" : {
+          "ScriptSource" : "None",
+          "StopOnError" : true,
+          "UserSource" : [
+            "bpcb"
+          ]
+        },
+        "ConditionText" : "",
+        "EnabledState" : true,
+        "IgnoreCount" : 0,
+        "OneShotState" : false
+      },
+      "BKPTResolver" : {
+        "Options" : {
+          "AddressOffset" : 4294983485,
+          "ModuleName" : "",
+          "Offset" : 0
+        },
+        "Type" : "Address"
+      },
+      "Hardware" : false,
+      "SearchFilter" : {
+        "Options" : {},
+        "Type" : "Unconstrained"
+      }
+    }
+  },
+  {
+    "Breakpoint" : {
+      "BKPTOptions" : {
+        "AutoContinue" : false,
+        "BKPTCMDData" : {
+          "ScriptSource" : "None",
+          "StopOnError" : true,
+          "UserSource" : [
+            "bpcb"
+          ]
+        },
+        "ConditionText" : "",
+        "EnabledState" : true,
+        "IgnoreCount" : 0,
+        "OneShotState" : false
+      },
+      "BKPTResolver" : {
+        "Options" : {
+          "AddressOffset" : 4294983524,
+          "ModuleName" : "",
+          "Offset" : 0
+        },
+        "Type" : "Address"
+      },
+      "Hardware" : false,
+      "SearchFilter" : {
+        "Options" : {},
+        "Type" : "Unconstrained"
+      }
+    }
+  }
+]

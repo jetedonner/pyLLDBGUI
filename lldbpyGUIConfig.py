@@ -23,13 +23,10 @@ from PyQt6 import uic, QtWidgets
 
 from QConsoleTextEdit import *
 
-#APP_NAME = "ConsoleTextEditWindow-TEST"
-#VERSION = "0.0.1"
-
-APP_NAME = "LLDB-PyGUI"
-APP_VERSION = "0.0.1"
+APP_NAME = "LLDBPyGUI"
+APP_VERSION = "0.0.1 - ALPHA PREVIEW"
 APP_BUILD = "689"
-PROMPT_TEXT = "LLDB-PyGUI"
+PROMPT_TEXT = "LLDBPyGUI"
 #WINDOW_SIZE = 512
 WINDOW_SIZE = 680
 

@@ -24,6 +24,14 @@ from PyQt6.QtGui import *
 from PyQt6.QtCore import *
 
 from PyQt6 import uic, QtWidgets, QtCore
+
+from QConsoleTextEdit import *
+
+from lldbpyGUIConfig import *
+from lldbpyGUIWindow import *
+
+from config import *
+
 #global process
 #process = None
 
@@ -44,7 +52,18 @@ from PyQt6 import uic, QtWidgets, QtCore
 #   if len(command) == 0:
 #     continue
 #   debugger.HandleCommand(command)
-    
+
+def breakpointHandlerDriver(dummy, frame, bpno, err):
+#   print(dummy)
+#   print(frame)
+#   print(bpno)
+#   print(err)
+    global pymobiledevice3GUIWindow
+    pymobiledevice3GUIWindow.bpcp("YESSSSS!!!!!")
+#   print("MLIR debugger attaching...")
+#   print("IIIIIIIIINNNNNNNN CCCCAAQALLLLLLBBBAAACCKKKK")
+  
+  
 class LLDBListenerThread(Thread):
   should_quit = False
   
@@ -130,6 +149,16 @@ class DebuggerDriver(Thread):
     
     aborted = False
     signals = None
+    
+    def breakpointHandlerDriver(self, dummy, frame, bpno, err):
+    #   print(dummy)
+    #   print(frame)
+    #   print(bpno)
+    #   print(err)
+        global pymobiledevice3GUIWindow
+        pymobiledevice3GUIWindow.bpcp("YESSSSS!!!!!")
+    #   print("MLIR debugger attaching...")
+    #   print("IIIIIIIIINNNNNNNN CCCCAAQALLLLLLBBBAAACCKKKK")
     
     def __init__(self, debugger, event_queue):
         Thread.__init__(self)

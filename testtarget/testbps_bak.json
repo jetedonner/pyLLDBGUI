@@ -1,0 +1,100 @@
+[
+  {
+    "Breakpoint" : {
+      "BKPTOptions" : {
+        "AutoContinue" : false,
+        "ConditionText" : "",
+        "EnabledState" : true,
+        "IgnoreCount" : 0,
+        "OneShotState" : false
+      },
+      "BKPTResolver" : {
+        "Options" : {
+          "NameMask" : [
+            56
+          ],
+          "Offset" : 0,
+          "SkipPrologue" : true,
+          "SymbolNames" : [
+            "main"
+          ]
+        },
+        "Type" : "SymbolName"
+      },
+      "Hardware" : false,
+      "Names" : [
+        "main"
+      ],
+      "SearchFilter" : {
+        "Options" : {
+          "ModuleList" : [
+            "hello_world_test"
+          ]
+        },
+        "Type" : "Modules"
+      }
+    }
+  },
+  {
+    "Breakpoint" : {
+      "BKPTOptions" : {
+        "AutoContinue" : false,
+        "BKPTCMDData" : {
+          "ScriptSource" : "None",
+          "StopOnError" : true,
+          "UserSource" : [
+            "bpcb"
+          ]
+        },
+        "ConditionText" : "",
+        "EnabledState" : true,
+        "IgnoreCount" : 0,
+        "OneShotState" : false
+      },
+      "BKPTResolver" : {
+        "Options" : {
+          "AddressOffset" : 4294983485,
+          "ModuleName" : "",
+          "Offset" : 0
+        },
+        "Type" : "Address"
+      },
+      "Hardware" : false,
+      "SearchFilter" : {
+        "Options" : {},
+        "Type" : "Unconstrained"
+      }
+    }
+  },
+  {
+    "Breakpoint" : {
+      "BKPTOptions" : {
+        "AutoContinue" : false,
+        "BKPTCMDData" : {
+          "ScriptSource" : "None",
+          "StopOnError" : true,
+          "UserSource" : [
+            "bpcb"
+          ]
+        },
+        "ConditionText" : "",
+        "EnabledState" : true,
+        "IgnoreCount" : 0,
+        "OneShotState" : false
+      },
+      "BKPTResolver" : {
+        "Options" : {
+          "AddressOffset" : 4294983524,
+          "ModuleName" : "",
+          "Offset" : 0
+        },
+        "Type" : "Address"
+      },
+      "Hardware" : false,
+      "SearchFilter" : {
+        "Options" : {},
+        "Type" : "Unconstrained"
+      }
+    }
+  }
+]
