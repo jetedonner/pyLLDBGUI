@@ -3,9 +3,46 @@ import lldb
 import re
 import codecs
 import struct
+from enum import Enum
+#import re
+
+class SizeDirPtrs(Enum):
+	BYTEPTR = ("byte ptr", 1)
+	WORDPTR = ("word ptr", 2)
+	DWORDPTR = ("dword ptr", 4)
+	QWORDPTR = ("qword ptr", 8)
+	
+	def hasMember(name):
+		for member in SizeDirPtrs:
+			if member.value[0] == name:
+				return True
+		return False
+	
+	def startswith(name):
+		for member in SizeDirPtrs:
+			if name.startswith(member.value[0]):
+				return True
+		return False
+			
+#	def has_member_name(enum_class, name):
+#		return any(member.name == name for member in enum_class)
+	
+#	def getString(value):
+#		flagRet = 0
+#		# Check if the bitmask includes a specific enum value
+#		if value & SizeDirPtrs.BYTEPTR.value:
+#			return "byte ptr"
+#		elif value & SizeDirPtrs.WORDPTR.value:
+#			return "word ptr"
+#		elif value & SizeDirPtrs.WORDPTR.value:
+#			return "dword ptr"
+#		elif value & SizeDirPtrs.WORDPTR.value:
+#			return "qword ptr"
+#		else:
+#			return "unknown"
 
 class QuickToolTip:
-	operandMemPrefixes = ("qword ptr", "dword ptr", "word ptr", "byte ptr", "[")
+#	operandMemPrefixes = ("qword ptr", "dword ptr", "word ptr", "byte ptr", "[")
 		
 	def get_memory_addressAndOperands(self, debugger, operands):
 		strOp = self.extractOperand(operands)
@@ -65,9 +102,9 @@ class QuickToolTip:
 		operandsText = ""
 		
 		part1, part2 = self.splitOperands(openrands)
-		if part1.startswith(self.operandMemPrefixes):
+		if SizeDirPtrs.startswith(part1):
 			operandsText = self.extractOperand(part1)
-		elif part2.startswith(self.operandMemPrefixes):
+		elif SizeDirPtrs.startswith(part2):
 			operandsText = self.extractOperand(part2)
 		else:
 			pass
@@ -89,6 +126,13 @@ class QuickToolTip:
 	def getQuickToolTip(self, openrands, debugger):
 		tooltip = ""				
 		
+		checkVal = SizeDirPtrs.DWORDPTR
+		
+#		if SizeDirPtrs.hasMember("dword ptr"):
+#			print("Member with name 'dword ptr' exists")
+#		else:
+#			print("NOT EXISTING!!!")
+			
 		address = 0
 		operandsText = self.getOperandsText(openrands)
 		if operandsText != "":

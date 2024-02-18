@@ -238,6 +238,13 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.tabWidgetDbg.setContentsMargins(0, 0, 0, 0)
 		self.splitter.addWidget(self.tabWidgetDbg)
 		
+#		self.txtSource = QConsoleTextEdit()
+#		self.txtSource.setFont(ConfigClass.font)
+#		self.gbpSource = QGroupBox("Source")
+#		self.gbpSource.setLayout(QHBoxLayout())
+#		self.gbpSource.layout().addWidget(self.txtSource)
+#		self.tabWidgetDbg.addTab(self.gbpSource, "Source")
+		
 		self.tabWidgetReg = QTabWidget()
 		self.tabWidgetReg.setContentsMargins(0, 0, 0, 0)
 		self.tabWidgetDbg.addTab(self.tabWidgetReg, "Register")
@@ -1046,17 +1053,24 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.reloadRegister(False)
 		self.reloadBreakpoints(False)
 		
-	def handle_loadSourceFinished(self, sourceCode):
+	def handle_loadSourceFinished(self, sourceCode, autoScroll = True):
 		if sourceCode != "":
 			horizontal_value = self.txtSource.horizontalScrollBar().value()
-			vertical_value = self.txtSource.verticalScrollBar().value()
-			print(f'SCROLL-VALUE-BEFORE-RESET: {self.txtSource.verticalScrollBar().value()}')
+			
+			if not autoScroll:
+				vertical_value = self.txtSource.verticalScrollBar().value()
+			
 			self.txtSource.setEscapedText(sourceCode)
 			
+			currTabIdx = self.tabWidgetDbg.currentIndex()
+			self.tabWidgetDbg.setCurrentIndex(2)
 			self.txtSource.horizontalScrollBar().setValue(horizontal_value)
-			self.txtSource.verticalScrollBar().setValue(vertical_value)
-			line_text = "=>"
-			self.scroll_to_line(self.txtSource, line_text)
+			if not autoScroll:
+				self.txtSource.verticalScrollBar().setValue(vertical_value)
+			else:
+				line_text = "=>"
+				self.scroll_to_line(self.txtSource, line_text)
+				self.tabWidgetDbg.setCurrentIndex(currTabIdx)
 		else:
 			self.txtSource.setText("<Source code NOT available>")
 		
@@ -1070,14 +1084,18 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		text = text_edit.document().findBlockByNumber(0).text()
 		position = text.find(line_text)
+#		print(f'position => {position}')
 		start_pos = position + 3
 		
 		end_pos = self.getNextNBSpace(text, start_pos)
 		linePos = int(text[start_pos:end_pos])
 
 		scroll_value = linePos * self.txtSource.fontMetrics().height()
+#		print(f'scroll_value => {scroll_value}')
 		scroll_value -= self.txtSource.viewport().height() / 2  # Center vertically
+#		print(f'self.txtSource.viewport().height() / 2 => {self.txtSource.viewport().height() / 2}')
 		self.txtSource.verticalScrollBar().setValue(scroll_value)
+#		print(f'scroll_value => {scroll_value}')
 	
 	def read_memory(self, process, address, size):
 		error = lldb.SBError()
