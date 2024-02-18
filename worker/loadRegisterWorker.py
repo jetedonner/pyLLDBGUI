@@ -9,8 +9,8 @@ class LoadRegisterWorkerSignals(BaseWorkerSignals):
 	loadRegister = pyqtSignal(str)
 	loadRegisterValue = pyqtSignal(int, str, str, str)
 	updateRegisterValue = pyqtSignal(int, str, str, str)
-	loadVariableValue = pyqtSignal(str, str, str, str)
-	updateVariableValue = pyqtSignal(str, str, str, str)
+	loadVariableValue = pyqtSignal(str, str, str, str, str)
+	updateVariableValue = pyqtSignal(str, str, str, str, str)
 	
 
 class LoadRegisterWorker(BaseWorker):
@@ -62,6 +62,9 @@ class LoadRegisterWorker(BaseWorker):
 					vars = frame.GetVariables(True, True, False, True)  # type of SBValueList
 					for var in vars:
 #						hexVal = ""
+#						print(dir(var))
+#						print(var)
+#						print(hex(var.GetLoadAddress()))
 						string_value = var.GetValue()
 						data = ""
 						if var.GetTypeName() == "int":
@@ -73,9 +76,9 @@ class LoadRegisterWorker(BaseWorker):
 							data = var.GetPointeeData(0, var.GetByteSize())
 							
 						if self.initTabs:
-							self.signals.loadVariableValue.emit(str(var.GetName()), str(string_value), str(data), str(var.GetTypeName()))
+							self.signals.loadVariableValue.emit(str(var.GetName()), str(string_value), str(data), str(var.GetTypeName()), hex(var.GetLoadAddress()))
 						else:
-							self.signals.updateVariableValue.emit(str(var.GetName()), str(string_value), str(data), str(var.GetTypeName()))
+							self.signals.updateVariableValue.emit(str(var.GetName()), str(string_value), str(data), str(var.GetTypeName()), hex(var.GetLoadAddress()))
 					
 					QCoreApplication.processEvents()
 						

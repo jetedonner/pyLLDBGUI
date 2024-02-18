@@ -311,6 +311,12 @@ class DisassemblyTableWidget(QTableWidget):
 		# Insert the items into the row
 		self.setItem(row, col, item)
 		
+	def scrollToRow(self, row):
+		row_to_scroll = row
+		scroll_value = (row_to_scroll - self.viewport().height() / (2 * self.rowHeight(0))) * self.rowHeight(0)
+		self.verticalScrollBar().setValue(scroll_value)
+		
+		
 		
 # THIS ONE IS USED FOR NG IMPLEMENTATION !!!
 class AssemblerTextEdit(QWidget):
@@ -343,13 +349,11 @@ class AssemblerTextEdit(QWidget):
 	def setPC(self, pc):
 		for row in range(self.table.rowCount()):
 			if self.table.item(row, 3).text() == hex(pc):
-#				print("FOUND ROW")
 				self.table.item(row, 0).setText('>')
-#				index = self.table.model().index(row, 0)
-#				self.table.scrollTo(index)
-				self.table.scrollTo(self.table.model().index(row, 0))
+				self.table.scrollToRow(row)
 			else:
 				self.table.item(row, 0).setText('')
+				
 		pass
 		
 	driver = None

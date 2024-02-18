@@ -18,6 +18,8 @@ class VariablesTableWidget(QTableWidget):
 	def __init__(self):
 		super().__init__()
 		self.context_menu = QMenu(self)
+		actionShowMemory = self.context_menu.addAction("Show Memory")
+		actionShowMemory.triggered.connect(self.handle_showMemory)
 #		actionToggleBP = self.context_menu.addAction("Toggle Breakpoint")
 #		actionToggleBP.triggered.connect(self.handle_toggleBP)
 #		actionDisableBP = self.context_menu.addAction("Enable / Disable Breakpoint")
@@ -25,20 +27,22 @@ class VariablesTableWidget(QTableWidget):
 #		
 #		self.context_menu.addSeparator()
 		
-		self.setColumnCount(4)
+		self.setColumnCount(5)
 		self.setColumnWidth(0, 196)
 		self.setColumnWidth(1, 196)
 		self.setColumnWidth(2, 196)
-		self.setColumnWidth(3, 768)
+		self.setColumnWidth(3, 196)
+		self.setColumnWidth(4, 450)
 		self.verticalHeader().hide()
 		self.horizontalHeader().show()
 		self.horizontalHeader().setHighlightSections(False)
-		self.setHorizontalHeaderLabels(['Name', 'Value', 'Data', 'Type'])
+		self.setHorizontalHeaderLabels(['Name', 'Value', 'Type', 'Address', 'Data'])
 		
 		self.horizontalHeaderItem(0).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
 		self.horizontalHeaderItem(1).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
 		self.horizontalHeaderItem(2).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
 		self.horizontalHeaderItem(3).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
+		self.horizontalHeaderItem(4).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
 		self.setFont(ConfigClass.font)
 		
 		self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
@@ -51,38 +55,46 @@ class VariablesTableWidget(QTableWidget):
 #			self.toggleBPOn(row)
 ##			self.sigBPOn.emit(self.item(self.selectedItems()[0].row(), 3).text(), self.item(self.selectedItems()[0].row(), 1).isBPOn)
 		pass
-			
+		
 	def contextMenuEvent(self, event):
 #		for i in dir(event):
 #			print(i)
 #		print(event.pos())
 #		print(self.itemAt(event.pos().x(), event.pos().y()))
 #		print(self.selectedItems())
-#		self.context_menu.exec(event.globalPos())
+		self.context_menu.exec(event.globalPos())
+		pass
+		
+	def handle_showMemory(self):
+		item = self.item(self.selectedItems()[0].row(), 3)
+		print(f'SHOWING MEM For: {item.text()}')
+		self.window().doReadMemory(int(item.text(), 16))
 		pass
 		
 	def resetContent(self):
 		for row in range(self.rowCount(), 0):
 			self.removeRow(row)
 	
-	def updateRow(self, name, value, data, datatype):
+	def updateRow(self, name, value, datatype, address, data):
 		self.ommitCellChanged = True
 		for i in range(self.rowCount()):
 			if self.item(i, 0).text() == name:
 				self.item(i, 1).setText(value)
-				self.item(i, 2).setText(data)
-				self.item(i, 3).setText(datatype)
+				self.item(i, 2).setText(datatype)
+				self.item(i, 3).setText(address)
+				self.item(i, 4).setText(data)
 				break
 		self.ommitCellChanged = False
 		
-	def addRow(self, name, value, data, datatype):
+	def addRow(self, name, value, datatype, address, data):
 		self.ommitCellChanged = True
 		currRowCount = self.rowCount()
 		self.setRowCount(currRowCount + 1)
 		self.addItem(currRowCount, 0, str(name))
 		self.addItem(currRowCount, 1, str(value), True if str(datatype) == "int" else False)
-		self.addItem(currRowCount, 2, str(data), True if str(datatype) == "int" else False)
-		self.addItem(currRowCount, 3, str(datatype))
+		self.addItem(currRowCount, 2, str(datatype))
+		self.addItem(currRowCount, 3, str(address))
+		self.addItem(currRowCount, 4, str(data), True if str(datatype) == "int" else False)
 		self.setRowHeight(currRowCount, 18)
 		self.ommitCellChanged = False
 		

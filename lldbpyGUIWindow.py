@@ -27,6 +27,8 @@ from ui.variablesTableWidget import *
 from ui.clickLabel import *
 from ui.helpDialog import *
 from ui.settingsDialog import *
+from ui.widgets.QHexTableWidget import *
+from ui.widgets.QMemoryViewer import *
 #from ui.testTableWidget import *
 
 from worker.eventListenerWorker import *
@@ -343,6 +345,14 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.tabWidgetDbg.addTab(self.tabMemory, "Memory")
 		
+		self.tblHex = QMemoryViewer(self.driver)
+		
+		self.tabMemoryNG = QWidget()
+		self.tabMemoryNG.setLayout(QVBoxLayout())
+		self.tabMemoryNG.layout().addWidget(self.tblHex)
+		
+		self.tabWidgetDbg.addTab(self.tabMemoryNG, "MemoryNG")
+		
 		self.txtOutput = QConsoleTextEdit()
 		self.txtOutput.setFont(ConfigClass.font)
 		self.txtOutput.setReadOnly(True)
@@ -466,6 +476,8 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.interruptLoadSourceWorker = LoadSourceCodeReceiver()
 		
 		self.threadpool = QThreadPool()
+		
+		self.tabWidgetDbg.setCurrentIndex(6)
 	
 	def loadTarget(self):
 		if self.debugger.GetNumTargets() > 0:
@@ -615,6 +627,33 @@ class LLDBPyGUIWindow(QMainWindow):
 		print("==============================================")
 		pass
 	
+	def doReadMemory(self, address, size = 0x100):
+		self.tabWidgetDbg.setCurrentWidget(self.tabMemoryNG)
+		self.tblHex.txtMemAddr.setText(hex(address))
+		self.tblHex.txtMemSize.setText(hex(size))
+		try:
+#           global debugger
+			print(f'INSIDE doReadMemory')
+			self.handle_readMemory(self.driver.debugger, int(self.tblHex.txtMemAddr.text(), 16), int(self.tblHex.txtMemSize.text(), 16))
+			print(f'AFTER doReadMemory')
+		except Exception as e:
+			print(f"Error while reading memory from process: {e}")
+			
+	def handle_readMemory(self, debugger, address, data_size = 0x100):
+		print(f'INSIDE handle_readMemory')
+		error_ref = lldb.SBError()
+		process = debugger.GetSelectedTarget().GetProcess()
+		memory = process.ReadMemory(address, data_size, error_ref)
+		if error_ref.Success():
+#           hex_string = binascii.hexlify(memory)
+			# `memory` is a regular byte string
+#           print(f'BYTES:\n{memory}\nHEX:\n{hex_string}')
+			print(f'INSIDE tblHex.setTxtHex')
+			self.tblHex.setTxtHex(memory, True, int(self.tblHex.txtMemAddr.text(), 16))
+			print(f'AFTER tblHex.setTxtHex')
+		else:
+			print(str(error_ref))
+			
 	def click_restartTarget(self):
 		target = self.driver.getTarget()
 		launch_info = target.GetLaunchInfo()
@@ -629,14 +668,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		except Exception as e:
 			print(f"Error while reading memory from process: {e}")
 			
-	def handle_readMemory(self, debugger, address, data_size = 0x100):
-		error_ref = lldb.SBError()
-		process = debugger.GetSelectedTarget().GetProcess()
-		memory = process.ReadMemory(address, data_size, error_ref)
-		if error_ref.Success():
-			self.hxtMemory.setTxtHexNG(memory, True, int(self.txtMemoryAddr.text(), 16))
-		else:
-			print(str(error_ref))
+#	0x3041130ad
 		
 	def click_saveBP(self):
 		filename = showSaveFileDialog()
@@ -788,20 +820,11 @@ class LLDBPyGUIWindow(QMainWindow):
 				tblWdgt.item(i, 2).setText(value)
 				break
 			
-	def handle_loadRegisterLoadVariableValue(self, name, value, data, valType):
-		self.tblVariables.addRow(name, value, data, valType)
+	def handle_loadRegisterLoadVariableValue(self, name, value, data, valType, address):
+		self.tblVariables.addRow(name, value, valType, address, data)
 		
-	def handle_loadRegisterUpdateVariableValue(self, name, value, data, valType):
-		self.tblVariables.updateRow(name, value, data, valType)
-#		tblWdgt = self.tblVariables
-#		tblWdgt.ommitCellChanged = True
-#		for i in range(tblWdgt.rowCount()):
-#			if tblWdgt.item(i, 0).text() == name:
-#				tblWdgt.item(i, 1).setText(value)
-#				tblWdgt.item(i, 2).setText(data)
-#				tblWdgt.item(i, 3).setText(valType)
-#				break
-#		tblWdgt.ommitCellChanged = False
+	def handle_loadRegisterUpdateVariableValue(self, name, value, data, valType, address):
+		self.tblVariables.updateRow(name, value, valType, address, data)
 	
 	def handle_execCommand(self):
 		self.do_execCommand()
