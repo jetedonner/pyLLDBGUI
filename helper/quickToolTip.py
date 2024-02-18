@@ -5,7 +5,7 @@ import codecs
 import struct
 
 class QuickToolTip:
-	operandMemPrefixes = ("dword ptr", "word ptr", "byte ptr", "[")
+	operandMemPrefixes = ("qword ptr", "dword ptr", "word ptr", "byte ptr", "[")
 		
 	def get_memory_addressAndOperands(self, debugger, operands):
 		strOp = self.extractOperand(operands)
@@ -18,19 +18,25 @@ class QuickToolTip:
 		frame = thread.GetSelectedFrame()
 		
 		isMinus = True
+		isSolo = False
 		parts = expression.split("-")
 		if len(parts) <= 1:
 			parts = expression.split("+")
 			isMinus = False
+			if len(parts) <= 1:
+				isSolo = True
 			
-		if len(parts) == 2:
-			rbp_value = frame.EvaluateExpression(f"${parts[0]}").GetValueAsUnsigned()
-			# Calculate the desired memory address
+#		if len(parts) == 2:
+		rbp_value = frame.EvaluateExpression(f"${parts[0]}").GetValueAsUnsigned()
+		# Calculate the desired memory address
+		if isMinus:
 			offset_value = int(parts[1].replace("0x", ""), 16)
-			if isMinus:
-				address = rbp_value - offset_value
-			else:
-				address = rbp_value + offset_value
+			address = rbp_value - offset_value
+		elif isSolo:
+			address = rbp_value
+		else:
+			offset_value = int(parts[1].replace("0x", ""), 16)
+			address = rbp_value + offset_value
 				
 #		print(f"Memory address: 0x{address:X}")
 		return address
@@ -121,7 +127,7 @@ class QuickToolTip:
 					
 				try:
 					value = struct.unpack('<H', dataTillNull)[0]
-					tooltip += f'\nInt:\t{value}'
+					tooltip += f'\nInt:\t{hex(value)} ({value})'
 				except Exception as e:
 #					print(f'Error extracting INT: {e}')
 					pass

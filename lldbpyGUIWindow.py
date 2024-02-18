@@ -391,11 +391,11 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.tabWidgetMain.addTab(self.tabWidgetFileInfos, "File Info")
 		self.wdgCmd = QWidget()
-		self.wdgConsole = QWidget()
+		self.wdgCommands = QWidget()
 		self.layCmdParent = QVBoxLayout()
 		self.layCmd = QHBoxLayout()
 		self.wdgCmd.setLayout(self.layCmd)
-		self.wdgConsole.setLayout(self.layCmdParent)
+		self.wdgCommands.setLayout(self.layCmdParent)
 		
 		self.lblCmd = QLabel("Command: ")
 		self.lblCmd.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
@@ -415,7 +415,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.cmdClear = QPushButton()
 		self.cmdClear.setIcon(ConfigClass.iconTrash)
-		self.cmdClear.setToolTip("Clear the console log")
+		self.cmdClear.setToolTip("Clear the Commands log")
 		self.cmdClear.setIconSize(QSize(16, 16))
 		self.cmdClear.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
 		self.cmdClear.clicked.connect(self.clear_clicked)
@@ -427,14 +427,14 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.layCmd.addWidget(self.cmdClear)
 		self.wdgCmd.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)		
 		
-		self.txtConsole = QConsoleTextEdit()
-		self.txtConsole.setReadOnly(True)
-		self.txtConsole.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
-		self.txtConsole.setFont(ConfigClass.font)
-		self.layCmdParent.addWidget(self.txtConsole)
+		self.txtCommands = QConsoleTextEdit()
+		self.txtCommands.setReadOnly(True)
+		self.txtCommands.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+		self.txtCommands.setFont(ConfigClass.font)
+		self.layCmdParent.addWidget(self.txtCommands)
 		self.layCmdParent.addWidget(self.wdgCmd)
 		
-		self.tabWidgetMain.addTab(self.wdgConsole, "Console")
+		self.tabWidgetMain.addTab(self.wdgCommands, "Commands")
 		
 		self.layout.addWidget(self.tabWidgetMain)
 		
@@ -676,7 +676,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.statusBar.showMessage(msg)
 		
 	def clear_clicked(self):
-		self.txtConsole.setText("")
+		self.txtCommands.setText("")
 	
 	def start_loadBreakpointsWorker(self, initTable = True):
 		print(">>>> start_loadBreakpointsWorker")
@@ -818,12 +818,12 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 	def handle_commandFinished(self, res):
 		if res.Succeeded():
-			self.txtConsole.appendEscapedText(res.GetOutput())
+			self.txtCommands.appendEscapedText(res.GetOutput())
 		else:
-			self.txtConsole.appendEscapedText(f"{res.GetError()}")
+			self.txtCommands.appendEscapedText(f"{res.GetError()}")
 			
 		if self.swtAutoscroll.isChecked():
-			self.sb = self.txtConsole.verticalScrollBar()
+			self.sb = self.txtCommands.verticalScrollBar()
 			self.sb.setValue(self.sb.maximum())
 	
 	def settings_clicked(self, s):
@@ -959,7 +959,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		pass
 	
 	def stepOver_clicked(self):
-		print("Trying to step OVER ...")
+#		print("Trying to step OVER ...")
 #		self.driver.debugger.SetAsync(True)
 #		self.thread.StepInstruction(True)
 		
@@ -1003,7 +1003,7 @@ class LLDBPyGUIWindow(QMainWindow):
 #		self.threadpool.start(self.workerLoadRegister)
 			
 	def stepInto_clicked(self):
-		print("Trying to step INTO ...")
+#		print("Trying to step INTO ...")
 #		self.driver.debugger.SetAsync(False)
 		self.thread.StepInto()
 #		self.driver.debugger.SetAsync(True)
@@ -1015,7 +1015,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.reloadBreakpoints(False)
 		
 	def stepOut_clicked(self):
-		print("Trying to step OUT ...")
+#		print("Trying to step OUT ...")
 #		self.driver.debugger.SetAsync(False)
 		self.thread.StepOut()
 #		self.driver.debugger.SetAsync(True)

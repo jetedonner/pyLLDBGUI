@@ -2,8 +2,6 @@
 triple:          'x86_64-apple-darwin'
 binary-path:     hello_world_test
 relocations:
-  - { offset: 0x26, size: 0x8, addend: 0x0, symName: _signal_handler, symObjAddr: 0x0, symBinAddr: 0x100003EA0, symSize: 0x20 }
-  - { offset: 0x3F, size: 0x8, addend: 0x0, symName: _shouldNotExit, symObjAddr: 0xCC, symBinAddr: 0x100008000, symSize: 0x0 }
-  - { offset: 0x5D, size: 0x8, addend: 0x0, symName: _signal_handler, symObjAddr: 0x0, symBinAddr: 0x100003EA0, symSize: 0x20 }
-  - { offset: 0x81, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x20, symBinAddr: 0x100003EC0, symSize: 0xAA }
+  - { offset: 0x26, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x0, symBinAddr: 0x100003EC0, symSize: 0xA9 }
+  - { offset: 0x41, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x0, symBinAddr: 0x100003EC0, symSize: 0xA9 }
 ...

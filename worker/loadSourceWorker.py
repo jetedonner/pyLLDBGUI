@@ -63,7 +63,7 @@ class LoadSourceCodeWorker(QRunnable):
 		source_mgr = self.debugger.GetSourceManager()
 		# Use a string stream as the destination.
 		stream = lldb.SBStream()
-		source_mgr.DisplaySourceLinesWithLineNumbers(filespec, self.lineNum, self.lineNum, 64, '=>', stream)
+		source_mgr.DisplaySourceLinesWithLineNumbers(filespec, self.lineNum, self.lineNum, 85, '=>', stream)
 #		print(stream.GetData())
 		
 		
