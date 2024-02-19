@@ -511,7 +511,7 @@ class LLDBPyGUIWindow(QMainWindow):
 						self.processNode.setExpanded(True)
 						self.threadNode.setExpanded(True)
 						
-						print(f'self.thread.GetNumFrames() {self.thread.GetNumFrames()}')
+#						print(f'self.thread.GetNumFrames() {self.thread.GetNumFrames()}')
 						frame = self.thread.GetFrameAtIndex(0)
 						if frame:
 							print(frame)
@@ -755,7 +755,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		if initTable:
 			self.txtMultiline.table.setBPAtAddress(loadAddr, True, False)
 		self.tblBPs.addRow(bpId, idx, loadAddr, name, str(hitCount), condition)
-		print("Reloading BPs ...")
+#		print("Reloading BPs ...")
 	
 	def handle_updateBreakpointsLoadBreakpointValue(self, bpId, idx, loadAddr, name, hitCount, condition, initTable):
 #		if initTable:

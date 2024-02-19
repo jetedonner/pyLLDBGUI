@@ -126,7 +126,7 @@ class QHEXTextEditSplitter(QWidget):
 		if not self.updateHexTxt:
 			return
 		
-		print("txtMultilineHex_textchanged")
+#		print("txtMultilineHex_textchanged")
 		try:
 			hex_string = self.txtMultilineHex.toPlainText()
 			bytes_list = bytearray.fromhex(hex_string)

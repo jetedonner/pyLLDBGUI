@@ -17,6 +17,7 @@ from ui.widgets.QHexTableWidget import *
 class QMemoryViewer(QWidget):
 	
 	driver = None
+	byteGrouping = ByteGrouping.TwoChars
 	
 	def __init__(self, driver, parent=None):
 		QWidget.__init__(self, parent=parent)
@@ -66,6 +67,8 @@ class QMemoryViewer(QWidget):
 		
 		# Add names to the combo box
 		self.cmbGrouping.addItems(member_names)
+#		print(f'SELF GROUING: {self.byteGrouping.value[1]}')
+		self.cmbGrouping.setCurrentIndex(1)
 		self.cmbGrouping.currentIndexChanged.connect(self.cmbGrouping_changed)
 		
 		self.layMemViewer.addWidget(self.cmbGrouping)
@@ -85,20 +88,23 @@ class QMemoryViewer(QWidget):
 		idx = 0
 		for member in ByteGrouping:
 			if idx == currentIdx:
-				self.tblHex.resetContent()
-				for i in range(0, len(self.hexData), 16):
-					rawData = ""
-					current_values = self.hexData[i:i+16]
-					for single in current_values:
-						integer_value = int(single, 16)
-						utf_8_char = chr(integer_value)
-						rawData += utf_8_char	
-					current_string = self.formatHexStringFourChars(' '.join(current_values), member)
-					self.tblHex.addRow(hex(self.startAddress + i), current_string, rawData)
+				self.byteGrouping = member
+				self.formatGrouping()
 				break
 			idx += 1
 				
-		
+	def formatGrouping(self):
+		self.tblHex.resetContent()
+		for i in range(0, len(self.hexData), 16):
+			rawData = ""
+			current_values = self.hexData[i:i+16]
+			for single in current_values:
+				integer_value = int(single, 16)
+				utf_8_char = chr(integer_value)
+				rawData += utf_8_char	
+			current_string = self.formatHexStringFourChars(' '.join(current_values), self.byteGrouping)
+			self.tblHex.addRow(hex(self.startAddress + i), current_string, rawData)
+			
 	def click_ReadMemory(self):
 		try:
 			self.handle_readMemory(self.driver.debugger, int(self.txtMemAddr.text(), 16), int(self.txtMemSize.text(), 16))
@@ -143,18 +149,18 @@ class QMemoryViewer(QWidget):
 		try:
 			self.startAddress = startAddress
 			self.hexData = [format(byte, '02x') for byte in txtInBytes]
-			
-#			string2 = ""
-#			string = ""
-			for i in range(0, len(self.hexData), 16):
-				rawData = ""
-				current_values = self.hexData[i:i+16]
-				for single in current_values:
-					integer_value = int(single, 16)
-					utf_8_char = chr(integer_value)
-					rawData += utf_8_char	
-				current_string = self.formatHexStringFourChars(' '.join(current_values), ByteGrouping.EightChars)
-				self.tblHex.addRow(hex(startAddress + i), current_string, rawData)
+			self.formatGrouping()
+##			string2 = ""
+##			string = ""
+#			for i in range(0, len(self.hexData), 16):
+#				rawData = ""
+#				current_values = self.hexData[i:i+16]
+#				for single in current_values:
+#					integer_value = int(single, 16)
+#					utf_8_char = chr(integer_value)
+#					rawData += utf_8_char	
+#				current_string = self.formatHexStringFourChars(' '.join(current_values), ByteGrouping.EightChars)
+#				self.tblHex.addRow(hex(startAddress + i), current_string, rawData)
 				
 		except Exception as e:
 			print(f"Exception: '{e}' while converting bytes '{txtInBytes}' to HEX string")

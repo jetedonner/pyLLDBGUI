@@ -11,6 +11,7 @@ class SizeDirPtrs(Enum):
 	WORDPTR = ("word ptr", 2)
 	DWORDPTR = ("dword ptr", 4)
 	QWORDPTR = ("qword ptr", 8)
+	BRACKET = ("[", 16)
 	
 	def hasMember(name):
 		for member in SizeDirPtrs:

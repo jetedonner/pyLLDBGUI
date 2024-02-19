@@ -329,7 +329,7 @@ class AssemblerTextEdit(QWidget):
 	def setInstsAndAddr(self, insts, addr):
 		self.insts = insts
 		self.addr = addr
-		print(f'CURRENT ADDRESS: {self.addr}')
+#		print(f'CURRENT ADDRESS: {self.addr}')
 	
 	def clear(self):
 		self.lineCountNG = 0
