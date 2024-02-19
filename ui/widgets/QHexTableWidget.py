@@ -19,12 +19,34 @@ from config import *
 
 import re
 
-class HexGroups(enum.Enum):
+class ByteGrouping(enum.Enum):
 	NoGrouping = ("No Grouping", 1) #"No grouping"
 	TwoChars = ("Two", 2) #"Two characters"
 	FourChars = ("Four", 4) #"Four characters"
 	EightChars = ("Eight", 8) #"Four characters"
 	
+class MyTextEdit(QTextEdit):
+	def __init__(self, parent=None):
+		super().__init__(parent)
+#		self.line_height = 20  # Set desired line height
+#		cursor = self.textCursor()
+#		if cursor.block():
+#			block_format = cursor.blockFormat()
+#			block_format.setLineHeight(30, 2)
+			
+#	def paintEvent(self, event):
+#		painter = QPainter(self)
+#		cursor = self.textCursor()
+#		while cursor.block():
+#			block_format = cursor.blockFormat()
+#			block_format.setLineHeight(20, 2)
+##			rect = self.cursorRect(cursor)
+##			y = rect.top()
+##			for j in range(block_format.length()):
+##				painter.drawText(rect.left(), y, cursor.charAt(j))
+##				y += self.line_height
+##			cursor.movePosition(QTextCursor.MoveOperation.NextBlock)
+			
 class TransparentLineEdit(QLineEdit):
 	
 	item_sel_changed = pyqtSignal(object, object)
@@ -92,21 +114,53 @@ class QHexTableWidget(QTableWidget):
 		currRowCount = self.rowCount()
 		
 		if currRowCount == 0:
+			self.line_height = 30  # Set desired line height
+			
 			self.setRowCount(currRowCount + 1)
-			self.txtAddr = QTextEdit()
+			self.txtAddr = MyTextEdit()
 			self.txtAddr.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 			self.txtAddr.setText(address)
+#			self.txtAddr.setStyleSheet("QTextEdit { paragraph-spacing: 20px; }")
+			self.txtAddr.setStyleSheet("MyTextEdit { line-height: 3.5; }")
+			self.txtAddr.setFont(ConfigClass.font)
 			self.setCellWidget(currRowCount, 0, self.txtAddr)
+#			cursor = self.txtAddr.textCursor()
+#			if cursor.block():
+#				block_format = cursor.blockFormat()
+#				block_format.setLineHeight(self.line_height, 2)
 			
-			self.txtHex = QTextEdit()
+			self.txtHex = MyTextEdit()
 			self.txtHex.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 			self.txtHex.setText(value)
+#			self.txtHex.setStyleSheet("QTextEdit { paragraph-spacing: 20px; }")
+			self.txtHex.setStyleSheet("MyTextEdit { line-height: 3.5; }")
+			self.txtHex.setFont(ConfigClass.font)
 			self.setCellWidget(currRowCount, 1, self.txtHex)
+#			cursor = self.txtHex.textCursor()
+#			if cursor.block():
+#				block_format = cursor.blockFormat()
+#				block_format.setLineHeight(self.line_height, 2)
 			
-			self.txtData = QTextEdit()
+			self.txtData = MyTextEdit()
 			self.txtData.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 			self.txtData.setText(raw)
+			self.txtData.setStyleSheet("MyTextEdit { line-height: 3.5; }")
+			self.txtData.setFont(ConfigClass.font)
 			self.setCellWidget(currRowCount, 2, self.txtData)
+#			cursor = self.txtData.textCursor()
+#			if cursor.block():
+#				block_format = cursor.blockFormat()
+#				block_format.setLineHeight(self.line_height, 2)
+			
+			self.txtAddr.verticalScrollBar().valueChanged.connect(self.handle_scroll_change)	
+			self.txtHex.verticalScrollBar().valueChanged.connect(self.handle_scroll_change)	
+			self.txtData.verticalScrollBar().valueChanged.connect(self.handle_scroll_change)	
+			
+#			reference_line_height = self.txtData.textCursor().blockFormat().lineHeight(20)  # Get reference line height
+#			stylesheet = self.create_line_height_stylesheet(reference_line_height)
+#			self.txtHex.setStyleSheet(stylesheet)
+			
+#			self.synchronize_scroll(self.txtAddr, self.txtHex)
 		else:
 			self.txtAddr.append(address)
 			self.txtHex.append(value)
@@ -147,8 +201,23 @@ class QHexTableWidget(QTableWidget):
 #		self.addItem(currRowCount, 1, str(value))
 #		self.addItem(currRowCount, 2, str(raw))
 		self.setRowHeight(currRowCount, self.get_required_row_height(self.txtAddr, self.height()))
-		
-		
+	
+	def create_line_height_stylesheet(self, reference_line_height):
+		stylesheet = ""
+		# Loop through lines in the second text edit
+		for line_index, line in enumerate(self.txtData.toPlainText().splitlines()):
+			# Calculate desired font size or spacing based on reference line height
+			# Adjust stylesheet rules as needed (e.g., using line numbers or custom markers)
+			stylesheet += f":global(.QTextEdit) line[{line_index}] {{ font-size: {reference_line_height * 1.2}px; }}"  # Example font size adjustment
+		return stylesheet
+	
+#	def synchronize_scroll(self, widget1, widget2):
+	def handle_scroll_change(self, value):
+		self.txtAddr.verticalScrollBar().setValue(value)
+		self.txtHex.verticalScrollBar().setValue(value)
+		self.txtData.verticalScrollBar().setValue(value)
+			
+#		widget1.verticalScrollBar().valueChanged.connect(handle_scroll_change)	
 	
 	def get_required_height(self, text_edit):
 		total_height = 0

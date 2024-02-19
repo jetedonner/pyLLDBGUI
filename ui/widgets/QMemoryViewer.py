@@ -59,10 +59,14 @@ class QMemoryViewer(QWidget):
 		self.cmbGrouping = QComboBox()
 		
 		# Access member names from the `__members__` dictionary
-		member_names = list(HexGroups.__members__.keys())
+		member_names = list(ByteGrouping.__members__.keys())
+		
+		
+#		print(ByteGrouping.__members__.keys())
 		
 		# Add names to the combo box
 		self.cmbGrouping.addItems(member_names)
+		self.cmbGrouping.currentIndexChanged.connect(self.cmbGrouping_changed)
 		
 		self.layMemViewer.addWidget(self.cmbGrouping)
 		
@@ -73,6 +77,27 @@ class QMemoryViewer(QWidget):
 		self.tblHex = QHexTableWidget()
 		self.layMain.addWidget(self.tblHex)
 		self.setLayout(self.layMain)
+		
+	startAddress = None
+	#	hexData = None
+	
+	def cmbGrouping_changed(self, currentIdx:int):
+		idx = 0
+		for member in ByteGrouping:
+			if idx == currentIdx:
+				self.tblHex.resetContent()
+				for i in range(0, len(self.hexData), 16):
+					rawData = ""
+					current_values = self.hexData[i:i+16]
+					for single in current_values:
+						integer_value = int(single, 16)
+						utf_8_char = chr(integer_value)
+						rawData += utf_8_char	
+					current_string = self.formatHexStringFourChars(' '.join(current_values), member)
+					self.tblHex.addRow(hex(self.startAddress + i), current_string, rawData)
+				break
+			idx += 1
+				
 		
 	def click_ReadMemory(self):
 		try:
@@ -85,27 +110,27 @@ class QMemoryViewer(QWidget):
 		process = debugger.GetSelectedTarget().GetProcess()
 		memory = process.ReadMemory(address, data_size, error_ref)
 		if error_ref.Success():
-#			self.hxtMemory.setTxtHexNG(memory, True, int(self.txtMemoryAddr.text(), 16))
-#			self.tblHex.addRow(hex(int(self.txtMemAddr.text(), 16)), memory)
 			self.setTxtHex(memory, True, int(self.txtMemAddr.text(), 16))
 		else:
 			print(str(error_ref))
 			
-#	hexData = None
-	
+
 	def formatHexStringFourChars(self, hex_string, grouping):
 		
 		no_space_text = hex_string.replace(" ", "")
 		strLen = len(no_space_text)
 		
-		if grouping == HexGroups.NoGrouping:
+		if grouping == ByteGrouping.NoGrouping:
 			return no_space_text
-		elif grouping == HexGroups.TwoChars:
+		elif grouping == ByteGrouping.TwoChars:
 			hex_pairs = re.findall(r'..', no_space_text)
-		elif grouping == HexGroups.FourChars:
+		elif grouping == ByteGrouping.FourChars:
 			hex_pairs = re.findall(r'....', no_space_text)
-		elif grouping == HexGroups.EightChars:
+		elif grouping == ByteGrouping.EightChars:
 			hex_pairs = re.findall(r'........', no_space_text)
+		else:
+			hex_pairs = ""
+			
 		if len(hex_pairs) < (strLen / grouping.value[1]):
 			return hex_string
 
@@ -116,6 +141,7 @@ class QMemoryViewer(QWidget):
 	def setTxtHex(self, txtInBytes, showAddress = True, startAddress:int = 0):
 		self.tblHex.resetContent()
 		try:
+			self.startAddress = startAddress
 			self.hexData = [format(byte, '02x') for byte in txtInBytes]
 			
 #			string2 = ""
@@ -126,9 +152,8 @@ class QMemoryViewer(QWidget):
 				for single in current_values:
 					integer_value = int(single, 16)
 					utf_8_char = chr(integer_value)
-					rawData += utf_8_char
-					
-				current_string = self.formatHexStringFourChars(' '.join(current_values), HexGroups.EightChars)
+					rawData += utf_8_char	
+				current_string = self.formatHexStringFourChars(' '.join(current_values), ByteGrouping.EightChars)
 				self.tblHex.addRow(hex(startAddress + i), current_string, rawData)
 				
 		except Exception as e:
