@@ -109,6 +109,10 @@ class DisassemblyTableWidget(QTableWidget):
 		item.toggleBPOn()
 		self.sigBPOn.emit(self.item(self.selectedItems()[0].row(), 3).text(), item.isBPOn)
 		pass
+	
+	def handle_deleteAllBPs(self):
+		for i in range(self.rowCount()):
+			self.item(i, 1).setBPOn(False)
 		
 	def doEnableBP(self, address, enabled):
 		for i in range(self.rowCount()):

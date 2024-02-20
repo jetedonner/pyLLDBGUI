@@ -85,6 +85,26 @@ class BreakpointHelper():
 				break
 		pass
 		
+	def handle_checkBPExists(self, address):
+		bpRet = None
+		print(f'handle_checkBPExists: {address}')
+		target = self.driver.getTarget()
+		for i in range(target.GetNumBreakpoints()):
+			bp = self.driver.getTarget().GetBreakpointAtIndex(i)
+			found = False
+			for j in range(bp.GetNumLocations()):
+				bl = bp.GetLocationAtIndex(j)
+				if hex(bl.GetAddress().GetLoadAddress(target)) == address:
+					bpRet = bp
+##					bp_cur = self.driver.getTarget().GetBreakpointAtIndex(bpId)
+#					bp.SetEnabled(enabled)
+					found = True
+					break
+			if found:
+				break
+		print(f'handle_checkBPExists => Found: {bpRet}')
+		return bpRet
+		
 	def handle_deleteBP(self, bpId, enabled = True):
 		print(f'handle_enableBP: {bpId} => {enabled}')
 		target = self.driver.getTarget()
@@ -106,3 +126,7 @@ class BreakpointHelper():
 #			if found:
 #				break
 		pass
+		
+	def handle_deleteAllBPs(self):
+		print(f'handle_deleteAllBPs!!!')
+		self.driver.getTarget().DeleteAllBreakpoints()

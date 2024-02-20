@@ -26,10 +26,12 @@ class ConfigClass():
 	
 	iconSave = None
 	iconLoad = None
+	iconReload = None
 	iconInfo = None
 	pixInfo = None
 	pixSave = None
 	pixLoad = None
+	pixReload = None
 	pixTrash = None
 	
 	iconBug = None
@@ -63,6 +65,7 @@ class ConfigClass():
 		
 		ConfigClass.pixSave = QPixmap(os.path.join(resources_root, 'save.png')).scaled(QSize(18, 18))
 		ConfigClass.pixLoad = QPixmap(os.path.join(resources_root, 'folder.png')).scaled(QSize(18, 18))
+		ConfigClass.pixReload = QPixmap(os.path.join(resources_root, 'reload.png')).scaled(QSize(18, 18))
 		ConfigClass.pixInfo = QPixmap(os.path.join(resources_root, 'info.png')).scaled(QSize(18, 18))
 		ConfigClass.pixTrash = QPixmap(os.path.join(resources_root, 'delete.png')).scaled(QSize(18, 18))
 #		ui->label->setStyleSheet("border-image:url(:/2.png);");

@@ -93,6 +93,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.driver.signals.event_output.connect(self.handle_output)
 		
 		self.bpHelper = BreakpointHelper(self, self.driver)
+		self.setHelper = SettingsHelper()
 		
 		self.debugger = debugger
 		
@@ -286,6 +287,12 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.cmdLoadBP.clicked.connect(self.click_loadBP)
 		self.cmdLoadBP.setContentsMargins(0, 0, 0, 0)
 		
+		self.cmdReloadBPs = ClickLabel()
+		self.cmdReloadBPs.setPixmap(ConfigClass.pixReload)
+		self.cmdReloadBPs.setToolTip("Reload Breakpoints")
+		self.cmdReloadBPs.clicked.connect(self.click_reloadBP)
+		self.cmdReloadBPs.setContentsMargins(0, 0, 0, 0)
+		
 		self.cmdDeleteAllBP = ClickLabel()
 		self.cmdDeleteAllBP.setPixmap(ConfigClass.pixTrash)
 		self.cmdDeleteAllBP.setToolTip("Delete ALL Breakpoints")
@@ -297,6 +304,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.wgtBPCtrls.setLayout(QHBoxLayout())
 		self.wgtBPCtrls.layout().addWidget(self.cmdSaveBP)
 		self.wgtBPCtrls.layout().addWidget(self.cmdLoadBP)
+		self.wgtBPCtrls.layout().addWidget(self.cmdReloadBPs)
 		self.wgtBPCtrls.layout().addWidget(self.cmdDeleteAllBP)
 #		self.wgtBPCtrls.layout().setContentsMargins(0, 0, 0, 0)
 		self.wgtBPCtrls.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
@@ -448,7 +456,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.cmdExecuteCmd = QPushButton("Execute")
 		self.cmdExecuteCmd.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
-		self.cmdExecuteCmd.clicked.connect(self.click_execCommand)
+		self.cmdExecuteCmd.clicked.connect(self.handle_execCommand)
 		
 		self.cmdClear = QPushButton()
 		self.cmdClear.setIcon(ConfigClass.iconTrash)
@@ -731,13 +739,16 @@ class LLDBPyGUIWindow(QMainWindow):
 #		self.updateStatusBar("Loading breakpoints ...")
 		pass
 	
+	def click_reloadBP(self):
+		self.reloadBreakpoints(True)
+		self.updateStatusBar("All Breakpoints reloaded!")
+	
 	def click_deleteAllBP(self):
-#		dlg = ConfirmDialog("Delete all Breakpoints?", "Do you really want to delete all Breakpoints?")
-#		if dlg.exec():
 		if showQuestionDialog(self, "Delete all Breakpoints?", "Do you really want to delete all Breakpoints?"):
+			self.bpHelper.handle_deleteAllBPs()
+			self.txtMultiline.table.handle_deleteAllBPs()
 			self.tblBPs.resetContent()
-			self.updateStatusBar("Deleted all Breakpoints!")			
-		pass
+			self.updateStatusBar("All Breakpoints deleted!")
 		
 	def click_exit_action(self):
 		self.close()
@@ -861,40 +872,27 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 	def handle_loadRegisterUpdateVariableValue(self, name, value, data, valType, address):
 		self.tblVariables.updateRow(name, value, valType, address, data)
-	
-	def handle_execCommand(self):
-		self.do_execCommand()
 		
 	def click_help(self):
 		self.updateStatusBar("Help for LLDBPyGUI opening ...")
-		
-#		project_root = dirname(realpath(__file__))
-#		helpDialogPath = os.path.join(project_root, 'resources', 'designer', 'helpDialog.ui')
-#		
-#		window = uic.loadUi(helpDialogPath)
 		helpWindow = HelpDialog()
 		helpWindow.exec()
 		pass
 		
-	def click_execCommand(self):
+	def handle_execCommand(self):
 		self.do_execCommand(True)
-#		print("EXEC COMMAND!!!!")
-#		newCommand = self.txtCmd.text()
-#		
-#		if len(self.txtCmd.lstCommands) > 0:
-#			if self.txtCmd.lstCommands[len(self.txtCmd.lstCommands) - 1] != newCommand:
-#				self.txtCmd.lstCommands.append(newCommand)
-#				self.txtCmd.currCmd = len(self.txtCmd.lstCommands) - 1
-#			else:
-#				self.txtCmd.lstCommands.append(newCommand)
-#				self.txtCmd.currCmd = len(self.txtCmd.lstCommands) - 1
-		pass
+		
+#	def click_execCommand(self):
+#		self.do_execCommand(True)
 		
 	def do_execCommand(self, addCmd2Hist = False):
-		if addCmd2Hist:
+		if self.setHelper.getValue(SettingsValues.CmdHistory):
 			self.txtCmd.addCommandToHistory()
-		self.start_execCommandWorker(self.txtCmd.text())
-		pass
+			
+		if self.txtCmd.text().strip().lower() in ["clear", "clr"]:
+			self.clear_clicked()
+		else:
+			self.start_execCommandWorker(self.txtCmd.text())
 		
 	def start_execCommandWorker(self, command):
 		workerExecCommand = ExecCommandWorker(self.debugger, command)
@@ -992,17 +990,17 @@ class LLDBPyGUIWindow(QMainWindow):
 	
 	def handle_enableBPTblBPs(self, address, enabled):
 		self.txtMultiline.table.doEnableBP(address, enabled)
-		self.bpHelper.handle_enableBP(address, enabled)
-		if enabled:
-			self.driver.handleCommand("br com a -F lldbpyGUI.breakpointHandlerNG")
-		pass
+		if self.bpHelper.handle_checkBPExists(address) != None:
+			self.bpHelper.handle_enableBP(address, enabled)
+			if enabled:
+				self.driver.handleCommand("br com a -F lldbpyGUI.breakpointHandlerNG")
 	
 	def handle_enableBP(self, address, enabled):
 		self.tblBPs.doEnableBP(address, enabled)
-		self.bpHelper.handle_enableBP(address, enabled)
-		if enabled:
-			self.driver.handleCommand("br com a -F lldbpyGUI.breakpointHandlerNG")
-#		pass
+		if self.bpHelper.handle_checkBPExists(address) != None:
+			self.bpHelper.handle_enableBP(address, enabled)
+			if enabled:
+				self.driver.handleCommand("br com a -F lldbpyGUI.breakpointHandlerNG")
 	
 	def handle_BPOn(self, address, on):
 		self.tblBPs.doBPOn(address, on)
@@ -1134,6 +1132,7 @@ class LLDBPyGUIWindow(QMainWindow):
 			
 			self.txtSource.setEscapedText(sourceCode)
 			
+#			self.tabWidgetDbg
 			currTabIdx = self.tabWidgetDbg.currentIndex()
 			self.tabWidgetDbg.setCurrentIndex(2)
 			self.txtSource.horizontalScrollBar().setValue(horizontal_value)

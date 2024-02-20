@@ -3,6 +3,9 @@
 import os
 import sys
 
+from enum import Enum
+#import re	
+	
 from os.path import abspath
 from os.path import dirname, realpath
 from os import getcwd, path
@@ -13,7 +16,32 @@ from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
 from PyQt6 import uic, QtWidgets
 
+
+class SettingsValues(Enum):
+	CmdHistory = ("Commands history", bool)
+	
+	
+class SettingsHelper(QObject):
+	
+	settings = QSettings("DaVe_inc", "LLDBPyGUI")
+	
+	def __init__(self):
+		super().__init__()
+		
+	def initDefaults(self):
+		self.settings.setValue(SettingsValues.CmdHistory.value[0], True)
+		
+	def getValue(self, setting):
+		return self.settings.value(setting.value[0], None)
+	
 class SettingsDialog(QDialog):
+	
+	settings = QSettings("DaVe_inc", "LLDBPyGUI")
+	
+	def initDefaults(self):
+		self.settings.setValue(SettingsValues.CmdHistory.value[0], True)
+	
+	
 	def __init__(self):
 		super().__init__()
 		
@@ -24,53 +52,39 @@ class SettingsDialog(QDialog):
 		uic.loadUi(settingsDialogPath, self)
 		print("AFTER INIT settingsDialog.ui")
 		
-		settings = QSettings("DaVe_inc", "LLDBPyGUI")
-#		settings.setValue("TestSetting", "TESTVALUE")
+		self.cmdLoadDefaults.clicked.connect(self.click_loadDefaults)
+		self.cmdTest.clicked.connect(self.click_test)
+#		self.settings.setVal
+#		self.settings.setValue("TestSetting", "TESTVALUE")
 		
-		name = settings.value("TestSetting", "")
+		name = self.settings.value("TestSetting", "")
 		print(name)
-		print(f'SETTINGS-FILE: {settings.fileName()}')
+		print(f'SETTINGS-FILE: {self.settings.fileName()}')
+		self.accepted.connect(self.click_saveSettings)
 		
-#		QStatusBar *b = new QStatusBar;
-#		l->addWidget(b);
-#		b->showMessage("XXX");
-#		l->setMargin(0);
-#		l->setSpacing(0);
+	def click_test(self):
+		print(f'{SettingsValues.CmdHistory.value[0]} => {self.settings.value(SettingsValues.CmdHistory.value[0], False)}')
 		
-#		self.stb = QStatusBar()
-#		self.layStb = QHBoxLayout()
-#		self.layStb.addWidget(self.stb)
-#		self.stb.showMessage(settings.fileName(), 5000)
-#		self.wgtStb = QWidget()
-#		self.wgtStb.setLayout(self.layStb)
-#		self.layout().addWidget(self.wgtStb)
-#		self.initTable()
+	def click_loadDefaults(self):
+		self.initDefaults()
 		
-#	def initTable(self):
-#		self.tableView.setColumnCount(3)
-#		self.setColumnWidth(0, 48)
-#		self.setColumnWidth(1, 48)
-#		self.setColumnWidth(2, 512)
-##		self.setColumnWidth(3, 108)
-##		self.setColumnWidth(4, 32)
-##		self.setColumnWidth(5, 256)
-##		self.setColumnWidth(5, 324)
-##		self.setColumnWidth(6, 304)
-#		self.verticalHeader().hide()
-#		self.horizontalHeader().show()
-#		self.horizontalHeader().setHighlightSections(False)
-#		self.setHorizontalHeaderLabels(['Key', 'Value', 'Description'])#, 'Instruction', 'Hex', 'Comment'])
-#		self.horizontalHeaderItem(0).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
-#		self.horizontalHeaderItem(1).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
-#		self.horizontalHeaderItem(2).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
-##		self.horizontalHeaderItem(3).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
-##		self.horizontalHeaderItem(4).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
-##		self.horizontalHeaderItem(5).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
-##		self.horizontalHeaderItem(5).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
-##		self.horizontalHeaderItem(6).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
-##		self.setFont(ConfigClass.font)
-##		
-#		self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-#		self.setShowGrid(False)
-##		self.cellDoubleClicked.connect(self.on_double_click)
-#		pass
+	def click_saveSettings(self):
+		print(f'GOING TO SAVE SETTINGS !!!!')
+		self.tab_widget = self.findChild(QtWidgets.QTabWidget, "tabWidget")
+		print(f'self.tab_widget: {self.tab_widget}')
+		self.tbl_settings = self.tab_widget.findChild(QtWidgets.QTableWidget, "tblSettings")
+		print(f'self.tbl_settings: {self.tbl_settings}')
+		
+		self.tab_first = self.tab_widget.findChild(QtWidgets.QWidget, "tab")
+		print(f'self.tab: {self.tab_first}')
+		
+		self.tbl_settings2 = self.tab_first.findChild(QtWidgets.QTableWidget, "tblSettings")
+		print(f'self.tbl_settings2: {self.tbl_settings2}')
+		
+		layout = self.tab_first.layout()
+		self.table_widget = layout.itemAt(0).widget()
+		print(self.table_widget)
+		
+		
+		print(f'IsChecked: {self.table_widget.item(3, 1).checkState() == Qt.CheckState.Checked}')
+		print(f'Save Hist: {self.table_widget.item(3, 1).text()}')
