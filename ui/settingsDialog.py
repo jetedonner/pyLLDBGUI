@@ -18,7 +18,7 @@ from PyQt6 import uic, QtWidgets
 
 
 class SettingsValues(Enum):
-	CmdHistory = ("Commands history", bool)
+	CmdHistory = ("Commands history", True, bool)
 	
 	
 class SettingsHelper(QObject):
@@ -30,19 +30,27 @@ class SettingsHelper(QObject):
 		
 	def initDefaults(self):
 		self.settings.setValue(SettingsValues.CmdHistory.value[0], True)
+	
+	def setChecked(self, setting, checkableItem):
+		self.settings.setValue(setting.value[0], checkableItem.checkState() == Qt.CheckState.Checked)
 		
+	def getChecked(self, setting):
+		print(f'self.settings.value(setting.value[0], True, bool) => {self.settings.value(setting.value[0], True, bool)}')
+		return Qt.CheckState.Checked if self.settings.value(setting.value[0], setting.value[1], setting.value[2]) else Qt.CheckState.Unchecked
+	
 	def getValue(self, setting):
-		return self.settings.value(setting.value[0], None)
+		return self.settings.value(setting.value[0], setting.value[1], setting.value[2])
 	
 class SettingsDialog(QDialog):
 	
 	settings = QSettings("DaVe_inc", "LLDBPyGUI")
+	setHelper = None
 	
 	def initDefaults(self):
 		self.settings.setValue(SettingsValues.CmdHistory.value[0], True)
 	
 	
-	def __init__(self):
+	def __init__(self, settingsHelper = None):
 		super().__init__()
 		
 		# loading the ui file with uic module
@@ -51,6 +59,15 @@ class SettingsDialog(QDialog):
 		
 		uic.loadUi(settingsDialogPath, self)
 		print("AFTER INIT settingsDialog.ui")
+		
+		if settingsHelper != None:
+			self.setHelper = settingsHelper
+		else:
+			self.setHelper = SettingsHelper()
+		
+		self.tab_first = self.findChild(QtWidgets.QWidget, "tab")
+		self.layout = self.tab_first.layout()
+		self.table_widget = self.layout.itemAt(0).widget()
 		
 		self.cmdLoadDefaults.clicked.connect(self.click_loadDefaults)
 		self.cmdTest.clicked.connect(self.click_test)
@@ -62,6 +79,12 @@ class SettingsDialog(QDialog):
 		print(f'SETTINGS-FILE: {self.settings.fileName()}')
 		self.accepted.connect(self.click_saveSettings)
 		
+		self.loadSettings()
+		
+	def loadSettings(self):
+		self.table_widget.item(3, 1).setCheckState(self.setHelper.getChecked(SettingsValues.CmdHistory))
+		pass
+		
 	def click_test(self):
 		print(f'{SettingsValues.CmdHistory.value[0]} => {self.settings.value(SettingsValues.CmdHistory.value[0], False)}')
 		
@@ -70,21 +93,8 @@ class SettingsDialog(QDialog):
 		
 	def click_saveSettings(self):
 		print(f'GOING TO SAVE SETTINGS !!!!')
-		self.tab_widget = self.findChild(QtWidgets.QTabWidget, "tabWidget")
-		print(f'self.tab_widget: {self.tab_widget}')
-		self.tbl_settings = self.tab_widget.findChild(QtWidgets.QTableWidget, "tblSettings")
-		print(f'self.tbl_settings: {self.tbl_settings}')
-		
-		self.tab_first = self.tab_widget.findChild(QtWidgets.QWidget, "tab")
-		print(f'self.tab: {self.tab_first}')
-		
-		self.tbl_settings2 = self.tab_first.findChild(QtWidgets.QTableWidget, "tblSettings")
-		print(f'self.tbl_settings2: {self.tbl_settings2}')
-		
-		layout = self.tab_first.layout()
-		self.table_widget = layout.itemAt(0).widget()
-		print(self.table_widget)
-		
 		
 		print(f'IsChecked: {self.table_widget.item(3, 1).checkState() == Qt.CheckState.Checked}')
 		print(f'Save Hist: {self.table_widget.item(3, 1).text()}')
+		
+		self.setHelper.setChecked(SettingsValues.CmdHistory, self.table_widget.item(3, 1))

@@ -15,7 +15,7 @@ from PyQt6 import uic, QtWidgets
 class ConfigClass():
 	
 	initialCommand = "breakpoint set -a 0x100003f6a" # re read
-	font = QFont("Courier New")
+	font = QFont("Courier New") # ("Monaco") #("Courier New")
 #	font.setFixedPitch(True)
 	
 	supportURL = "https://pylldbgui.kimhauser.ch/support"

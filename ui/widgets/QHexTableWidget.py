@@ -2,6 +2,8 @@
 
 import array
 import enum
+import re
+import math
 # from enum import StrEnum
 
 # import enum
@@ -17,7 +19,7 @@ from PyQt6 import uic, QtWidgets
 #from QSwitch import *
 from config import *
 
-import re
+
 
 class ByteGrouping(enum.Enum):
 	NoGrouping = ("No Grouping", 1) #"No grouping"
@@ -125,7 +127,7 @@ class QHexTableWidget(QTableWidget):
 			self.txtAddr.setFont(ConfigClass.font)
 			
 			blockFmt = QTextBlockFormat()
-			blockFmt.setLineHeight(150, 1)
+			blockFmt.setLineHeight(self.line_height, 2)
 			
 			theCursor = self.txtAddr.textCursor()
 			theCursor.clearSelection()
@@ -159,9 +161,11 @@ class QHexTableWidget(QTableWidget):
 #				block_format = cursor.blockFormat()
 #				block_format.setLineHeight(self.line_height, 2)
 			
+			
 			self.txtData = MyTextEdit()
+			self.txtData.acceptRichText()
 			self.txtData.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-			self.txtData.insertHtml(raw + "<br>")
+			self.txtData.insertHtml(raw) # + "<br>")
 #			self.txtData.setStyleSheet("MyTextEdit { line-height: 3.5; }")
 			self.txtData.setFont(ConfigClass.font)
 			self.txtData.setStyleSheet("selection-background-color: #ff0000;")
@@ -170,8 +174,15 @@ class QHexTableWidget(QTableWidget):
 #			theCursor3.clearSelection()
 #			theCursor3.select(QTextCursor.SelectionType.Document)
 #			theCursor3.mergeBlockFormat(blockFmt)
-			self.txtData.acceptRichText()
+			
+			blockFmt2 = QTextBlockFormat()
+			blockFmt2.setLineHeight(self.line_height, 2)
+			theCursor3 = self.txtData.textCursor()
+			theCursor3.clearSelection()
+			theCursor3.select(QTextCursor.SelectionType.Document)
+			theCursor3.mergeBlockFormat(blockFmt2)
 			self.txtData.selectionChanged.connect(self.txtData_selectionchanged)
+#			self.txtData.setLineSpacing(30)
 			self.setCellWidget(currRowCount, 2, self.txtData)
 #			cursor = self.txtData.textCursor()
 #			if cursor.block():
@@ -190,8 +201,14 @@ class QHexTableWidget(QTableWidget):
 		else:
 			self.txtAddr.append(address)
 			self.txtHex.append(value)
-			self.txtData.insertHtml(raw + "<br>") #.append(raw)
-			
+			self.txtData.insertHtml("<br>" + raw) #.append(raw) # .replace("\n", "\\n")
+			blockFmt2 = QTextBlockFormat()
+			blockFmt2.setLineHeight(self.line_height, 2)
+			theCursor3 = self.txtData.textCursor()
+			theCursor3.clearSelection()
+			theCursor3.select(QTextCursor.SelectionType.Document)
+			theCursor3.mergeBlockFormat(blockFmt2)
+#			self.txtData.setLineSpacing(30)
 #		self.setRowCount(currRowCount + 1)
 #		self.addItem(currRowCount, 0, str(address))
 #		
@@ -279,28 +296,54 @@ class QHexTableWidget(QTableWidget):
 	updateHexSel = True
 	updateSel = True
 	
+	def hexPosToData(self, hexPos):
+		modHexPos = hexPos % 3
+		difToAdd = 0
+		if modHexPos > 0:
+			difToAdd = 3 % modHexPos
+		
+		dataPos = int((hexPos + difToAdd) / 3)
+		return dataPos
+	
+	def dataPosToHex(self, dataPos):
+		hexPos = dataPos * 3
+		if hexPos % 2 > 0:
+			hexPos -= 1
+		if hexPos % 6 == 0:
+			hexPos -= 1
+#		if hexPos % 4 > 0:
+#			hexPos -= 1
+				
+		return hexPos
+	
 	def txtHex_selectionchanged(self):
 		if not self.updateHexSel or not self.updateTxt:
 			return
 		
 		cursorHex = self.txtHex.textCursor()
-		print("txtHex Selection start: %d end: %d" % (cursorHex.selectionStart(), cursorHex.selectionEnd()))
+		hexStart = cursorHex.selectionStart()
+		hexEnd = cursorHex.selectionEnd()
+		dataStart = self.hexPosToData(hexStart) + (int(hexStart / 48))
+		dataEnd = self.hexPosToData(hexEnd) + (int(hexEnd / 48))
+		
+		print("txtHex Selection start: %d end: %d" % (hexStart, hexEnd))
+		print(f'===> Data-Start: {dataStart} / End: {dataEnd}')
 		
 		cursorData = self.txtData.textCursor()
 		cursorData.clearSelection()
 		txtLen = len(self.txtData.toPlainText())
-		print("txtData Selection start: %d end: %d" % (cursorData.selectionStart(), cursorData.selectionEnd()))
-		startPos = int(cursorHex.selectionStart() / 3)
-		if startPos > txtLen:
-			startPos -= 1
-		cursorData.setPosition(startPos)
-		indx = (int((cursorHex.selectionEnd() + 1) / 3) - startPos) / 16
-		endPos = int((cursorHex.selectionEnd() + 1) / 3) + indx
-		if endPos > txtLen:
-			endPos -= 1
+#		print("txtData Selection start: %d end: %d" % (cursorData.selectionStart(), cursorData.selectionEnd()))
+#		startPos = int(cursorHex.selectionStart() / 3)
+		if dataStart > txtLen:
+			dataStart = 0
+		cursorData.setPosition(dataStart)
+#		indx = (int((cursorHex.selectionEnd() + 1) / 3) - startPos) / 16
+#		endPos = int((cursorHex.selectionEnd() + indx) / 3)# + indx
+		if dataEnd > txtLen:
+			dataEnd = txtLen - 1
 #		print(f"txtLen = {txtLen}")
-		cursorData.setPosition(endPos, QTextCursor.MoveMode.KeepAnchor)
-		print("txtData Selection start: %d end: %d" % (startPos, endPos))
+		cursorData.setPosition(dataEnd, QTextCursor.MoveMode.KeepAnchor)
+#		print("txtData Selection start: %d end: %d" % (startPos, endPos))
 		self.updateHexSel = False
 		self.updateSel = False
 		self.txtData.setTextCursor(cursorData)
@@ -314,24 +357,48 @@ class QHexTableWidget(QTableWidget):
 	def txtData_selectionchanged(self):
 		if not self.updateSel or not self.updateTxt:
 			return
+#		cursorData = self.txtData.textCursor()
+#		print("txtData Selection start: %d end: %d" % (cursorData.selectionStart(), cursorData.selectionEnd()))
+		
 		cursorData = self.txtData.textCursor()
-		print("txtData Selection start: %d end: %d" % (cursorData.selectionStart(), cursorData.selectionEnd()))
+		dataStart = cursorData.selectionStart()
+		dataEnd = cursorData.selectionEnd()
+		hexStart = self.dataPosToHex(dataStart)# - (int(dataStart / 16) * 1)
+		hexEnd = self.dataPosToHex(dataEnd)# - (int(dataEnd / 16) * 1)
+		
+#		if dataEnd > 16:
+#			hexEnd -= int(dataEnd / 16) * 2
+		
+		print("txtData Selection start: %d end: %d" % (dataStart, dataEnd))
+		print(f'===> Hex-Start: {hexStart} / End: {hexEnd}')
+		print(f'(math.floor(hexEnd  / 48)) = {(math.floor(hexEnd  / 48))}')
+		hexEnd -= (math.floor(hexEnd / 48))
+		print(f'=======> Hex-Start: {hexStart} / End: {hexEnd}')
 		
 		cursorHex = self.txtHex.textCursor()
 		cursorHex.clearSelection()
 		txtLen = len(self.txtHex.toPlainText())
-		print("txtHex Selection start: %d end: %d" % (cursorHex.selectionStart(), cursorHex.selectionEnd()))
-		startPos = (cursorData.selectionStart() * 3)
-		if startPos > txtLen:
-			startPos -= 1
-		cursorHex.setPosition(startPos)
-		indx = (int((cursorData.selectionEnd() + 1) * 3) - startPos) / 16
-		endPos = ((cursorData.selectionEnd() * 3) - 1) + indx
-		if endPos > txtLen:
-			endPos -= 1
+#		print("txtHex Selection start: %d end: %d" % (cursorHex.selectionStart(), cursorHex.selectionEnd()))
+#		startPos = (cursorData.selectionStart() * 3)
+		if hexStart % 2 == 0:
+			hexStart += 1
+			
+		if hexStart > txtLen:
+			hexStart = 0
+		elif hexStart < 0:
+			hexStart = 0
+			
+		if math.floor((hexEnd / 48)) > 0:
+			hexEnd -= (math.floor((hexEnd / 48) * 2))
+		
+		cursorHex.setPosition(hexStart)
+#		indx = (int((cursorData.selectionEnd() + 1) * 3) - startPos) / 16
+#		endPos = ((cursorData.selectionEnd() * 3) - 1) + indx
+		if hexEnd > txtLen:
+			hexEnd = txtLen - 1
 #		print(f"txtLen = {txtLen}")
-		cursorHex.setPosition(endPos, QTextCursor.MoveMode.KeepAnchor)
-		print("txtHex Selection start: %d end: %d" % (startPos, endPos))
+		cursorHex.setPosition(hexEnd, QTextCursor.MoveMode.KeepAnchor)
+#		print("txtHex Selection start: %d end: %d" % (startPos, endPos))
 		self.updateTxt = False
 		self.updateHexTxt = False
 		self.txtHex.setTextCursor(cursorHex)

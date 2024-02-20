@@ -10,9 +10,11 @@ class HistoryLineEdit(QLineEdit):
 	
 	lstCommands = []
 	currCmd = 0
+	doAddCmdToHist = True
 	
-	def __init__(self):
+	def __init__(self, doAddCmdToHist = True):
 		super().__init__()
+		self.doAddCmdToHist = doAddCmdToHist
 		
 	def keyPressEvent(self, event):
 		
@@ -37,11 +39,12 @@ class HistoryLineEdit(QLineEdit):
 			super(HistoryLineEdit, self).keyPressEvent(event)
 		
 	def addCommandToHistory(self):
-		newCommand = self.text()
-		if len(self.lstCommands) > 0:
-			if self.lstCommands[len(self.lstCommands) - 1] != newCommand:
+		if self.doAddCmdToHist:
+			newCommand = self.text()
+			if len(self.lstCommands) > 0:
+				if self.lstCommands[len(self.lstCommands) - 1] != newCommand:
+					self.lstCommands.append(newCommand)
+					self.currCmd = len(self.lstCommands) - 1
+			else:
 				self.lstCommands.append(newCommand)
 				self.currCmd = len(self.lstCommands) - 1
-		else:
-			self.lstCommands.append(newCommand)
-			self.currCmd = len(self.lstCommands) - 1

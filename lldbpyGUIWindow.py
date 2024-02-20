@@ -445,7 +445,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.lblCmd = QLabel("Command: ")
 		self.lblCmd.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
 		
-		self.txtCmd = HistoryLineEdit()
+		self.txtCmd = HistoryLineEdit(self.setHelper.getValue(SettingsValues.CmdHistory))
 		self.txtCmd.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
 		self.txtCmd.setText(ConfigClass.initialCommand)
 		self.txtCmd.returnPressed.connect(self.handle_execCommand)
@@ -918,8 +918,10 @@ class LLDBPyGUIWindow(QMainWindow):
 #		helpDialogPath = os.path.join(project_root, 'resources', 'designer', 'helpDialog.ui')
 #		
 #		window = uic.loadUi(helpDialogPath)
-		settingsWindow = SettingsDialog()
-		settingsWindow.exec()
+		settingsWindow = SettingsDialog(self.setHelper)
+		if settingsWindow.exec():
+			print(f'Settings saved')
+			self.txtCmd.doAddCmdToHist = self.setHelper.getValue(SettingsValues.CmdHistory)
 		
 #		dialog = QFileDialog(None, "Select executable or library", "", "All Files (*.*)")
 #		dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
