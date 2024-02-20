@@ -332,8 +332,8 @@ def TestCommand(debugger, command, result, dict):
         #         process = debugger.GetSelectedTarget().GetProcess()
         
 #       global event_thread
-        event_thread = LLDBListenerThread(process)
-        event_thread.start()
+#       event_thread = LLDBListenerThread(process)
+#       event_thread.start()
 #       interctive_loop(debugger)
         pymobiledevice3GUIApp.exec()
         

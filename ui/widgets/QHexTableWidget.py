@@ -161,7 +161,7 @@ class QHexTableWidget(QTableWidget):
 			
 			self.txtData = MyTextEdit()
 			self.txtData.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-			self.txtData.setText(raw)
+			self.txtData.insertHtml(raw + "<br>")
 #			self.txtData.setStyleSheet("MyTextEdit { line-height: 3.5; }")
 			self.txtData.setFont(ConfigClass.font)
 			self.txtData.setStyleSheet("selection-background-color: #ff0000;")
@@ -170,6 +170,7 @@ class QHexTableWidget(QTableWidget):
 #			theCursor3.clearSelection()
 #			theCursor3.select(QTextCursor.SelectionType.Document)
 #			theCursor3.mergeBlockFormat(blockFmt)
+			self.txtData.acceptRichText()
 			self.txtData.selectionChanged.connect(self.txtData_selectionchanged)
 			self.setCellWidget(currRowCount, 2, self.txtData)
 #			cursor = self.txtData.textCursor()
@@ -189,7 +190,7 @@ class QHexTableWidget(QTableWidget):
 		else:
 			self.txtAddr.append(address)
 			self.txtHex.append(value)
-			self.txtData.append(raw)
+			self.txtData.insertHtml(raw + "<br>") #.append(raw)
 			
 #		self.setRowCount(currRowCount + 1)
 #		self.addItem(currRowCount, 0, str(address))
@@ -279,7 +280,7 @@ class QHexTableWidget(QTableWidget):
 	updateSel = True
 	
 	def txtHex_selectionchanged(self):
-		if not self.updateHexSel and not self.updateTxt:
+		if not self.updateHexSel or not self.updateTxt:
 			return
 		
 		cursorHex = self.txtHex.textCursor()
@@ -288,16 +289,16 @@ class QHexTableWidget(QTableWidget):
 		cursorData = self.txtData.textCursor()
 		cursorData.clearSelection()
 		txtLen = len(self.txtData.toPlainText())
-#		cursor = self.txtHex.textCursor()
 		print("txtData Selection start: %d end: %d" % (cursorData.selectionStart(), cursorData.selectionEnd()))
 		startPos = int(cursorHex.selectionStart() / 3)
 		if startPos > txtLen:
 			startPos -= 1
 		cursorData.setPosition(startPos)
-		endPos = int((cursorHex.selectionEnd() + 1) / 3)
+		indx = (int((cursorHex.selectionEnd() + 1) / 3) - startPos) / 16
+		endPos = int((cursorHex.selectionEnd() + 1) / 3) + indx
 		if endPos > txtLen:
 			endPos -= 1
-		print(f"txtLen = {txtLen}")
+#		print(f"txtLen = {txtLen}")
 		cursorData.setPosition(endPos, QTextCursor.MoveMode.KeepAnchor)
 		print("txtData Selection start: %d end: %d" % (startPos, endPos))
 		self.updateHexSel = False
@@ -311,7 +312,7 @@ class QHexTableWidget(QTableWidget):
 	updateHexTxt = True
 	
 	def txtData_selectionchanged(self):
-		if not self.updateSel and not self.updateTxt:
+		if not self.updateSel or not self.updateTxt:
 			return
 		cursorData = self.txtData.textCursor()
 		print("txtData Selection start: %d end: %d" % (cursorData.selectionStart(), cursorData.selectionEnd()))
@@ -319,15 +320,18 @@ class QHexTableWidget(QTableWidget):
 		cursorHex = self.txtHex.textCursor()
 		cursorHex.clearSelection()
 		txtLen = len(self.txtHex.toPlainText())
+		print("txtHex Selection start: %d end: %d" % (cursorHex.selectionStart(), cursorHex.selectionEnd()))
 		startPos = (cursorData.selectionStart() * 3)
 		if startPos > txtLen:
 			startPos -= 1
 		cursorHex.setPosition(startPos)
-		endPos = (cursorData.selectionEnd() * 3) - 1
+		indx = (int((cursorData.selectionEnd() + 1) * 3) - startPos) / 16
+		endPos = ((cursorData.selectionEnd() * 3) - 1) + indx
 		if endPos > txtLen:
 			endPos -= 1
-		print(f"txtLen = {txtLen}")
+#		print(f"txtLen = {txtLen}")
 		cursorHex.setPosition(endPos, QTextCursor.MoveMode.KeepAnchor)
+		print("txtHex Selection start: %d end: %d" % (startPos, endPos))
 		self.updateTxt = False
 		self.updateHexTxt = False
 		self.txtHex.setTextCursor(cursorHex)

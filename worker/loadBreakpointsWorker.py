@@ -7,8 +7,8 @@ from helper.dbgHelper import *
 	
 class LoadBreakpointsWorkerSignals(BaseWorkerSignals):
 	loadBreakpoints = pyqtSignal(str)
-	loadBreakpointsValue = pyqtSignal(int, int, str, str, int, str, bool)
-	updateBreakpointsValue = pyqtSignal(int, int, str, str, int, str, bool)
+	loadBreakpointsValue = pyqtSignal(int, int, str, str, int, str, bool, bool)
+	updateBreakpointsValue = pyqtSignal(int, int, str, str, int, str, bool, bool)
 #	updateRegisterValue = pyqtSignal(int, str, str, str)
 
 class LoadBreakpointsWorker(BaseWorker):
@@ -69,10 +69,11 @@ class LoadBreakpointsWorker(BaseWorker):
 #				
 ##						self.tblBPs.resetContent()
 #				self.tblBPs.addRow(bp_cur.GetID(), idx, hex(bl.GetLoadAddress()), name, str(bp_cur.GetHitCount()), bp_cur.GetCondition())
+				print(f'bp_cur.GetID() ==> {bp_cur.GetID()}')
 				if self.initTable:
-					self.signals.loadBreakpointsValue.emit(bp_cur.GetID(), idx, hex(bl.GetLoadAddress()), name, bp_cur.GetHitCount(), bp_cur.GetCondition(), self.initTable)
+					self.signals.loadBreakpointsValue.emit(bp_cur.GetID(), bp_cur.GetID(), hex(bl.GetLoadAddress()), name, bp_cur.GetHitCount(), bp_cur.GetCondition(), self.initTable, bp_cur.IsEnabled())
 				else:
-					self.signals.updateBreakpointsValue.emit(bp_cur.GetID(), idx, hex(bl.GetLoadAddress()), name, bp_cur.GetHitCount(), bp_cur.GetCondition(), self.initTable)
+					self.signals.updateBreakpointsValue.emit(bp_cur.GetID(), bp_cur.GetID(), hex(bl.GetLoadAddress()), name, bp_cur.GetHitCount(), bp_cur.GetCondition(), self.initTable, bp_cur.IsEnabled())
 								
 #		self.signals.finished.emit()
 		pass

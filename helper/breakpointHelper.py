@@ -18,6 +18,13 @@ class BreakpointHelper():
 	colNum = 1
 	colCond = 5
 	
+	window = None
+	driver = None
+	
+	def __init__(self, window, driver):
+		self.window = window
+		self.driver = driver
+		
 	def handle_saveBreakpoints(self, target, filepath):
 		path_spec = lldb.SBFileSpec(filepath)
 		target.BreakpointsWriteToFile(path_spec)
@@ -60,3 +67,42 @@ class BreakpointHelper():
 		if len(self.table.selectedItems()) > 0:
 			itemCond = self.table.item(self.table.selectedItems()[0].row(), self.colCond)
 			itemCond.setText(text)
+			
+	def handle_enableBP(self, address, enabled = True):
+		print(f'handle_enableBP: {address} => {enabled}')
+		target = self.driver.getTarget()
+		for i in range(target.GetNumBreakpoints()):
+			bp = self.driver.getTarget().GetBreakpointAtIndex(i)
+			found = False
+			for j in range(bp.GetNumLocations()):
+				bl = bp.GetLocationAtIndex(j)
+				if hex(bl.GetAddress().GetLoadAddress(target)) == address:
+#					bp_cur = self.driver.getTarget().GetBreakpointAtIndex(bpId)
+					bp.SetEnabled(enabled)
+					found = True
+					break
+			if found:
+				break
+		pass
+		
+	def handle_deleteBP(self, bpId, enabled = True):
+		print(f'handle_enableBP: {bpId} => {enabled}')
+		target = self.driver.getTarget()
+		if target.BreakpointDelete(bpId):
+			print(f"Breakpoint (ID: {bpId}) deleted successfully!")
+		
+		else:
+			print(f"Breakpoint (ID: {bpId}) COULD NOT BE DELETED!")
+#		for i in range(target.GetNumBreakpoints()):
+#			bp = self.driver.getTarget().GetBreakpointAtIndex(i)
+#			found = False
+#			for j in range(bp.GetNumLocations()):
+#				bl = bp.GetLocationAtIndex(j)
+#				if hex(bl.GetAddress().GetLoadAddress(target)) == bpId:
+##					bp_cur = self.driver.getTarget().GetBreakpointAtIndex(bpId)
+##					bp_cur.SetEnabled(enabled)
+#					found = True
+#					break
+#			if found:
+#				break
+		pass

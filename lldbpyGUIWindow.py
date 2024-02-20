@@ -46,6 +46,8 @@ from config import *
 from helper.dbgHelper import *
 from helper.dialogHelper import *
 from lldbpyGUIConfig import *
+from listener import *
+#from debuggerdriver import LLDBListenerThread
 #from test.lldbutil import *
 
 #APP_NAME = "LLDB-PyGUI"
@@ -63,6 +65,8 @@ class LLDBPyGUIWindow(QMainWindow):
 	interruptEventListenerWorker = None
 	interruptLoadSourceWorker = None
 	process = None
+	
+	bpHelper = None
 	
 	def bpcp(self, msg):
 		print(f'IN CALLBACK: {msg}')
@@ -87,6 +91,8 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.driver = driver
 		self.driver.signals.event_queued.connect(self.handle_event_queued)
 		self.driver.signals.event_output.connect(self.handle_output)
+		
+		self.bpHelper = BreakpointHelper(self, self.driver)
 		
 		self.debugger = debugger
 		
@@ -266,6 +272,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.tabWidgetDbg.addTab(self.gbpSource, "Source")
 		
 		self.tblBPs = BreakpointsTableWidget(self.driver)
+		self.tblBPs.sigEnableBP.connect(self.handle_enableBPTblBPs)
 		
 		self.cmdSaveBP = ClickLabel()
 		self.cmdSaveBP.setPixmap(ConfigClass.pixSave)
@@ -479,6 +486,32 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.tabWidgetDbg.setCurrentIndex(6)
 	
+	def handle_breakpointEvent(self, event):
+		breakpoint = SBBreakpoint.GetBreakpointFromEvent(event)
+		bpEventType = SBBreakpoint.GetBreakpointEventTypeFromEvent(event)
+		
+		print(f'GOT BREAKPOINT EVENT: {breakpoint} => TYPE: {bpEventType}')
+		
+		if bpEventType == lldb.eBreakpointEventTypeAdded:
+			print(f"BP ID: {breakpoint.GetID()} has been ADDED !!!!!!!!!!!!!!")
+			self.event_bpAdded(breakpoint)
+			pass
+		elif bpEventType == lldb.eBreakpointEventTypeRemoved:
+			print(f"BP ID: {breakpoint.GetID()} has been DELETED !!!!!!!!!!!!!!")
+#			self.bpHelper.handle_deleteBP(self.breakpoint.GetID())
+			self.tblBPs.removeRowWithId(breakpoint.GetID())
+			
+			for i in range(breakpoint.GetNumLocations()):
+				self.txtMultiline.table.removeBPAtAddress(hex(breakpoint.GetLocationAtIndex(i).GetLoadAddress()))
+				pass
+		
+	def event_bpAdded(self, bp):
+		print(f'bp.GetID() => {bp.GetID()}')
+		for i in range(bp.GetNumLocations()):
+			bl = bp.GetLocationAtIndex(i)
+			self.txtMultiline.table.event_bpAdded(bl)
+			self.tblBPs.event_bpAdded(bl)
+		
 	def loadTarget(self):
 		if self.debugger.GetNumTargets() > 0:
 			
@@ -494,6 +527,9 @@ class LLDBPyGUIWindow(QMainWindow):
 				self.process = target.GetProcess()
 				if self.process:
 					
+					self.listener = LLDBListener(self.process)
+					self.listener.breakpointEvent.connect(self.handle_breakpointEvent)
+					self.listener.start()
 					
 					idx = 0
 					self.thread = self.process.GetThreadAtIndex(0)
@@ -674,7 +710,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		filename = showSaveFileDialog()
 		if filename != None:
 			print(f'Saving to: {filename} ...')
-			BreakpointHelper().handle_saveBreakpoints(self.driver.getTarget(), filename)
+			self.bpHelper.handle_saveBreakpoints(self.driver.getTarget(), filename)
 			self.updateStatusBar(f"Saving breakpoints to {filename} ...")
 #			self.driver.handleCommand(f"breakpoint write -f {filename}")
 			
@@ -751,16 +787,16 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.threadpool.start(self.loadBreakpointsWorker)
 		
-	def handle_loadBreakpointsLoadBreakpointValue(self, bpId, idx, loadAddr, name, hitCount, condition, initTable):
+	def handle_loadBreakpointsLoadBreakpointValue(self, bpId, idx, loadAddr, name, hitCount, condition, initTable, enabled):
 		if initTable:
 			self.txtMultiline.table.setBPAtAddress(loadAddr, True, False)
-		self.tblBPs.addRow(bpId, idx, loadAddr, name, str(hitCount), condition)
+		self.tblBPs.addRow(enabled, idx, loadAddr, name, str(hitCount), condition)
 #		print("Reloading BPs ...")
 	
-	def handle_updateBreakpointsLoadBreakpointValue(self, bpId, idx, loadAddr, name, hitCount, condition, initTable):
+	def handle_updateBreakpointsLoadBreakpointValue(self, bpId, idx, loadAddr, name, hitCount, condition, initTable, enabled):
 #		if initTable:
 #			self.txtMultiline.table.setBPAtAddress(loadAddr, True, False)
-		self.tblBPs.updateRow(bpId, idx, loadAddr, name, str(hitCount), condition)
+		self.tblBPs.updateRow(enabled, idx, loadAddr, name, str(hitCount), condition)
 #		print("Reloading BPs ...")
 		
 	def handle_loadBreakpointsFinished(self):
@@ -954,20 +990,33 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.threadpool.start(self.workerLoadSource)
 	
-	def handle_enableBP(self, address, enable):
-		self.tblBPs.doEnableBP(address, enable)
-		self.driver.handleCommand("br com a -F lldbpyGUI.breakpointHandlerNG")
+	def handle_enableBPTblBPs(self, address, enabled):
+		self.txtMultiline.table.doEnableBP(address, enabled)
+		self.bpHelper.handle_enableBP(address, enabled)
+		if enabled:
+			self.driver.handleCommand("br com a -F lldbpyGUI.breakpointHandlerNG")
+		pass
+	
+	def handle_enableBP(self, address, enabled):
+		self.tblBPs.doEnableBP(address, enabled)
+		self.bpHelper.handle_enableBP(address, enabled)
+		if enabled:
+			self.driver.handleCommand("br com a -F lldbpyGUI.breakpointHandlerNG")
 #		pass
 	
 	def handle_BPOn(self, address, on):
 		self.tblBPs.doBPOn(address, on)
 #		print(f"breakpoint set -a {address} -C bpcbdriver")
+		res = lldb.SBCommandReturnObject()
+		ci = self.driver.debugger.GetCommandInterpreter()
 		if on:
-#			self.driver.handleCommand(f"breakpoint set -a {address} -C bpcb")
-			res = lldb.SBCommandReturnObject()
-			ci = self.driver.debugger.GetCommandInterpreter()
+			#			self.driver.handleCommand(f"breakpoint set -a {address} -C bpcb")
+			
 			ci.HandleCommand(f"breakpoint set -a {address} -C bpcb", res)
-#		pass
+		else:
+			ci.HandleCommand(f"breakpoint set -a {address} -C bpcb", res)
+		self.bpHelper.handle_enableBP(address, on)
+		pass
 		
 	def handle_resumeThread(self):
 #		print("Trying to Continue ...")

@@ -41,7 +41,16 @@ class DisassemblyImageTableWidgetItem(QTableWidgetItem):
 			self.isBPEnabled = False
 			self.setIcon(self.iconStd)
 		pass
-		
+	
+	def event_bpAdded(self, on = True):
+#		self.isBPOn = not self.isBPOn
+		if on:
+			self.isBPEnabled = True
+			self.setIcon(self.iconBPEnabled)
+		else:
+			self.isBPEnabled = False
+			self.setIcon(self.iconStd)
+			
 	def setBPOn(self, on = True):
 #		self.isBPOn = not self.isBPOn
 		if on:
@@ -50,6 +59,15 @@ class DisassemblyImageTableWidgetItem(QTableWidgetItem):
 		else:
 			self.isBPEnabled = False
 			self.setIcon(self.iconStd)
+			
+	def enableBP(self, enabled):
+#		self.isBPOn = not self.isBPOn
+		if enabled:
+			self.isBPEnabled = True
+			self.setIcon(self.iconBPEnabled)
+		else:
+			self.isBPEnabled = False
+			self.setIcon(self.iconBPDisabled)
 	
 	def toggleBPEnabled(self):
 		if not self.isBPOn:
@@ -92,11 +110,21 @@ class DisassemblyTableWidget(QTableWidget):
 		self.sigBPOn.emit(self.item(self.selectedItems()[0].row(), 3).text(), item.isBPOn)
 		pass
 		
+	def doEnableBP(self, address, enabled):
+		for i in range(self.rowCount()):
+			if self.item(i, 3).text() == address:
+				item = self.item(i, 1)
+#				item.toggleBPEnabled()
+				item.enableBP(enabled)
+				break
+		pass
+		
 	def handle_enableBP(self):
 		item = self.item(self.selectedItems()[0].row(), 1)
-		item.toggleBPEnabled()
-		self.sigEnableBP.emit(self.item(self.selectedItems()[0].row(), 3).text(), not item.isBPEnabled)
-		pass
+		item.enableBP(not item.isBPEnabled)
+#		item.toggleBPEnabled()
+		self.sigEnableBP.emit(self.item(self.selectedItems()[0].row(), 3).text(), item.isBPEnabled)
+#		pass
 		
 	def handle_editCondition(self):
 		BreakpointHelper().handle_editCondition(self, 2, 6)
@@ -121,10 +149,11 @@ class DisassemblyTableWidget(QTableWidget):
 		
 		self.driver = driver
 		self.context_menu = QMenu(self)
-		actionToggleBP = self.context_menu.addAction("Toggle Breakpoint")
-		actionToggleBP.triggered.connect(self.handle_toggleBP)
-		actionDisableBP = self.context_menu.addAction("Enable / Disable Breakpoint")
-		actionDisableBP.triggered.connect(self.handle_enableBP)
+#		actionToggleBP = self.context_menu.addAction("Toggle Breakpoint")
+#		actionToggleBP.triggered.connect(self.handle_toggleBP)
+		self.actionEnableBP = self.context_menu.addAction("Enable / Disable Breakpoint")
+		self.actionEnableBP.triggered.connect(self.handle_enableBP)
+		self.context_menu.addSeparator()
 		actionEditCondition = self.context_menu.addAction("Edit condition")
 		actionEditCondition.triggered.connect(self.handle_editCondition)
 		
@@ -207,6 +236,12 @@ class DisassemblyTableWidget(QTableWidget):
 #			self.sigBPOn.emit(self.item(self.selectedItems()[0].row(), 3).text(), self.item(self.selectedItems()[0].row(), 1).isBPOn)
 			
 	def contextMenuEvent(self, event):
+		
+		if self.item(self.selectedItems()[0].row(), 1).isBPEnabled:
+			self.actionEnableBP.setText("Disable Breakpoint")
+		else:
+			self.actionEnableBP.setText("Enable Breakpoint")
+		
 		self.actionShowMemoryFor.setText("Show memory for:")
 		self.actionShowMemoryFor.setEnabled(False)
 		self.actionShowMemoryFor.setData("")
@@ -270,6 +305,19 @@ class DisassemblyTableWidget(QTableWidget):
 				break
 		pass
 	
+	
+	def event_bpAdded(self, bp):
+#		self.txtMultiline
+#		print(f'CHECKING BREAKPOINT ROW-COUNT: {self.rowCount()}')
+		for row in range(self.rowCount()):
+#			print(f'CHECKING BREAKPOINT AT ADDRESS: {self.item(row, 3).text()}')
+			if self.item(row, 3).text() == hex(bp.GetLoadAddress()):
+				self.item(row, 1).event_bpAdded(True)
+#				if updateBPWidget:
+#					self.sigBPOn.emit(self.item(row, 3).text(), on)
+				break
+		pass
+		
 	def setBPAtAddress(self, address, on = True, updateBPWidget = True):
 #		self.txtMultiline
 #		print(f'CHECKING BREAKPOINT ROW-COUNT: {self.rowCount()}')
@@ -279,6 +327,18 @@ class DisassemblyTableWidget(QTableWidget):
 				self.item(row, 1).setBPOn(on)
 				if updateBPWidget:
 					self.sigBPOn.emit(self.item(row, 3).text(), on)
+				break
+		pass
+		
+	def removeBPAtAddress(self, address):
+#		self.txtMultiline
+#		print(f'CHECKING BREAKPOINT ROW-COUNT: {self.rowCount()}')
+		for row in range(self.rowCount()):
+#			print(f'CHECKING BREAKPOINT AT ADDRESS: {self.item(row, 3).text()}')
+			if self.item(row, 3).text() == address:
+				self.item(row, 1).setBPOn(False)
+#				if updateBPWidget:
+#					self.sigBPOn.emit(self.item(row, 3).text(), on)
 				break
 		pass
 		

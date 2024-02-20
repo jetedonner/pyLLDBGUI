@@ -21,6 +21,8 @@ def breakpointHandlerAuto(dummy, frame, bpno, err):
 		
 class BreakpointsTableWidget(QTableWidget):
 	
+	sigEnableBP = pyqtSignal(str, bool)
+	
 	ommitCellChanged = False
 	
 #	window() = None
@@ -63,7 +65,9 @@ class BreakpointsTableWidget(QTableWidget):
 		if len(self.selectedItems()) > 0:
 			item = self.item(self.selectedItems()[0].row(), 0)
 			itemNum = self.item(self.selectedItems()[0].row(), 1)
-			item.toggleBPEnabled()
+#			item.toggleBPEnabled()
+			item.enableBP(not item.isBPEnabled)
+			self.sigEnableBP.emit(self.item(self.selectedItems()[0].row(), 2).text(), item.isBPEnabled)
 			self.window().updateStatusBar(f"Set breakpoint {itemNum.text()} enabled to {item.isBPEnabled}")
 		pass
 		
@@ -112,11 +116,12 @@ class BreakpointsTableWidget(QTableWidget):
 				itemCell.toggleBPOn()
 				break
 			
-	def doEnableBP(self, address, enable):
+	def doEnableBP(self, address, enabled):
 		for i in range(self.rowCount()):
 			if self.item(i, 2).text() == address:
-				itemCell = self.item(i, 0)
-				itemCell.toggleBPEnabled()
+				item = self.item(i, 0)
+#				item.toggleBPEnabled()
+				item.enableBP(enabled)
 				break
 						
 	def doBPOn(self, address, on):
@@ -130,6 +135,18 @@ class BreakpointsTableWidget(QTableWidget):
 		if on and not bBPFound:
 			self.addRow(on, self.rowCount() + 1, address, '', '0', '')
 	
+	def event_bpAdded(self, bp):
+		bBPFound = False
+		for i in range(self.rowCount()):
+			if self.item(i, 2).text() == hex(bp.GetLoadAddress()):
+				bBPFound = True
+				itemCell = self.item(i, 0)
+				itemCell.toggleBPOn()
+				break
+		if True and not bBPFound:
+			print(f'str(bp.GetBreakpoint().GetID()) => {str(bp.GetBreakpoint().GetID())}')
+			self.addRow(True, str(bp.GetBreakpoint().GetID()), hex(bp.GetLoadAddress()), '', str(bp.GetHitCount()), bp.GetCondition())
+	
 	def __init__(self, driver):
 		super().__init__()
 #		self.window() = window()
@@ -139,12 +156,14 @@ class BreakpointsTableWidget(QTableWidget):
 		
 		self.initTable()
 		self.context_menu = QMenu(self)
+		self.actionEnableBP = self.context_menu.addAction("Enable / Disable Breakpoint")
+		self.actionEnableBP.triggered.connect(self.handle_enableBP)
+		self.context_menu.addSeparator()
 		actionDeleteBP = self.context_menu.addAction("Delete Breakpoint")
 		actionDeleteBP.triggered.connect(self.handle_deleteBP)
-		actionToggleBP = self.context_menu.addAction("Toggle Breakpoint")
-		actionToggleBP.triggered.connect(self.handle_toggleBP)
-		actionDisableBP = self.context_menu.addAction("Enable / Disable Breakpoint")
-		actionDisableBP.triggered.connect(self.handle_enableBP)
+#		actionToggleBP = self.context_menu.addAction("Toggle Breakpoint")
+#		actionToggleBP.triggered.connect(self.handle_toggleBP)
+		
 		actionEditCondition = self.context_menu.addAction("Edit condition")
 		actionEditCondition.triggered.connect(self.handle_editCondition)
 		
@@ -198,6 +217,11 @@ class BreakpointsTableWidget(QTableWidget):
 		pass
 			
 	def contextMenuEvent(self, event):
+		if self.item(self.selectedItems()[0].row(), 0).isBPEnabled:
+			self.actionEnableBP.setText("Disable Breakpoint")
+		else:
+			self.actionEnableBP.setText("Enable Breakpoint")
+		
 #		for i in dir(event):
 #			print(i)
 #			print(event.pos())
@@ -215,12 +239,27 @@ class BreakpointsTableWidget(QTableWidget):
 			self.removeRow(row)
 		self.setRowCount(0)
 	
+	def removeRowWithId(self, num):
+#		self.ommitCellChanged = True
+		
+		for i in range(self.rowCount()):
+			if self.item(i, 1).text() == "#" + str(num):
+				print("FOUND ROW")
+				self.removeRow(i)
+#				self.item(i, 0).setBPOn(state)
+#				self.item(i, 2).setText(address)
+#				self.item(i, 3).setText(name)
+#				self.item(i, 4).setText(hitcount)
+#				self.item(i, 5).setText(condition)
+				break
+#		self.ommitCellChanged = False
+		
 	def updateRow(self, state, num, address, name, hitcount, condition):
 		self.ommitCellChanged = True
 
 		for i in range(self.rowCount()):
 			if self.item(i, 1).text() == "#" + str(num):
-				self.item(i, 0).setBPOn(state)
+				self.item(i, 0).enableBP(state)
 				self.item(i, 2).setText(address)
 				self.item(i, 3).setText(name)
 				self.item(i, 4).setText(hitcount)
@@ -248,7 +287,7 @@ class BreakpointsTableWidget(QTableWidget):
 		self.setRowCount(currRowCount + 1)
 		item = DisassemblyImageTableWidgetItem()
 
-		item.setBPOn(state)
+		item.enableBP(state)
 		self.setItem(currRowCount, 0, item)
 		self.addItem(currRowCount, 1, "#" + str(num))
 		self.addItem(currRowCount, 2, address)

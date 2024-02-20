@@ -62,10 +62,12 @@ class QuickToolTip:
 			parts = expression.split("+")
 			isMinus = False
 			if len(parts) <= 1:
+				print("ISSOLO")
 				isSolo = True
 			
 #		if len(parts) == 2:
 		rbp_value = frame.EvaluateExpression(f"${parts[0]}").GetValueAsUnsigned()
+		print(f"rbp_value: {rbp_value}")
 		# Calculate the desired memory address
 		if isMinus:
 			offset_value = int(parts[1].replace("0x", ""), 16)
