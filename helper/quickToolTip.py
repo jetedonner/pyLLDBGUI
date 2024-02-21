@@ -142,7 +142,8 @@ class QuickToolTip:
 			address = self.get_memory_address(debugger, operandsText)
 
 		if address != 0:
-			tooltip = f'Addr:\t{hex(address)}'
+			tooltip = f'OpStr:\t{operandsText}'
+			tooltip += f'\nAddr:\t{hex(address)}'
 			error_ref = lldb.SBError()
 			process = debugger.GetSelectedTarget().GetProcess()
 			memory = process.ReadMemory(address, 0x20, error_ref)

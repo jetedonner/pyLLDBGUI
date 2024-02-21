@@ -123,6 +123,13 @@ class DisassemblyTableWidget(QTableWidget):
 				break
 		pass
 		
+	def handle_editBP(self):
+#		self.sigEnableBP.emit(self.item(self.selectedItems()[0].row(), 3).text(), item.isBPEnabled)
+		self.window().tabWidgetDbg.setCurrentIndex(3)
+		self.window().tblBPs.setFocus()
+		self.window().tblBPs.selectBPRow(self.item(self.selectedItems()[0].row(), 3).text())
+#		pass
+		
 	def handle_enableBP(self):
 		item = self.item(self.selectedItems()[0].row(), 1)
 		item.enableBP(not item.isBPEnabled)
@@ -157,6 +164,8 @@ class DisassemblyTableWidget(QTableWidget):
 #		actionToggleBP.triggered.connect(self.handle_toggleBP)
 		self.actionEnableBP = self.context_menu.addAction("Enable / Disable Breakpoint")
 		self.actionEnableBP.triggered.connect(self.handle_enableBP)
+		self.actionEditBP = self.context_menu.addAction("Edit Breakpoint")
+		self.actionEditBP.triggered.connect(self.handle_editBP)
 		self.context_menu.addSeparator()
 		actionEditCondition = self.context_menu.addAction("Edit condition")
 		actionEditCondition.triggered.connect(self.handle_editCondition)
@@ -237,6 +246,23 @@ class DisassemblyTableWidget(QTableWidget):
 	def on_double_click(self, row, col):
 		if col in range(3):
 			self.toggleBPOn(row)
+		elif col in range(4, 6):
+			if self.item(self.selectedItems()[0].row(), 4).text().startswith(("jmp", "jne", "jz", "jnz")):
+#				frame = self.driver.getTarget().GetProcess().GetThreadAtIndex(0).GetFrameAtIndex(0)
+#				if frame:
+#					newPC = int(str(self.item(self.selectedItems()[0].row(), 5).text()), 16)
+#					frame.SetPC(newPC)
+#					self.window().txtMultiline.setPC(newPC)
+				for row in range(self.window().txtMultiline.table.rowCount()):
+					if self.window().txtMultiline.table.item(row, 3).text() == str(self.item(self.selectedItems()[0].row(), 5).text()):
+#							self.table.item(row, 0).setText('>')
+						self.window().txtMultiline.table.scrollToRow(row)
+						self.window().txtMultiline.table.selectRow(row)
+#						else:
+#							self.table.item(row, 0).setText('')
+						print(f'JUMPING!!!')
+						break
+#			pass
 #			self.sigBPOn.emit(self.item(self.selectedItems()[0].row(), 3).text(), self.item(self.selectedItems()[0].row(), 1).isBPOn)
 			
 	def contextMenuEvent(self, event):

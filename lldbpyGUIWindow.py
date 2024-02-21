@@ -54,12 +54,28 @@ from listener import *
 #WINDOW_SIZE = 680
 
 #APP_VERSION = "v0.0.1"
-		
+
+global my_target
+def myTest():
+	print("MYTEST")
+	
+def my_callback(frame, bp_loc, dict): # self, 
+	# Your code to execute when the breakpoint hits
+	print(f"Breakpoint hit!!!!!!!! =========>>>>>>>>  YEESSSS 123 {bp_loc}!!!!!!")
+	# Access the frame, breakpoint location, and any extra arguments passed to the callback
+	print(f'bp_loc.GetBreakpoint() => {bp_loc.GetBreakpoint()}')
+#	global my_window
+#	my_window.my_callbackWindow(frame, bp_loc, dict)
+
+global my_window
+my_window = None
+
 class LLDBPyGUIWindow(QMainWindow):
 	"""PyMobiledevice3GUI's main window (GUI or view)."""
 	
 #	regTreeList = []
-	
+	global my_target
+	my_target = myTest
 	driver = None
 	debugger = None
 	interruptEventListenerWorker = None
@@ -71,6 +87,7 @@ class LLDBPyGUIWindow(QMainWindow):
 	def bpcp(self, msg):
 		print(f'IN CALLBACK: {msg}')
 		self.load_resume.setIcon(ConfigClass.iconResume)
+		self.updateStatusBar("Breakpoint hit!")
 		
 	def onQApplicationStarted(self):
 		print('onQApplicationStarted started')
@@ -85,9 +102,17 @@ class LLDBPyGUIWindow(QMainWindow):
 						
 			process = target.LaunchSimple(None, None, os.getcwd())
 			self.loadTarget()
-			
+		
+	def my_callbackWindow(self, frame, bp_loc, dict): # self, 
+		# Your code to execute when the breakpoint hits
+		print(f"Breakpoint hit!!!!!!!! =========>>>>>>>>  WINDOW !!!!!! {bp_loc}!!!!!!")
+		# Access the frame, breakpoint location, and any extra arguments passed to the callback
+		
 	def __init__(self, debugger, driver = None):
 		super().__init__()
+		global my_window
+		my_window = self
+		
 		self.driver = driver
 		self.driver.signals.event_queued.connect(self.handle_event_queued)
 		self.driver.signals.event_output.connect(self.handle_output)
@@ -494,6 +519,12 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.tabWidgetDbg.setCurrentIndex(6)
 	
+	def my_callback(self, frame, bp_loc, dict):
+		# Your code to execute when the breakpoint hits
+		print("Breakpoint hit!!!!!!!! =========>>>>>>>>  YEESSSS!!!!!!")
+		# Access the frame, breakpoint location, and any extra arguments passed to the callback
+		
+		
 	def handle_breakpointEvent(self, event):
 		breakpoint = SBBreakpoint.GetBreakpointFromEvent(event)
 		bpEventType = SBBreakpoint.GetBreakpointEventTypeFromEvent(event)
@@ -798,16 +829,26 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.threadpool.start(self.loadBreakpointsWorker)
 		
-	def handle_loadBreakpointsLoadBreakpointValue(self, bpId, idx, loadAddr, name, hitCount, condition, initTable, enabled):
+	
+	def handle_loadBreakpointsLoadBreakpointValue(self, bpId, idx, loadAddr, name, hitCount, condition, initTable, enabled, bp):
 		if initTable:
 			self.txtMultiline.table.setBPAtAddress(loadAddr, True, False)
 		self.tblBPs.addRow(enabled, idx, loadAddr, name, str(hitCount), condition)
+#		bp.SetScriptCallbackBody("print('HELLLLLLLLLLLLLLOOOOOOOOO SSSSCCCCRRRRIIIIIPPPTTTTT CALLBACK!!!!!')")
+		extra_args = lldb.SBStructuredData()
+		# Add any extra data you want to pass to the callback (e.g., variables, settings)
+		self.driver.handleCommand("command script import --allow-reload ./lldbpyGUIWindow.py")
+		bp.SetScriptCallbackFunction("lldbpyGUIWindow.my_callback", extra_args)
+		
 #		print("Reloading BPs ...")
 	
-	def handle_updateBreakpointsLoadBreakpointValue(self, bpId, idx, loadAddr, name, hitCount, condition, initTable, enabled):
+	def handle_updateBreakpointsLoadBreakpointValue(self, bpId, idx, loadAddr, name, hitCount, condition, initTable, enabled, bp):
 #		if initTable:
 #			self.txtMultiline.table.setBPAtAddress(loadAddr, True, False)
 		self.tblBPs.updateRow(enabled, idx, loadAddr, name, str(hitCount), condition)
+		extra_args = lldb.SBStructuredData()
+		self.driver.handleCommand("command script import --allow-reload ./lldbpyGUIWindow.py")
+		bp.SetScriptCallbackFunction("lldbpyGUIWindow.my_callback", extra_args)
 #		print("Reloading BPs ...")
 		
 	def handle_loadBreakpointsFinished(self):

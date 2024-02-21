@@ -309,10 +309,10 @@ class QHexTableWidget(QTableWidget):
 		hexPos = dataPos * 3
 		if hexPos % 2 > 0:
 			hexPos -= 1
+		
+		# FIXME: This is a ugly hack and not working properly
 		if hexPos % 6 == 0:
 			hexPos -= 1
-#		if hexPos % 4 > 0:
-#			hexPos -= 1
 				
 		return hexPos
 	
@@ -332,18 +332,16 @@ class QHexTableWidget(QTableWidget):
 		cursorData = self.txtData.textCursor()
 		cursorData.clearSelection()
 		txtLen = len(self.txtData.toPlainText())
-#		print("txtData Selection start: %d end: %d" % (cursorData.selectionStart(), cursorData.selectionEnd()))
-#		startPos = int(cursorHex.selectionStart() / 3)
+		
 		if dataStart > txtLen:
 			dataStart = 0
 		cursorData.setPosition(dataStart)
-#		indx = (int((cursorHex.selectionEnd() + 1) / 3) - startPos) / 16
-#		endPos = int((cursorHex.selectionEnd() + indx) / 3)# + indx
+
 		if dataEnd > txtLen:
 			dataEnd = txtLen - 1
-#		print(f"txtLen = {txtLen}")
+
 		cursorData.setPosition(dataEnd, QTextCursor.MoveMode.KeepAnchor)
-#		print("txtData Selection start: %d end: %d" % (startPos, endPos))
+		
 		self.updateHexSel = False
 		self.updateSel = False
 		self.txtData.setTextCursor(cursorData)
@@ -357,9 +355,7 @@ class QHexTableWidget(QTableWidget):
 	def txtData_selectionchanged(self):
 		if not self.updateSel or not self.updateTxt:
 			return
-#		cursorData = self.txtData.textCursor()
-#		print("txtData Selection start: %d end: %d" % (cursorData.selectionStart(), cursorData.selectionEnd()))
-		
+
 		cursorData = self.txtData.textCursor()
 		dataStart = cursorData.selectionStart()
 		dataEnd = cursorData.selectionEnd()
@@ -369,17 +365,20 @@ class QHexTableWidget(QTableWidget):
 #		if dataEnd > 16:
 #			hexEnd -= int(dataEnd / 16) * 2
 		
-		print("txtData Selection start: %d end: %d" % (dataStart, dataEnd))
-		print(f'===> Hex-Start: {hexStart} / End: {hexEnd}')
-		print(f'(math.floor(hexEnd  / 48)) = {(math.floor(hexEnd  / 48))}')
-		hexEnd -= (math.floor(hexEnd / 48))
-		print(f'=======> Hex-Start: {hexStart} / End: {hexEnd}')
+		
 		
 		cursorHex = self.txtHex.textCursor()
 		cursorHex.clearSelection()
 		txtLen = len(self.txtHex.toPlainText())
-#		print("txtHex Selection start: %d end: %d" % (cursorHex.selectionStart(), cursorHex.selectionEnd()))
-#		startPos = (cursorData.selectionStart() * 3)
+
+		print("txtData Selection start: %d end: %d" % (dataStart, dataEnd))
+		print(f'===> Hex-Start: {hexStart} / End: {hexEnd}')
+		print(f'(math.floor(hexEnd  / 48)) = {(math.floor(hexEnd  / 48))}')
+#		hexEnd -= (math.floor(hexEnd / 48))
+		if math.floor((hexEnd / 48)) > 0:
+			hexEnd -= (math.floor((hexEnd / 48) * 2))
+		print(f'=======> Hex-Start: {hexStart} / End: {hexEnd}')
+		
 		if hexStart % 2 == 0:
 			hexStart += 1
 			
@@ -388,17 +387,13 @@ class QHexTableWidget(QTableWidget):
 		elif hexStart < 0:
 			hexStart = 0
 			
-		if math.floor((hexEnd / 48)) > 0:
-			hexEnd -= (math.floor((hexEnd / 48) * 2))
-		
-		cursorHex.setPosition(hexStart)
-#		indx = (int((cursorData.selectionEnd() + 1) * 3) - startPos) / 16
-#		endPos = ((cursorData.selectionEnd() * 3) - 1) + indx
 		if hexEnd > txtLen:
 			hexEnd = txtLen - 1
-#		print(f"txtLen = {txtLen}")
+		
+		cursorHex.setPosition(hexStart)
+		
+			
 		cursorHex.setPosition(hexEnd, QTextCursor.MoveMode.KeepAnchor)
-#		print("txtHex Selection start: %d end: %d" % (startPos, endPos))
 		self.updateTxt = False
 		self.updateHexTxt = False
 		self.txtHex.setTextCursor(cursorHex)

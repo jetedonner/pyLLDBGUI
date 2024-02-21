@@ -1,20 +1,27 @@
 #!/usr/bin/env python3
 from worker.baseWorker import *
 from helper.dbgHelper import *
+#from  lldbpyGUIWindow import myTest
 
 #class LoadBreakpointsWorkerReceiver(BaseWorkerReceiver):
 #	interruptWorker = pyqtSignal()
 	
+def myTest():
+	print("MYTEST")
+	
 class LoadBreakpointsWorkerSignals(BaseWorkerSignals):
 	loadBreakpoints = pyqtSignal(str)
-	loadBreakpointsValue = pyqtSignal(int, int, str, str, int, str, bool, bool)
-	updateBreakpointsValue = pyqtSignal(int, int, str, str, int, str, bool, bool)
+	loadBreakpointsValue = pyqtSignal(int, int, str, str, int, str, bool, bool, object)
+	updateBreakpointsValue = pyqtSignal(int, int, str, str, int, str, bool, bool, object)
 #	updateRegisterValue = pyqtSignal(int, str, str, str)
 
 class LoadBreakpointsWorker(BaseWorker):
 	
 	initTable = True
 	
+	def myTest(self):
+		print("MYTEST")
+		
 	def __init__(self, driver, initTable = True):
 		super(LoadBreakpointsWorker, self).__init__(driver)
 		self.initTable = initTable
@@ -69,11 +76,18 @@ class LoadBreakpointsWorker(BaseWorker):
 #				
 ##						self.tblBPs.resetContent()
 #				self.tblBPs.addRow(bp_cur.GetID(), idx, hex(bl.GetLoadAddress()), name, str(bp_cur.GetHitCount()), bp_cur.GetCondition())
+				def myTest(self):
+					print("MYTEST")
+					
 				print(f'bp_cur.GetID() ==> {bp_cur.GetID()}')
+#				bl.SetScriptCallbackBody("print(f'HELLLLLLLLLLLLLLOOOOOOOOO SSSSCCCCRRRRIIIIIPPPTTTTT CALLBACK BLLLLLL!!!!! {bp_loc}');")
 				if self.initTable:
-					self.signals.loadBreakpointsValue.emit(bp_cur.GetID(), bp_cur.GetID(), hex(bl.GetLoadAddress()), name, bp_cur.GetHitCount(), bp_cur.GetCondition(), self.initTable, bp_cur.IsEnabled())
+					self.signals.loadBreakpointsValue.emit(bp_cur.GetID(), bp_cur.GetID(), hex(bl.GetLoadAddress()), name, bp_cur.GetHitCount(), bp_cur.GetCondition(), self.initTable, bp_cur.IsEnabled(), bp_cur)
 				else:
-					self.signals.updateBreakpointsValue.emit(bp_cur.GetID(), bp_cur.GetID(), hex(bl.GetLoadAddress()), name, bp_cur.GetHitCount(), bp_cur.GetCondition(), self.initTable, bp_cur.IsEnabled())
+					self.signals.updateBreakpointsValue.emit(bp_cur.GetID(), bp_cur.GetID(), hex(bl.GetLoadAddress()), name, bp_cur.GetHitCount(), bp_cur.GetCondition(), self.initTable, bp_cur.IsEnabled(), bp_cur)
 								
 #		self.signals.finished.emit()
 		pass
+		
+
+		

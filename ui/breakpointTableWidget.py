@@ -123,7 +123,18 @@ class BreakpointsTableWidget(QTableWidget):
 #				item.toggleBPEnabled()
 				item.enableBP(enabled)
 				break
-						
+	
+	def selectBPRow(self, address):
+		bBPFound = False
+		for i in range(self.rowCount()):
+			if self.item(i, 2).text() == address:
+#				bBPFound = True
+				itemCell = self.item(i, 0)
+				self.selectRow(i)
+#				itemCell.row().se
+#				itemCell.toggleBPOn()
+				break
+			
 	def doBPOn(self, address, on):
 		bBPFound = False
 		for i in range(self.rowCount()):
