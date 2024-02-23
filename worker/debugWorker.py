@@ -51,6 +51,7 @@ class DebugWorker(BaseWorker):
 					print("After StepOver ...")
 					ID = thread.GetThreadID()
 					if thread.GetStopReason() == lldb.eStopReasonBreakpoint:
+						
 						print(f'GOT if thread.GetStopReason() == lldb.eStopReasonBreakpoint:')
 						from lldbutil import print_stacktrace
 						print_stacktrace(thread)

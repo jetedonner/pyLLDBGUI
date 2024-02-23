@@ -127,83 +127,12 @@ class LoadDisassemblyWorker(BaseWorker):
 #										print(f'sym.GetName() => {sym.GetName()} / instruction.GetAddress().GetFunction().GetName() => {instruction.GetAddress().GetFunction().GetName()}')
 #										print(f'COMMENT => {instruction.GetComment(self.target)}')
 										self.signals.loadInstruction.emit(instruction)
-								
 								idxSym += 1
 								self.sendProgressUpdate((idxSym * 100) / secLen, "Disassembling executable ...")
 							break
 					break
-	#				# Disassemble instructions in chunks
-	#				chunk_size = 1024
-	#				remaining_bytes = size
-	#				while remaining_bytes > 0:
-	#					# Read a chunk of data
-	#					data_size = min(remaining_bytes, chunk_size)
-	#					instructions = self.target.ReadInstructions(SBAddress(start_address, self.target), data_size)
-	#					
-	#					# Disassemble and handle instructions
-	#					for instruction in instructions:
-	#						print(f"Address: {instruction.GetAddress()}")
-	#						print(f"Instruction: {instruction}")
-	#						
-	#					# Update addresses and remaining bytes
-	#					start_address += data_size
-	#					remaining_bytes -= data_size
 				idx += 1
 			idxOuter += 1
-#		target
-#		frame = self.thread.GetFrameAtIndex(0)
-#		if frame:
-#			print(frame)
-#			rip = lldbHelper.convert_address(frame.register["rip"].value)
-#			
-#			########################################################################
-#			i = 0
-#			addr = frame.GetPCAddress()
-#			load_addr = addr.GetLoadAddress(target)
-#			function = frame.GetFunction()
-#			mod_name = frame.GetModule().GetFileSpec().GetFilename()
-##							print(f'load_addr: {load_addr}')
-#			if not function:
-#				# No debug info for 'function'.
-#				symbol = frame.GetSymbol()
-#				file_addr = addr.GetFileAddress()
-#				start_addr = symbol.GetStartAddress().GetFileAddress()
-#				symbol_name = symbol.GetName()
-#				symbol_offset = file_addr - start_addr
-##								print(f'symbol_name: {symbol_name}')
-##								with open("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/my_output.txt", "w") as output:
-##								print('  frame #{num}: {addr:#016x} {mod}`{symbol} + {offset}'.format(num=i, addr=load_addr, mod=mod_name, symbol=symbol_name, offset=symbol_offset))
-#			else:
-#				# Debug info is available for 'function'.
-#				func_name = frame.GetFunctionName()
-#				file_name = frame.GetLineEntry().GetFileSpec().GetFilename()
-#				line_num = frame.GetLineEntry().GetLine()
-##								print(f'function.GetStartAddress().GetFileAddress(): {function.GetStartAddress().	GetFileAddress()}')
-##								print(f'func_name: {func_name}')
-###								with open("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/my_output.txt", "w") as output:
-##								print('  frame #{num}: {addr:#016x} {mod}`{func} at {file}:{line} {args}'.format(num=i, addr=load_addr, mod=mod_name, func='%s [inlined]' % func_name if frame.IsInlined() else func_name, file=file_name, line=line_num, args=get_args_as_string(frame, showFuncName=False))) #args=get_args_as_string(frame, showFuncName=False)), output)
-#				
-#				
-#				self.disassemble_instructions(function.GetInstructions(target), target, rip)
-#		
-##		idx = 0
-##		for i in range(target.GetNumBreakpoints()):
-##			idx += 1
-##			bp_cur = target.GetBreakpointAtIndex(i)
-##			for bl in bp_cur:
-##				# Make sure the name list has the remaining name:
-##				name_list = lldb.SBStringList()
-##				bp_cur.GetNames(name_list)
-##				num_names = name_list.GetSize()
-##				
-##				name = name_list.GetStringAtIndex(0)
-##				if self.initTable:
-##					self.signals.loadBreakpointsValue.emit(bp_cur.GetID(), bp_cur.GetID(), hex(bl.GetLoadAddress()), name, bp_cur.GetHitCount(), bp_cur.GetCondition(), self.initTable, bp_cur.IsEnabled(), bp_cur)
-##				else:
-##					self.signals.updateBreakpointsValue.emit(bp_cur.GetID(), bp_cur.GetID(), hex(bl.GetLoadAddress()), name, bp_cur.GetHitCount(), bp_cur.GetCondition(), self.initTable, bp_cur.IsEnabled(), bp_cur)
-#								
-##		self.signals.finished.emit()
-#		pass
 		
 
 		

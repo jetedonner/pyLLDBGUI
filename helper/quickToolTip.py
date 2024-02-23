@@ -5,6 +5,7 @@ import codecs
 import struct
 from enum import Enum
 #import re
+from helper.dbgHelper import *
 
 class SizeDirPtrs(Enum):
 	BYTEPTR = ("byte ptr", 1)
@@ -62,12 +63,13 @@ class QuickToolTip:
 			parts = expression.split("+")
 			isMinus = False
 			if len(parts) <= 1:
-				print("ISSOLO")
+#				print("ISSOLO")
+				log("SOLO menemonic!!!")
 				isSolo = True
 			
 #		if len(parts) == 2:
 		rbp_value = frame.EvaluateExpression(f"${parts[0]}").GetValueAsUnsigned()
-		print(f"rbp_value: {rbp_value} / {hex(rbp_value)}")
+#		print(f"rbp_value: {rbp_value} / {hex(rbp_value)}")
 		# Calculate the desired memory address
 		if isMinus:
 			offset_value = int(parts[1].replace("0x", ""), 16)
@@ -149,7 +151,7 @@ class QuickToolTip:
 			memory = process.ReadMemory(address, 0x20, error_ref)
 			if error_ref.Success():
 				dataTillNull = self.extract_data_until_null(memory)
-				print(dataTillNull)
+#				print(dataTillNull)
 				string = codecs.decode(dataTillNull, 'utf-8', errors='ignore')
 				
 #				isNum = False

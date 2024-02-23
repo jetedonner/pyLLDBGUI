@@ -286,6 +286,13 @@ class BreakpointsTableWidget(QTableWidget):
 				break
 		self.ommitCellChanged = False
 		
+	def setCurrentBPHit(self, address):
+		for i in range(self.rowCount()):
+			if self.item(i, 2).text() == address:
+				self.item(i, 0).setBackground(QColor(0, 255, 0, 128))
+			else:
+				self.item(i, 0).setBackground(QColor(0, 255, 0, 0))
+		
 #		currRowCount = self.rowCount()
 #		self.setRowCount(currRowCount + 1)
 #		item = DisassemblyImageTableWidgetItem()

@@ -39,6 +39,7 @@ from lldbpyGUIConfig import *
 from lldbpyGUIWindow import *
 
 from config import *
+from helper.dbgHelper import *
 
 # test terminal - idea from https://github.com/ant4g0nist/lisa.py/
 try:

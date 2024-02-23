@@ -29,6 +29,7 @@ from ui.helpDialog import *
 from ui.settingsDialog import *
 from ui.widgets.QHexTableWidget import *
 from ui.widgets.QMemoryViewer import *
+from ui.searchTableWidget import *
 #from ui.testTableWidget import *
 
 from worker.eventListenerWorker import *
@@ -38,6 +39,7 @@ from worker.loadRegisterWorker import *
 from worker.loadBreakpointsWorker import *
 from worker.debugWorker import *
 from worker.loadDisassemblyWorker import *
+from worker.findReferencesWorker import *
 
 from helper import lldbHelper
 #import helper.lldbHelper
@@ -441,44 +443,72 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.tabWidgetDbg.addTab(self.gbpThreads, "Threads/Frames")
 		
-		self.hxtMemory = QHEXTextEditSplitter()
-		self.txtMemoryAddr = QLineEdit("0x100003f50")
-		self.txtMemoryAddr.setContentsMargins(0, 0, 0, 0)
-		self.txtMemoryAddr.returnPressed.connect(self.click_ReadMemory)
-		self.txtMemorySize = QLineEdit("0x100")
-		self.txtMemorySize.setContentsMargins(0, 0, 0, 0)
-		self.txtMemorySize.returnPressed.connect(self.click_ReadMemory)
-		self.lblMemoryAddr = QLabel("Address:")
-		self.lblMemoryAddr.setContentsMargins(0, 0, 0, 0)
-		self.hxtMemory.layoutTopPlaceholer.addWidget(self.lblMemoryAddr)
-		self.hxtMemory.layoutTopPlaceholer.addWidget(self.txtMemoryAddr)
-		self.lblMemorySize = QLabel("Size:")
-		self.lblMemorySize.setContentsMargins(0, 0, 0, 0)
-		self.hxtMemory.layoutTopPlaceholer.addWidget(self.lblMemorySize)
-		self.hxtMemory.layoutTopPlaceholer.addWidget(self.txtMemorySize)
-		self.hxtMemory.layoutTopPlaceholer.setContentsMargins(0, 0, 0, 0)
-		self.cmdReadMemory = QPushButton("Read memory")
-		self.cmdReadMemory.clicked.connect(self.click_ReadMemory)
-		self.cmdReadMemory.setContentsMargins(0, 0, 0, 0)
-		self.hxtMemory.layoutTopPlaceholer.addWidget(self.cmdReadMemory)
-		self.hxtMemory.txtMultiline.setFont(ConfigClass.font)
-		self.hxtMemory.txtMultiline.setContentsMargins(0, 0, 0, 0)
-		self.hxtMemory.txtMultilineHex.setFont(ConfigClass.font)
-		self.hxtMemory.txtMultilineHex.hexGrouping = HexGrouping.TwoChars
-	
-		self.tabMemory = QWidget()
-		self.tabMemory.setLayout(QVBoxLayout())
-		self.tabMemory.layout().addWidget(self.hxtMemory)
-		
-		self.tabWidgetDbg.addTab(self.tabMemory, "Memory")
+#		self.hxtMemory = QHEXTextEditSplitter()
+#		self.txtMemoryAddr = QLineEdit("0x100003f50")
+#		self.txtMemoryAddr.setContentsMargins(0, 0, 0, 0)
+#		self.txtMemoryAddr.returnPressed.connect(self.click_ReadMemory)
+#		self.txtMemorySize = QLineEdit("0x100")
+#		self.txtMemorySize.setContentsMargins(0, 0, 0, 0)
+#		self.txtMemorySize.returnPressed.connect(self.click_ReadMemory)
+#		self.lblMemoryAddr = QLabel("Address:")
+#		self.lblMemoryAddr.setContentsMargins(0, 0, 0, 0)
+#		self.hxtMemory.layoutTopPlaceholer.addWidget(self.lblMemoryAddr)
+#		self.hxtMemory.layoutTopPlaceholer.addWidget(self.txtMemoryAddr)
+#		self.lblMemorySize = QLabel("Size:")
+#		self.lblMemorySize.setContentsMargins(0, 0, 0, 0)
+#		self.hxtMemory.layoutTopPlaceholer.addWidget(self.lblMemorySize)
+#		self.hxtMemory.layoutTopPlaceholer.addWidget(self.txtMemorySize)
+#		self.hxtMemory.layoutTopPlaceholer.setContentsMargins(0, 0, 0, 0)
+#		self.cmdReadMemory = QPushButton("Read memory")
+#		self.cmdReadMemory.clicked.connect(self.click_ReadMemory)
+#		self.cmdReadMemory.setContentsMargins(0, 0, 0, 0)
+#		self.hxtMemory.layoutTopPlaceholer.addWidget(self.cmdReadMemory)
+#		self.hxtMemory.txtMultiline.setFont(ConfigClass.font)
+#		self.hxtMemory.txtMultiline.setContentsMargins(0, 0, 0, 0)
+#		self.hxtMemory.txtMultilineHex.setFont(ConfigClass.font)
+#		self.hxtMemory.txtMultilineHex.hexGrouping = HexGrouping.TwoChars
+#	
+#		self.tabMemory = QWidget()
+#		self.tabMemory.setLayout(QVBoxLayout())
+#		self.tabMemory.layout().addWidget(self.hxtMemory)
+#		
+#		self.tabWidgetDbg.addTab(self.tabMemory, "Memory")
 		
 		self.tblHex = QMemoryViewer(self.driver)
 		
-		self.tabMemoryNG = QWidget()
-		self.tabMemoryNG.setLayout(QVBoxLayout())
-		self.tabMemoryNG.layout().addWidget(self.tblHex)
+		self.tabMemory = QWidget()
+		self.tabMemory.setLayout(QVBoxLayout())
+		self.tabMemory.layout().addWidget(self.tblHex)
 		
-		self.tabWidgetDbg.addTab(self.tabMemoryNG, "MemoryNG")
+		self.tabWidgetDbg.addTab(self.tabMemory, "Memory")
+		
+		
+#		self.wdtSearchMain = QWidget()
+#		self.laySearchMain = QVBoxLayout()
+#		
+#		self.wdtSearchTop = QWidget()
+#		self.laySearchTop = QHBoxLayout()
+#		self.laySearchTop.addWidget(QLabel("Term:"))
+#		self.txtSearchTerm = QLineEdit()
+#		self.txtSearchTerm.setFixedWidth(300)
+#		self.txtSearchTerm.setText("Hello")
+#		self.laySearchTop.addWidget(self.txtSearchTerm)
+#		self.cmdSearch = QPushButton("Search")
+#		self.laySearchTop.addWidget(self.cmdSearch)
+#		self.laySearchTop.addWidget(QLabel("Type:"))
+#		self.cmbSearchType = QComboBox()
+#		self.cmbSearchType.addItems(["String", "Address", "Operand", "Data"])
+#		self.laySearchTop.addWidget(self.cmbSearchType)
+#		
+#		self.laySearchTop.addStretch(1)
+#		self.wdtSearchTop.setLayout(self.laySearchTop)
+#		self.laySearchMain.addWidget(self.wdtSearchTop)
+#		self.laySearchMain.addWidget(SearchTableWidget())
+#		self.wdtSearchMain.setLayout(self.laySearchMain)
+#		self.tabWidgetDbg.addTab(self.wdtSearchMain, "Search")
+		
+		self.wdtSearch = SearchWidget(self.driver)
+		self.tabWidgetDbg.addTab(self.wdtSearch, "Search")
 		
 		self.txtOutput = QConsoleTextEdit()
 		self.txtOutput.setFont(ConfigClass.font)
@@ -757,7 +787,31 @@ class LLDBPyGUIWindow(QMainWindow):
 #						print("STDERR:", data.decode())
 	
 	
-	
+	def start_findReferencesWorker(self, address, initTable = True):
+#		print(">>>> start_loadBreakpointsWorker")
+#		self.symFuncName = ""
+#		self.txtMultiline.table.resetContent()
+		self.findReferencesWorker = FindReferencesWorker(self.driver, address, initTable)
+		self.findReferencesWorker.signals.finished.connect(self.handle_findReferencesWorkerFinished)
+		self.findReferencesWorker.signals.sendStatusBarUpdate.connect(self.handle_statusBarUpdate)
+		self.findReferencesWorker.signals.sendProgressUpdate.connect(self.handle_progressUpdate)
+		
+		self.findReferencesWorker.signals.referenceFound.connect(self.handle_referenceFound)
+##		self.loadBreakpointsWorker.signals.loadRegister.connect(self.handle_loadRegisterLoadRegister)
+#		self.loadDisassemblyWorker.signals.loadBreakpointsValue.connect(self.handle_loadBreakpointsLoadBreakpointValue)
+#		self.loadDisassemblyWorker.signals.updateBreakpointsValue.connect(self.handle_updateBreakpointsLoadBreakpointValue)
+##		self.loadBreakpointsWorker.signals.updateRegisterValue.connect(self.handle_loadRegisterUpdateRegisterValue)
+		
+		self.threadpool.start(self.findReferencesWorker)
+		
+	def handle_referenceFound(self, address, instruction):
+		print(f"REFERENCE TO ADDRESS '{address}' FOUND AT: {hex(int(str(instruction.GetAddress().GetFileAddress()), 10))}")
+		pass
+		
+	def handle_findReferencesWorkerFinished(self):
+		self.updateStatusBar("Search for references finished")
+		pass
+		
 	def start_loadDisassemblyWorker(self, initTable = True):
 #		print(">>>> start_loadBreakpointsWorker")
 		self.symFuncName = ""
@@ -858,7 +912,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		pass
 	
 	def doReadMemory(self, address, size = 0x100):
-		self.tabWidgetDbg.setCurrentWidget(self.tabMemoryNG)
+		self.tabWidgetDbg.setCurrentWidget(self.tabMemory)
 		self.tblHex.txtMemAddr.setText(hex(address))
 		self.tblHex.txtMemSize.setText(hex(size))
 		try:
@@ -894,7 +948,7 @@ class LLDBPyGUIWindow(QMainWindow):
 
 	def click_ReadMemory(self):
 		try:
-			self.handle_readMemory(self.driver.debugger, int(self.txtMemoryAddr.text(), 16), int(self.txtMemorySize.text(), 16))
+			self.handle_readMemory(self.driver.debugger, int(self.tblHex.txtMemAddr.text(), 16), int(self.tblHex.txtMemSize.text(), 16))
 		except Exception as e:
 			print(f"Error while reading memory from process: {e}")
 			
@@ -1013,6 +1067,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 	def handle_loadBreakpointsFinished(self):
 #		print("handle_loadBreakpointsFinished")
+#		self.tblBPs.setCurrentBPHit(str(self.rip))
 		pass
 		
 	def start_loadRegisterWorker(self, initTabs = True):
@@ -1235,6 +1290,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		if success:
 #			print(f"Debug STEP ({kind}) completed SUCCESSFULLY")
 			self.txtMultiline.setPC(int(str(rip), 16))
+			
 #			print(f'NEXT INSTRUCTION {rip}')
 #			self.txtMultiline.setPC(frame.GetPC())
 			self.reloadRegister(False)

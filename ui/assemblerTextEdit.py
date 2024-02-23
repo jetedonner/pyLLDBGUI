@@ -306,66 +306,76 @@ class DisassemblyTableWidget(QTableWidget):
 	
 	def handle_findReferences(self):
 		
-		print(f'Find References to address: {self.getSelItemText(3)}')
+#		print(f'Find References to address: {self.getSelItemText(3)}')
 		
-		address = int(self.getSelItemText(3), 16)
-		print(f'Find References to address (int): {address}')
-		target = self.driver.getTarget()
-		# Now call SBTarget.ResolveSymbolContextForAddress() with address1.
-		try:
-#			context1 = target.ResolveSymbolContextForAddress(lldb.SBAddress(address, target), lldb.eSymbolContextEverything)
-	
-	#		self.assertTrue(context1)
-	#		if self.TraceOn():
-#			print("context1:", context1)
+		address = self.getSelItemText(3)
 		
-			target = self.driver.getTarget()
-			for module in target.module_iter():
-				for section in module.section_iter():
-#					if not section.IsReadable():
-#						continue
-					
-					chunk_size = 1024
-					address = section.GetLoadAddress(target)
-					remaining_bytes = section.GetByteSize()
-					
-					while remaining_bytes > 0:
-						# Read a chunk of data
-						error = lldb.SBError()
-						data = target.ReadMemory(lldb.SBAddress(address, target), min(remaining_bytes, chunk_size), error)
-						print(error)
-						address += len(data)
-						remaining_bytes -= len(data)
-						
-						ascii_string = b"Hello"  # Replace with the actual string
-						string_index = data.find(ascii_string)
-						
-						if string_index != -1:
-							# Found the string!
-							print(f"Found string at address: {address + string_index}")
-							break  # Stop searching if found
-					
-					
-					#References
-	#				section_start = section.GetFileAddress()
-	#				section_end = section_start + section.GetByteSize()
-	##			
-	#				try:
-	#					if address >= section_start and address < section_end:
-	#						instructions = target.ReadInstructions(lldb.SBAddress(address, target), 100, 'intel')  # Adjust count as needed
-	#						for instruction in instructions:
-	#							operand = instruction.GetOperands(target)
-	#							print(f'OPERAND: {operand}')
-	#							if operand == hex(address):
-	#								print(f"Found reference at instruction: {instruction}")
-	#	#					pass
-	#						pass
-	#				except Exception as e:
-	#					print(f'EXCEPTION {e}')
-	#		pass
-		except Exception as e:
-			print(f'EXCEPTION {e}')
-		return
+		self.window().start_findReferencesWorker(address, True)
+#		print(f'Find References to address: {address}')
+##		target = self.driver.getTarget()
+#		# Now call SBTarget.ResolveSymbolContextForAddress() with address1.
+#		try:
+#			for i in range(self.rowCount()):
+#				if self.item(i, 5) != None and address in self.item(i, 5).text():
+#					print(f'Reference found at address: {self.item(i, 3).text()}')
+##					item = self.item(i, 1)
+##	#				item.toggleBPEnabled()
+##					item.enableBP(enabled)
+##					break
+##			pass
+###			context1 = target.ResolveSymbolContextForAddress(lldb.SBAddress(address, target), lldb.eSymbolContextEverything)
+##	
+##	#		self.assertTrue(context1)
+##	#		if self.TraceOn():
+###			print("context1:", context1)
+##		
+##			target = self.driver.getTarget()
+##			for module in target.module_iter():
+##				for section in module.section_iter():
+###					if not section.IsReadable():
+###						continue
+##					
+##					chunk_size = 1024
+##					address = section.GetLoadAddress(target)
+##					remaining_bytes = section.GetByteSize()
+##					
+##					while remaining_bytes > 0:
+##						# Read a chunk of data
+##						error = lldb.SBError()
+##						data = target.ReadMemory(lldb.SBAddress(address, target), min(remaining_bytes, chunk_size), error)
+##						print(error)
+##						address += len(data)
+##						remaining_bytes -= len(data)
+##						
+##						ascii_string = b"Hello"  # Replace with the actual string
+##						string_index = data.find(ascii_string)
+##						
+##						if string_index != -1:
+##							# Found the string!
+##							print(f"Found string at address: {address + string_index}")
+##							break  # Stop searching if found
+##					
+##					
+##					#References
+##	#				section_start = section.GetFileAddress()
+##	#				section_end = section_start + section.GetByteSize()
+##	##			
+##	#				try:
+##	#					if address >= section_start and address < section_end:
+##	#						instructions = target.ReadInstructions(lldb.SBAddress(address, target), 100, 'intel')  # Adjust count as needed
+##	#						for instruction in instructions:
+##	#							operand = instruction.GetOperands(target)
+##	#							print(f'OPERAND: {operand}')
+##	#							if operand == hex(address):
+##	#								print(f"Found reference at instruction: {instruction}")
+##	#	#					pass
+##	#						pass
+##	#				except Exception as e:
+##	#					print(f'EXCEPTION {e}')
+##	#		pass
+#		except Exception as e:
+#			print(f'EXCEPTION {e}')
+#		return
 		
 	def handle_showMemoryFor(self):
 		sender = self.sender()  # get the sender object
@@ -380,25 +390,29 @@ class DisassemblyTableWidget(QTableWidget):
 			
 	def doReadMemory(self, address, size = 0x100):
 		self.window().tabWidgetDbg.setCurrentWidget(self.window().tabMemory)
-		self.window().txtMemoryAddr.setText(hex(address))
-		self.window().txtMemorySize.setText(hex(size))
+		self.window().tblHex.txtMemAddr.setText(hex(address))
+		self.window().tblHex.txtMemSize.setText(hex(size))
 		try:
 #           global debugger
-			self.handle_readMemory(self.driver.debugger, int(self.window().txtMemoryAddr.text(), 16), int(self.window().txtMemorySize.text(), 16))
+#			self.handle_readMemory(self.driver.debugger, int(self.window().tblHex.txtMemAddr.text(), 16), int(self.window().tblHex.txtMemSize.text(), 16))
+			self.window().tblHex.handle_readMemory(self.driver.debugger, int(self.window().tblHex.txtMemAddr.text(), 16), int(self.window().tblHex.txtMemSize.text(), 16))
 		except Exception as e:
 			print(f"Error while reading memory from process: {e}")
 			
-	def handle_readMemory(self, debugger, address, data_size = 0x100):
-		error_ref = lldb.SBError()
-		process = debugger.GetSelectedTarget().GetProcess()
-		memory = process.ReadMemory(address, data_size, error_ref)
-		if error_ref.Success():
-#           hex_string = binascii.hexlify(memory)
-			# `memory` is a regular byte string
-#           print(f'BYTES:\n{memory}\nHEX:\n{hex_string}')
-			self.window().hxtMemory.setTxtHexNG(memory, True, int(self.window().txtMemoryAddr.text(), 16))
-		else:
-			print(str(error_ref))
+#	def handle_readMemory(self, debugger, address, data_size = 0x100):
+##		error_ref = lldb.SBError()
+##		process = debugger.GetSelectedTarget().GetProcess()
+##		memory = process.ReadMemory(address, data_size, error_ref)
+##		if error_ref.Success():
+###           hex_string = binascii.hexlify(memory)
+##			# `memory` is a regular byte string
+###           print(f'BYTES:\n{memory}\nHEX:\n{hex_string}')
+###			self.window().hxtMemory.setTxtHexNG(memory, True, int(self.window().txtMemoryAddr.text(), 16))
+##			pass
+##			
+##		else:
+##			print(str(error_ref))
+#		self.window().tblHex.handle_readMemory(debugger, address, data_size)
 			
 	def toggleBPOn(self, row, updateBPWidget = True):
 #		print(f'TOGGLE BP: {self.item(row, 3).text()}')

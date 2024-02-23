@@ -14,6 +14,9 @@
 #include <stdio.h>
 // For sleep()
 #include <unistd.h>
+#include <time.h>
+
+//time_t start_real_time;// = time(NULL); // Get starting real time
 
 void subfunc(int idx) {
   printf("\n%d", idx);
@@ -29,7 +32,9 @@ int main() {
 
   // Another test variable (char array) for the disasseblers "Variable" view
   char hardcoded_string[] = "S3CR3T";
-
+  
+//start_real_time = time(NULL); // Get starting real time
+  
   // This msg will prompt the user to enter his / her secret
   printf("Hello test: %d / %s", testVar, hardcoded_string);
   
