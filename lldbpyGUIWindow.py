@@ -37,6 +37,7 @@ from worker.execCommandWorker import *
 from worker.loadRegisterWorker import *
 from worker.loadBreakpointsWorker import *
 from worker.debugWorker import *
+from worker.loadDisassemblyWorker import *
 
 from helper import lldbHelper
 #import helper.lldbHelper
@@ -47,6 +48,14 @@ from helper.dbgHelper import *
 from helper.dialogHelper import *
 from lldbpyGUIConfig import *
 from listener import *
+
+try:
+	import queue
+except ImportError:
+	import Queue as queue
+
+global event_queueBP
+event_queueBP = queue.Queue()
 #from debuggerdriver import LLDBListenerThread
 #from test.lldbutil import *
 
@@ -54,16 +63,60 @@ from listener import *
 #WINDOW_SIZE = 680
 
 #APP_VERSION = "v0.0.1"
+#global myProcess
+#myProcess = None
+#
+#def worker2():
+#	from lldbutil import print_stacktrace
+#	stopped_due_to_breakpoint = False
+#	global myProcess
+#	for thread in myProcess:
+#		if self.TraceOn():
+#			print_stacktrace(thread)
+#		ID = thread.GetThreadID()
+#		if thread.GetStopReason() == lldb.eStopReasonBreakpoint:
+#			stopped_due_to_breakpoint = True
+#		for frame in thread:
+#			self.assertTrue(frame.GetThread().GetThreadID() == ID)
+#			if self.TraceOn():
+#				print frame
+#	pass
+
+def worker():
+	while True:
+		global event_queueBP
+		item = event_queueBP.get()
+		print(f'Working on {item}')
+#		print(f'Finished {item}')
+		event_queueBP.task_done()
+		
+		# Turn-on the worker thread.
+threading.Thread(target=worker, daemon=True).start()
 
 global my_target
 def myTest():
 	print("MYTEST")
 	
-def my_callback(frame, bp_loc, dict): # self, 
+def my_callback(frame, bp_loc, dict): # self,
+	
+	global event_queueBP
+	event_queueBP.put(bp_loc)
+	QCoreApplication.processEvents()
+	
 	# Your code to execute when the breakpoint hits
 	print(f"Breakpoint hit!!!!!!!! =========>>>>>>>>  YEESSSS 123 {bp_loc}!!!!!!")
+	
+#	LLDBPyGUIWindow.call_instance_method("hello")
+	
+#	global pymobiledevice3GUIWindow
+	
 	# Access the frame, breakpoint location, and any extra arguments passed to the callback
-	print(f'bp_loc.GetBreakpoint() => {bp_loc.GetBreakpoint()}')
+	print(f'bp_loc.GetBreakpoint() => {bp_loc.GetBreakpoint()} / frame => {frame}')
+	
+	if frame.GetThread().GetStopReason() == lldb.eStopReasonBreakpoint:
+		print(f'frame.GetThread().GetStopReason() == lldb.eStopReasonBreakpoint')
+	
+	
 #	global my_window
 #	my_window.my_callbackWindow(frame, bp_loc, dict)
 
@@ -84,10 +137,27 @@ class LLDBPyGUIWindow(QMainWindow):
 	
 	bpHelper = None
 	
+	def my_function(self, arg):
+		print(f'HEEEEEEEELLLLLLLLOOOOOO ARG {arg}')
+		
+	def my_class_method(cls, instance, arg):
+			instance.my_function(arg)  # Assuming access to the instance
+		
+	@classmethod
+	def call_instance_method(cls, arg):
+		global my_window
+		# You can get the instance here (e.g., from a static variable)
+		instance = my_window# get_instance()
+		cls.my_class_method(cls, instance, arg)
+			
 	def bpcp(self, msg):
 		print(f'IN CALLBACK: {msg}')
 		self.load_resume.setIcon(ConfigClass.iconResume)
 		self.updateStatusBar("Breakpoint hit!")
+		
+	def setResumeActionIcon(self, icon):
+		self.load_resume.setIcon(icon)
+		pass
 		
 	def onQApplicationStarted(self):
 		print('onQApplicationStarted started')
@@ -107,11 +177,28 @@ class LLDBPyGUIWindow(QMainWindow):
 		# Your code to execute when the breakpoint hits
 		print(f"Breakpoint hit!!!!!!!! =========>>>>>>>>  WINDOW !!!!!! {bp_loc}!!!!!!")
 		# Access the frame, breakpoint location, and any extra arguments passed to the callback
-		
+	
+#	def worker(self):
+#		while True:
+#			global event_queueBP
+#			item = event_queueBP.get()
+#			print(f'Working on {item}')
+#			print(f'Finished {item}')
+#			event_queueBP.task_done()
+#			
+##	# Turn-on the worker thread.
+#		threading.Thread(target=self.worker, daemon=True).start()
+	
 	def __init__(self, debugger, driver = None):
 		super().__init__()
 		global my_window
 		my_window = self
+		
+#		global my_window
+#		my_window = None
+		
+		# Turn-on the worker thread.
+#		threading.Thread(target=self.worker, daemon=True).start()
 		
 		self.driver = driver
 		self.driver.signals.event_queued.connect(self.handle_event_queued)
@@ -269,7 +356,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.splitter.addWidget(self.txtMultiline)
 		
 		self.tabWidgetDbg = QTabWidget()
-		self.tabWidgetDbg.setContentsMargins(0, 0, 0, 0)
+#		self.tabWidgetDbg.setContentsMargins(0, 0, 0, 0)
 		self.splitter.addWidget(self.tabWidgetDbg)
 		
 #		self.txtSource = QConsoleTextEdit()
@@ -396,10 +483,10 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.txtOutput = QConsoleTextEdit()
 		self.txtOutput.setFont(ConfigClass.font)
 		self.txtOutput.setReadOnly(True)
-		self.gbpOutput = QGroupBox("Output")
-		self.gbpOutput.setLayout(QHBoxLayout())
-		self.gbpOutput.layout().addWidget(self.txtOutput)
-		self.tabWidgetDbg.addTab(self.gbpOutput, "Terminal")
+#		self.gbpOutput = QGroupBox("Stacktrace")
+#		self.gbpOutput.setLayout(QHBoxLayout())
+#		self.gbpOutput.layout().addWidget(self.txtOutput)
+		self.tabWidgetDbg.addTab(self.txtOutput, "Stacktrace")
 		
 		self.tabWidgetMain = QTabWidget()
 		self.tabWidgetMain.addTab(self.splitter, "Debugger")
@@ -525,6 +612,10 @@ class LLDBPyGUIWindow(QMainWindow):
 		# Access the frame, breakpoint location, and any extra arguments passed to the callback
 		
 		
+	def handle_stdoutEvent(self, data):
+		print(f'EVENT: {data}')
+		pass
+		
 	def handle_breakpointEvent(self, event):
 		breakpoint = SBBreakpoint.GetBreakpointFromEvent(event)
 		bpEventType = SBBreakpoint.GetBreakpointEventTypeFromEvent(event)
@@ -558,6 +649,9 @@ class LLDBPyGUIWindow(QMainWindow):
 			target = self.debugger.GetTargetAtIndex(0)
 			
 			if target:
+				
+#				self.start_loadDisassemblyWorker(True)
+				
 				self.loadFileInfo(target.GetExecutable().GetDirectory() + "/" + target.GetExecutable().GetFilename())
 				self.loadFileStats(target)
 				
@@ -568,6 +662,8 @@ class LLDBPyGUIWindow(QMainWindow):
 					
 					self.listener = LLDBListener(self.process)
 					self.listener.breakpointEvent.connect(self.handle_breakpointEvent)
+					self.listener.stdoutEvent.connect(self.handle_stdoutEvent)
+					
 					self.listener.start()
 					
 					idx = 0
@@ -591,36 +687,39 @@ class LLDBPyGUIWindow(QMainWindow):
 						if frame:
 							print(frame)
 							rip = lldbHelper.convert_address(frame.register["rip"].value)
-							
-							########################################################################
-							i = 0
-							addr = frame.GetPCAddress()
-							load_addr = addr.GetLoadAddress(target)
-							function = frame.GetFunction()
-							mod_name = frame.GetModule().GetFileSpec().GetFilename()
-#							print(f'load_addr: {load_addr}')
-							if not function:
-								# No debug info for 'function'.
-								symbol = frame.GetSymbol()
-								file_addr = addr.GetFileAddress()
-								start_addr = symbol.GetStartAddress().GetFileAddress()
-								symbol_name = symbol.GetName()
-								symbol_offset = file_addr - start_addr
-#								print(f'symbol_name: {symbol_name}')
-#								with open("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/my_output.txt", "w") as output:
-#								print('  frame #{num}: {addr:#016x} {mod}`{symbol} + {offset}'.format(num=i, addr=load_addr, mod=mod_name, symbol=symbol_name, offset=symbol_offset))
-							else:
-								# Debug info is available for 'function'.
-								func_name = frame.GetFunctionName()
-								file_name = frame.GetLineEntry().GetFileSpec().GetFilename()
-								line_num = frame.GetLineEntry().GetLine()
-#								print(f'function.GetStartAddress().GetFileAddress(): {function.GetStartAddress().	GetFileAddress()}')
-#								print(f'func_name: {func_name}')
+							self.rip = rip
+							self.start_loadDisassemblyWorker(True)
+#							########################################################################
+#							i = 0
+#							addr = frame.GetPCAddress()
+#							load_addr = addr.GetLoadAddress(target)
+#							function = frame.GetFunction()
+#							mod_name = frame.GetModule().GetFileSpec().GetFilename()
+##							print(f'load_addr: {load_addr}')
+#							if not function:
+#								# No debug info for 'function'.
+#								symbol = frame.GetSymbol()
+#								file_addr = addr.GetFileAddress()
+#								start_addr = symbol.GetStartAddress().GetFileAddress()
+#								symbol_name = symbol.GetName()
+#								symbol_offset = file_addr - start_addr
+##								print(f'symbol_name: {symbol_name}')
 ##								with open("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/my_output.txt", "w") as output:
-#								print('  frame #{num}: {addr:#016x} {mod}`{func} at {file}:{line} {args}'.format(num=i, addr=load_addr, mod=mod_name, func='%s [inlined]' % func_name if frame.IsInlined() else func_name, file=file_name, line=line_num, args=get_args_as_string(frame, showFuncName=False))) #args=get_args_as_string(frame, showFuncName=False)), output)
-								
-								
-								self.disassemble_instructions(function.GetInstructions(target), target, rip)
+##								print('  frame #{num}: {addr:#016x} {mod}`{symbol} + {offset}'.format(num=i, addr=load_addr, mod=mod_name, symbol=symbol_name, offset=symbol_offset))
+#							else:
+#								# Debug info is available for 'function'.
+#								func_name = frame.GetFunctionName()
+#								file_name = frame.GetLineEntry().GetFileSpec().GetFilename()
+#								line_num = frame.GetLineEntry().GetLine()
+##								print(f'function.GetStartAddress().GetFileAddress(): {function.GetStartAddress().	GetFileAddress()}')
+##								print(f'func_name: {func_name}')
+###								with open("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/my_output.txt", "w") as output:
+##								print('  frame #{num}: {addr:#016x} {mod}`{func} at {file}:{line} {args}'.format(num=i, addr=load_addr, mod=mod_name, func='%s [inlined]' % func_name if frame.IsInlined() else func_name, file=file_name, line=line_num, args=get_args_as_string(frame, showFuncName=False))) #args=get_args_as_string(frame, showFuncName=False)), output)
+#								
+#								
+#								self.disassemble_instructions(function.GetInstructions(target), target, rip)
+#							
+#							########################################################################
 							
 							module = frame.GetModule()
 							for sec in module.section_iter():
@@ -643,7 +742,7 @@ class LLDBPyGUIWindow(QMainWindow):
 							self.start_loadSourceWorker(self.debugger, "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/hello_world_test.c", self.interruptLoadSourceWorker, context.GetLineEntry().GetLine())
 #						self.process.Continue()
 				
-				self.reloadBreakpoints(True)
+#				self.reloadBreakpoints(True)
 				
 #				stdout_stream = self.process.GetSTDOUT()
 #				stderr_stream = self.process.GetSTDERR()
@@ -654,7 +753,58 @@ class LLDBPyGUIWindow(QMainWindow):
 #					data = stderr_stream.ReadBytes(1024)
 #					if data:
 #						print("STDERR:", data.decode())
+	
+	
+	
+	def start_loadDisassemblyWorker(self, initTable = True):
+#		print(">>>> start_loadBreakpointsWorker")
+		self.symFuncName = ""
+		self.txtMultiline.table.resetContent()
+		self.loadDisassemblyWorker = LoadDisassemblyWorker(self.driver, initTable)
+		self.loadDisassemblyWorker.signals.finished.connect(self.handle_loadDisassemblyWorkerFinished)
+		self.loadDisassemblyWorker.signals.sendStatusBarUpdate.connect(self.handle_statusBarUpdate)
+		self.loadDisassemblyWorker.signals.sendProgressUpdate.connect(self.handle_progressUpdate)
 		
+		self.loadDisassemblyWorker.signals.loadInstruction.connect(self.handle_loadInstruction)
+##		self.loadBreakpointsWorker.signals.loadRegister.connect(self.handle_loadRegisterLoadRegister)
+#		self.loadDisassemblyWorker.signals.loadBreakpointsValue.connect(self.handle_loadBreakpointsLoadBreakpointValue)
+#		self.loadDisassemblyWorker.signals.updateBreakpointsValue.connect(self.handle_updateBreakpointsLoadBreakpointValue)
+##		self.loadBreakpointsWorker.signals.updateRegisterValue.connect(self.handle_loadRegisterUpdateRegisterValue)
+		
+		self.threadpool.start(self.loadDisassemblyWorker)
+		
+	def handle_loadDisassemblyWorkerFinished(self):
+		self.reloadBreakpoints(True)
+#		print(f'self.rip => {self.rip}')
+		QApplication.processEvents()
+#		QCoreApplication.processEvents()
+		self.txtMultiline.setInstsAndAddr(None, self.rip)
+		self.txtMultiline.setPC(int(self.rip, 16))
+		self.loadStacktrace()
+		
+	symFuncName = "" #== instruction.GetAddress().GetFunction().GetName()
+	def handle_loadInstruction(self, instruction):
+		target = self.driver.getTarget()
+		
+		if self.symFuncName != instruction.GetAddress().GetFunction().GetName():
+			self.symFuncName = instruction.GetAddress().GetFunction().GetName()
+			
+#			self.txtMultiline.appendAsmSymbol(str(instruction.GetAddress().GetFileAddress()), self.symFuncName)
+
+		self.txtMultiline.appendAsmText(hex(int(str(instruction.GetAddress().GetFileAddress()), 10)), instruction.GetMnemonic(target),  instruction.GetOperands(target), instruction.GetComment(target), str(instruction.GetData(target)).replace("                             ", "\t\t").replace("		            ", "\t\t\t").replace("		         ", "\t\t").replace("		      ", "\t\t").replace("			   ", "\t\t\t"), True, self.rip)
+		pass
+		
+	def disassemble_instructions(self, insts, target, rip):
+		idx = 0
+		for i in insts:
+			if idx == 0:
+				self.txtMultiline.setInstsAndAddr(insts, hex(int(str(i.GetAddress().GetFileAddress()), 10)))
+#				print(dir(i))
+#			print(i)
+			idx += 1
+#			print(i.GetData(target))
+			self.txtMultiline.appendAsmText(hex(int(str(i.GetAddress().GetFileAddress()), 10)), i.GetMnemonic(target),  i.GetOperands(target), i.GetComment(target), str(i.GetData(target)).replace("                             ", "\t\t").replace("		            ", "\t\t\t").replace("		         ", "\t\t").replace("		      ", "\t\t").replace("			   ", "\t\t\t"), True, rip)
+			
 	def handle_output(self, output):
 		print(f">>>>>> OUTPUT: {output}")
 		byte_array = bytearray.fromhex(output)
@@ -816,7 +966,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.txtCommands.setText("")
 	
 	def start_loadBreakpointsWorker(self, initTable = True):
-		print(">>>> start_loadBreakpointsWorker")
+#		print(">>>> start_loadBreakpointsWorker")
 		self.loadBreakpointsWorker = LoadBreakpointsWorker(self.driver, initTable)
 		self.loadBreakpointsWorker.signals.finished.connect(self.handle_loadBreakpointsFinished)
 		self.loadBreakpointsWorker.signals.sendStatusBarUpdate.connect(self.handle_statusBarUpdate)
@@ -840,6 +990,9 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.driver.handleCommand("command script import --allow-reload ./lldbpyGUIWindow.py")
 		bp.SetScriptCallbackFunction("lldbpyGUIWindow.my_callback", extra_args)
 		
+#		self.driver.handleCommand("command script import --allow-reload ./lldbpyGUI.py")
+#		bp.SetScriptCallbackFunction("lldbpyGUI.my_callback", extra_args)
+		
 #		print("Reloading BPs ...")
 	
 	def handle_updateBreakpointsLoadBreakpointValue(self, bpId, idx, loadAddr, name, hitCount, condition, initTable, enabled, bp):
@@ -849,10 +1002,12 @@ class LLDBPyGUIWindow(QMainWindow):
 		extra_args = lldb.SBStructuredData()
 		self.driver.handleCommand("command script import --allow-reload ./lldbpyGUIWindow.py")
 		bp.SetScriptCallbackFunction("lldbpyGUIWindow.my_callback", extra_args)
+#		self.driver.handleCommand("command script import --allow-reload ./lldbpyGUI.py")
+#		bp.SetScriptCallbackFunction("lldbpyGUI.my_callback", extra_args)
 #		print("Reloading BPs ...")
 		
 	def handle_loadBreakpointsFinished(self):
-		print("handle_loadBreakpointsFinished")
+#		print("handle_loadBreakpointsFinished")
 		pass
 		
 	def start_loadRegisterWorker(self, initTabs = True):
@@ -999,17 +1154,6 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.tblFileInfos.addRow("Num CMDs", str(mach_header.ncmds), hex(mach_header.ncmds))
 		self.tblFileInfos.addRow("Size CMDs", str(mach_header.sizeofcmds), hex(mach_header.sizeofcmds))
 		self.tblFileInfos.addRow("Flags", lldbHelper.MachoFlag.to_str(lldbHelper.MachoFlag.create_flag_value(mach_header.flags)), hex(mach_header.flags))
-	
-	def disassemble_instructions(self, insts, target, rip):
-		idx = 0
-		for i in insts:
-			if idx == 0:
-				self.txtMultiline.setInstsAndAddr(insts, hex(int(str(i.GetAddress().GetFileAddress()), 10)))
-#				print(dir(i))
-#			print(i)
-			idx += 1
-#			print(i.GetData(target))
-			self.txtMultiline.appendAsmText(hex(int(str(i.GetAddress().GetFileAddress()), 10)), i.GetMnemonic(target),  i.GetOperands(target), i.GetComment(target), str(i.GetData(target)).replace("                             ", "\t\t").replace("		            ", "\t\t\t").replace("		         ", "\t\t").replace("		      ", "\t\t").replace("			   ", "\t\t\t"), True, rip)
 			
 	def loadFileStats(self, target):
 		statistics = target.GetStatistics()
@@ -1090,13 +1234,40 @@ class LLDBPyGUIWindow(QMainWindow):
 #			self.txtMultiline.setPC(frame.GetPC())
 			self.reloadRegister(False)
 			self.reloadBreakpoints(False)
+			
+#			print(f'GOT if thread.GetStopReason() == lldb.eStopReasonBreakpoint:')
+			self.loadStacktrace()
 #			self.driver.getTarget()
 			context = frm.GetSymbolContext(lldb.eSymbolContextEverything)
 #			print(f'.GetLineEntry() => {context.GetLineEntry()} => {context.GetLineEntry().GetLine()}')
 			self.start_loadSourceWorker(self.debugger, "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/hello_world_test.c", self.interruptLoadSourceWorker, context.GetLineEntry().GetLine())
+			self.setResumeActionIcon(ConfigClass.iconResume)
 		else:
 			print(f"Debug STEP ({kind}) FAILED!!!")
 		pass
+		
+	def loadStacktrace(self):
+		self.process = self.driver.getTarget().GetProcess()
+		self.thread = self.process.GetThreadAtIndex(0)
+#		from lldbutil import print_stacktrace
+#		st = get_stacktrace(self.thread)
+##			print(f'{st}')
+#		self.txtOutput.setText(st)
+		
+		idx = 0
+		if self.thread:
+			
+			self.treThreads.clear()
+			self.processNode = QTreeWidgetItem(self.treThreads, ["#0 " + str(self.process.GetProcessID()), hex(self.process.GetProcessID()) + "", self.process.GetTarget().GetExecutable().GetFilename(), '', ''])
+			
+			self.threadNode = QTreeWidgetItem(self.processNode, ["#" + str(idx) + " " + str(self.thread.GetThreadID()), hex(self.thread.GetThreadID()) + "", self.thread.GetQueueName(), '', ''])
+			
+			for idx2 in range(self.thread.GetNumFrames()):
+				frame = self.thread.GetFrameAtIndex(idx2)
+				frameNode = QTreeWidgetItem(self.threadNode, ["#" + str(frame.GetFrameID()), "", str(frame.GetPCAddress()), str(hex(frame.GetPC())), lldbHelper.GuessLanguage(frame)])
+				
+			self.processNode.setExpanded(True)
+			self.threadNode.setExpanded(True)
 	
 	def stepOver_clicked(self):
 #		print("Trying to step OVER ...")
@@ -1143,28 +1314,30 @@ class LLDBPyGUIWindow(QMainWindow):
 #		self.threadpool.start(self.workerLoadRegister)
 			
 	def stepInto_clicked(self):
-#		print("Trying to step INTO ...")
-#		self.driver.debugger.SetAsync(False)
-		self.thread.StepInto()
-#		self.driver.debugger.SetAsync(True)
-		
-		frame = self.thread.GetFrameAtIndex(0)
-		print(f'NEXT INSTRUCTION {hex(frame.GetPC())}')
-		self.txtMultiline.setPC(frame.GetPC())
-		self.reloadRegister(False)
-		self.reloadBreakpoints(False)
+##		print("Trying to step INTO ...")
+##		self.driver.debugger.SetAsync(False)
+#		self.thread.StepInto()
+##		self.driver.debugger.SetAsync(True)
+#		
+#		frame = self.thread.GetFrameAtIndex(0)
+#		print(f'NEXT INSTRUCTION {hex(frame.GetPC())}')
+#		self.txtMultiline.setPC(frame.GetPC())
+#		self.reloadRegister(False)
+#		self.reloadBreakpoints(False)
+		self.start_debugWorker(self.driver, StepKind.StepInto)
 		
 	def stepOut_clicked(self):
-#		print("Trying to step OUT ...")
-#		self.driver.debugger.SetAsync(False)
-		self.thread.StepOut()
-#		self.driver.debugger.SetAsync(True)
-		
-		frame = self.thread.GetFrameAtIndex(0)
-		print(f'NEXT INSTRUCTION {hex(frame.GetPC())}')
-		self.txtMultiline.setPC(frame.GetPC())
-		self.reloadRegister(False)
-		self.reloadBreakpoints(False)
+##		print("Trying to step OUT ...")
+##		self.driver.debugger.SetAsync(False)
+#		self.thread.StepOut()
+##		self.driver.debugger.SetAsync(True)
+#		
+#		frame = self.thread.GetFrameAtIndex(0)
+#		print(f'NEXT INSTRUCTION {hex(frame.GetPC())}')
+#		self.txtMultiline.setPC(frame.GetPC())
+#		self.reloadRegister(False)
+#		self.reloadBreakpoints(False)
+		self.start_debugWorker(self.driver, StepKind.StepOut)
 		
 	def handle_loadSourceFinished(self, sourceCode, autoScroll = True):
 		if sourceCode != "":

@@ -90,33 +90,38 @@ class DisassemblyTableWidget(QTableWidget):
 	quickToolTip = QuickToolTip()
 	
 	def handle_copyHexValue(self):
-		item = self.item(self.selectedItems()[0].row(), 5)
-		pyperclip.copy(item.text())
+		if self.item(self.selectedItems()[0].row(), 5) != None:
+			item = self.item(self.selectedItems()[0].row(), 5)
+			pyperclip.copy(item.text())
 		
 	def handle_copyInstruction(self):
-		item = self.item(self.selectedItems()[0].row(), 4)
-		pyperclip.copy(item.text())
+		if self.item(self.selectedItems()[0].row(), 4) != None:
+			item = self.item(self.selectedItems()[0].row(), 4)
+			pyperclip.copy(item.text())
 		
 	def handle_copyAddress(self):
-		item = self.item(self.selectedItems()[0].row(), 3)
-		pyperclip.copy(item.text())
+		if self.item(self.selectedItems()[0].row(), 3) != None:
+			item = self.item(self.selectedItems()[0].row(), 3)
+			pyperclip.copy(item.text())
 #		clipboard_contents = pyperclip.paste()
 #		print(clipboard_contents)
 #		pass
 		
 	def handle_toggleBP(self):
-		item = self.item(self.selectedItems()[0].row(), 1)
-		item.toggleBPOn()
-		self.sigBPOn.emit(self.item(self.selectedItems()[0].row(), 3).text(), item.isBPOn)
+		if self.item(self.selectedItems()[0].row(), 1) != None:
+			item = self.item(self.selectedItems()[0].row(), 1)
+			item.toggleBPOn()
+			self.sigBPOn.emit(self.item(self.selectedItems()[0].row(), 3).text(), item.isBPOn)
 		pass
 	
 	def handle_deleteAllBPs(self):
 		for i in range(self.rowCount()):
-			self.item(i, 1).setBPOn(False)
+			if self.item(i, 1) != None:
+				self.item(i, 1).setBPOn(False)
 		
 	def doEnableBP(self, address, enabled):
 		for i in range(self.rowCount()):
-			if self.item(i, 3).text() == address:
+			if self.item(i, 3) != None and self.item(i, 3).text() == address:
 				item = self.item(i, 1)
 #				item.toggleBPEnabled()
 				item.enableBP(enabled)
@@ -125,31 +130,34 @@ class DisassemblyTableWidget(QTableWidget):
 		
 	def handle_editBP(self):
 #		self.sigEnableBP.emit(self.item(self.selectedItems()[0].row(), 3).text(), item.isBPEnabled)
-		self.window().tabWidgetDbg.setCurrentIndex(3)
-		self.window().tblBPs.setFocus()
-		self.window().tblBPs.selectBPRow(self.item(self.selectedItems()[0].row(), 3).text())
+		if self.item(self.selectedItems()[0].row(), 3) != None:
+			self.window().tabWidgetDbg.setCurrentIndex(3)
+			self.window().tblBPs.setFocus()
+			self.window().tblBPs.selectBPRow(self.item(self.selectedItems()[0].row(), 3).text())
 #		pass
 		
 	def handle_enableBP(self):
-		item = self.item(self.selectedItems()[0].row(), 1)
-		item.enableBP(not item.isBPEnabled)
-#		item.toggleBPEnabled()
-		self.sigEnableBP.emit(self.item(self.selectedItems()[0].row(), 3).text(), item.isBPEnabled)
-#		pass
+		if self.item(self.selectedItems()[0].row(), 1) != None:
+			item = self.item(self.selectedItems()[0].row(), 1)
+			item.enableBP(not item.isBPEnabled)
+	#		item.toggleBPEnabled()
+			self.sigEnableBP.emit(self.item(self.selectedItems()[0].row(), 3).text(), item.isBPEnabled)
+	#		pass
 		
 	def handle_editCondition(self):
 		BreakpointHelper().handle_editCondition(self, 2, 6)
 		
 	def handle_setPC(self):
-		dlg = InputDialog("Set new PC", "Please enter address for PC", self.item(self.selectedItems()[0].row(), 3).text())
-		if dlg.exec():
-			print(f'dlg.txtInput: {dlg.txtInput.text()}')
-			
-			frame = self.driver.getTarget().GetProcess().GetThreadAtIndex(0).GetFrameAtIndex(0)
-			if frame:
-				newPC = int(str(dlg.txtInput.text()), 16)
-				frame.SetPC(newPC)
-				self.window().txtMultiline.setPC(newPC)
+		if self.item(self.selectedItems()[0].row(), 3) != None:
+			dlg = InputDialog("Set new PC", "Please enter address for PC", self.item(self.selectedItems()[0].row(), 3).text())
+			if dlg.exec():
+				print(f'dlg.txtInput: {dlg.txtInput.text()}')
+				
+				frame = self.driver.getTarget().GetProcess().GetThreadAtIndex(0).GetFrameAtIndex(0)
+				if frame:
+					newPC = int(str(dlg.txtInput.text()), 16)
+					frame.SetPC(newPC)
+					self.window().txtMultiline.setPC(newPC)
 		
 	driver = None
 	
@@ -178,7 +186,8 @@ class DisassemblyTableWidget(QTableWidget):
 		actionCopyHex = self.context_menu.addAction("Copy hex value")
 		actionCopyHex.triggered.connect(self.handle_copyHexValue)
 		self.context_menu.addSeparator()
-		actionFindReferences = self.context_menu.addAction("Find references")
+		self.actionFindReferences = self.context_menu.addAction("Find references")
+		self.actionFindReferences.triggered.connect(self.handle_findReferences)
 		self.actionShowMemory = self.context_menu.addAction("Show memory")
 		self.actionShowMemoryFor = self.context_menu.addAction("Show memory for ...")
 		self.actionShowMemoryFor.setStatusTip("Show memory for ...")
@@ -186,6 +195,9 @@ class DisassemblyTableWidget(QTableWidget):
 		self.context_menu.addSeparator()
 		self.actionSetPC = self.context_menu.addAction("Set new PC")
 		self.actionSetPC.triggered.connect(self.handle_setPC)
+		
+#		self.verticalScrollBar().valueChanged.connect(self.handle_valueChanged)
+#		self.verticalScrollBar().rangeChanged.connect(self.handle_rangeChanged)
 		
 		self.setColumnCount(8)
 		self.setColumnWidth(0, 24)
@@ -247,42 +259,113 @@ class DisassemblyTableWidget(QTableWidget):
 		if col in range(3):
 			self.toggleBPOn(row)
 		elif col in range(4, 6):
-			if self.item(self.selectedItems()[0].row(), 4).text().startswith(("jmp", "jne", "jz", "jnz")):
-#				frame = self.driver.getTarget().GetProcess().GetThreadAtIndex(0).GetFrameAtIndex(0)
-#				if frame:
-#					newPC = int(str(self.item(self.selectedItems()[0].row(), 5).text()), 16)
-#					frame.SetPC(newPC)
-#					self.window().txtMultiline.setPC(newPC)
-				for row in range(self.window().txtMultiline.table.rowCount()):
-					if self.window().txtMultiline.table.item(row, 3).text() == str(self.item(self.selectedItems()[0].row(), 5).text()):
-#							self.table.item(row, 0).setText('>')
-						self.window().txtMultiline.table.scrollToRow(row)
-						self.window().txtMultiline.table.selectRow(row)
-#						else:
-#							self.table.item(row, 0).setText('')
-						print(f'JUMPING!!!')
-						break
+			if self.item(self.selectedItems()[0].row(), 4) != None:
+				if self.item(self.selectedItems()[0].row(), 4).text().startswith(("jmp", "jne", "jz", "jnz")):
+	#				frame = self.driver.getTarget().GetProcess().GetThreadAtIndex(0).GetFrameAtIndex(0)
+	#				if frame:
+	#					newPC = int(str(self.item(self.selectedItems()[0].row(), 5).text()), 16)
+	#					frame.SetPC(newPC)
+	#					self.window().txtMultiline.setPC(newPC)
+					for row in range(self.window().txtMultiline.table.rowCount()):
+						if self.window().txtMultiline.table.item(row, 3) != None and self.window().txtMultiline.table.item(row, 5) != None: 
+							if self.window().txtMultiline.table.item(row, 3).text() == str(self.item(self.selectedItems()[0].row(), 5).text()):
+		#							self.table.item(row, 0).setText('>')
+								self.window().txtMultiline.table.scrollToRow(row)
+								self.window().txtMultiline.table.selectRow(row)
+		#						else:
+		#							self.table.item(row, 0).setText('')
+								print(f'JUMPING!!!')
+								break
 #			pass
 #			self.sigBPOn.emit(self.item(self.selectedItems()[0].row(), 3).text(), self.item(self.selectedItems()[0].row(), 1).isBPOn)
 			
 	def contextMenuEvent(self, event):
-		
-		if self.item(self.selectedItems()[0].row(), 1).isBPEnabled:
-			self.actionEnableBP.setText("Disable Breakpoint")
-		else:
-			self.actionEnableBP.setText("Enable Breakpoint")
-		
-		self.actionShowMemoryFor.setText("Show memory for:")
-		self.actionShowMemoryFor.setEnabled(False)
-		self.actionShowMemoryFor.setData("")
-		
-		operandsText = self.quickToolTip.getOperandsText(self.item(self.selectedItems()[0].row(), 5).text())
-		if operandsText != "":
-			self.actionShowMemoryFor.setText("Show memory for: " + operandsText)
-			self.actionShowMemoryFor.setEnabled(True)
-			self.actionShowMemoryFor.setData(operandsText)
+		if self.item(self.selectedItems()[0].row(), 1) != None:
+			if self.item(self.selectedItems()[0].row(), 1).isBPEnabled:
+				self.actionEnableBP.setText("Disable Breakpoint")
+			else:
+				self.actionEnableBP.setText("Enable Breakpoint")
+			
+			self.actionShowMemoryFor.setText("Show memory for:")
+			self.actionShowMemoryFor.setEnabled(False)
+			self.actionShowMemoryFor.setData("")
+			if self.item(self.selectedItems()[0].row(), 5) != None:
+				operandsText = self.quickToolTip.getOperandsText(self.item(self.selectedItems()[0].row(), 5).text())
+				if operandsText != "":
+					self.actionShowMemoryFor.setText("Show memory for: " + operandsText)
+					self.actionShowMemoryFor.setEnabled(True)
+					self.actionShowMemoryFor.setData(operandsText)
 			
 		self.context_menu.exec(event.globalPos())
+	
+	def getSelItemText(self, col):
+		if self.item(self.selectedItems()[0].row(), col) != None:
+			return self.item(self.selectedItems()[0].row(), col).text()
+		else:
+			return ""
+	
+	def handle_findReferences(self):
+		
+		print(f'Find References to address: {self.getSelItemText(3)}')
+		
+		address = int(self.getSelItemText(3), 16)
+		print(f'Find References to address (int): {address}')
+		target = self.driver.getTarget()
+		# Now call SBTarget.ResolveSymbolContextForAddress() with address1.
+		try:
+#			context1 = target.ResolveSymbolContextForAddress(lldb.SBAddress(address, target), lldb.eSymbolContextEverything)
+	
+	#		self.assertTrue(context1)
+	#		if self.TraceOn():
+#			print("context1:", context1)
+		
+			target = self.driver.getTarget()
+			for module in target.module_iter():
+				for section in module.section_iter():
+#					if not section.IsReadable():
+#						continue
+					
+					chunk_size = 1024
+					address = section.GetLoadAddress(target)
+					remaining_bytes = section.GetByteSize()
+					
+					while remaining_bytes > 0:
+						# Read a chunk of data
+						error = lldb.SBError()
+						data = target.ReadMemory(lldb.SBAddress(address, target), min(remaining_bytes, chunk_size), error)
+						print(error)
+						address += len(data)
+						remaining_bytes -= len(data)
+						
+						ascii_string = b"Hello"  # Replace with the actual string
+						string_index = data.find(ascii_string)
+						
+						if string_index != -1:
+							# Found the string!
+							print(f"Found string at address: {address + string_index}")
+							break  # Stop searching if found
+					
+					
+					#References
+	#				section_start = section.GetFileAddress()
+	#				section_end = section_start + section.GetByteSize()
+	##			
+	#				try:
+	#					if address >= section_start and address < section_end:
+	#						instructions = target.ReadInstructions(lldb.SBAddress(address, target), 100, 'intel')  # Adjust count as needed
+	#						for instruction in instructions:
+	#							operand = instruction.GetOperands(target)
+	#							print(f'OPERAND: {operand}')
+	#							if operand == hex(address):
+	#								print(f"Found reference at instruction: {instruction}")
+	#	#					pass
+	#						pass
+	#				except Exception as e:
+	#					print(f'EXCEPTION {e}')
+	#		pass
+		except Exception as e:
+			print(f'EXCEPTION {e}')
+		return
 		
 	def handle_showMemoryFor(self):
 		sender = self.sender()  # get the sender object
@@ -319,10 +402,11 @@ class DisassemblyTableWidget(QTableWidget):
 			
 	def toggleBPOn(self, row, updateBPWidget = True):
 #		print(f'TOGGLE BP: {self.item(row, 3).text()}')
-		item = self.item(row, 1)
-		item.toggleBPOn()
-		if updateBPWidget:
-			self.sigBPOn.emit(self.item(row, 3).text(), item.isBPOn)
+		if self.item(row, 1) != None:
+			item = self.item(row, 1)
+			item.toggleBPOn()
+			if updateBPWidget:
+				self.sigBPOn.emit(self.item(row, 3).text(), item.isBPOn)
 		pass
 		
 	def toggleBPAtAddress(self, address, updateBPWidget = True):
@@ -330,7 +414,7 @@ class DisassemblyTableWidget(QTableWidget):
 #		print(f'CHECKING BREAKPOINT ROW-COUNT: {self.rowCount()}')
 		for row in range(self.rowCount()):
 #			print(f'CHECKING BREAKPOINT AT ADDRESS: {self.item(row, 3).text()}')
-			if self.item(row, 3).text() == address:
+			if self.item(row, 3) != None and self.item(row, 3).text() == address:
 				self.toggleBPOn(row, updateBPWidget)
 				break
 		pass
@@ -341,8 +425,9 @@ class DisassemblyTableWidget(QTableWidget):
 #		print(f'CHECKING BREAKPOINT ROW-COUNT: {self.rowCount()}')
 		for row in range(self.rowCount()):
 #			print(f'CHECKING BREAKPOINT AT ADDRESS: {self.item(row, 3).text()}')
-			if self.item(row, 3).text() == hex(bp.GetLoadAddress()):
-				self.item(row, 1).event_bpAdded(True)
+			if self.item(row, 3) != None and self.item(row, 3).text() == hex(bp.GetLoadAddress()):
+				if self.item(row, 1) != None:
+					self.item(row, 1).event_bpAdded(True)
 #				if updateBPWidget:
 #					self.sigBPOn.emit(self.item(row, 3).text(), on)
 				break
@@ -353,11 +438,12 @@ class DisassemblyTableWidget(QTableWidget):
 #		print(f'CHECKING BREAKPOINT ROW-COUNT: {self.rowCount()}')
 		for row in range(self.rowCount()):
 #			print(f'CHECKING BREAKPOINT AT ADDRESS: {self.item(row, 3).text()}')
-			if self.item(row, 3).text() == address:
-				self.item(row, 1).setBPOn(on)
-				if updateBPWidget:
-					self.sigBPOn.emit(self.item(row, 3).text(), on)
-				break
+			if self.item(row, 3) != None and self.item(row, 3).text() == address:
+				if self.item(row, 1) != None:
+					self.item(row, 1).setBPOn(on)
+					if updateBPWidget:
+						self.sigBPOn.emit(self.item(row, 3).text(), on)
+					break
 		pass
 		
 	def removeBPAtAddress(self, address):
@@ -365,11 +451,12 @@ class DisassemblyTableWidget(QTableWidget):
 #		print(f'CHECKING BREAKPOINT ROW-COUNT: {self.rowCount()}')
 		for row in range(self.rowCount()):
 #			print(f'CHECKING BREAKPOINT AT ADDRESS: {self.item(row, 3).text()}')
-			if self.item(row, 3).text() == address:
-				self.item(row, 1).setBPOn(False)
-#				if updateBPWidget:
-#					self.sigBPOn.emit(self.item(row, 3).text(), on)
-				break
+			if self.item(row, 3) != None and self.item(row, 3).text() == address:
+				if self.item(row, 1) != None:
+					self.item(row, 1).setBPOn(False)
+	#				if updateBPWidget:
+	#					self.sigBPOn.emit(self.item(row, 3).text(), on)
+					break
 		pass
 		
 	def resetContent(self):
@@ -404,9 +491,19 @@ class DisassemblyTableWidget(QTableWidget):
 	def scrollToRow(self, row):
 		row_to_scroll = row
 		scroll_value = (row_to_scroll - self.viewport().height() / (2 * self.rowHeight(0))) * self.rowHeight(0)
+#		print(f'scroll_value => {scroll_value}')
 		self.verticalScrollBar().setValue(scroll_value)
+#		print(f'self.verticalScrollBar().value() => {self.verticalScrollBar().value()}')
+		QApplication.processEvents()
+#		QCoreApplication.processEvents()
 		
 		
+#	def handle_valueChanged(self, value):
+#		print(f'handle_valueChanged => {value}')
+#		
+#	def handle_rangeChanged(self, min, max):
+##		print(f'handle_rangeChanged: min => {min} / max => {max}')
+#		pass
 		
 # THIS ONE IS USED FOR NG IMPLEMENTATION !!!
 class AssemblerTextEdit(QWidget):
@@ -425,6 +522,27 @@ class AssemblerTextEdit(QWidget):
 		self.lineCountNG = 0
 		self.table.resetContent()
 		pass
+	
+	def appendAsmSymbol(self, addr, symbol):
+		# Define the text for the spanning cell
+		text = symbol
+		
+		table_widget = self.table
+		# Get the row count
+		row_count = table_widget.rowCount()
+		
+		# Insert a new row
+		table_widget.insertRow(row_count)
+		
+		# Create a spanning cell item
+		item = QTableWidgetItem(f'function: {text}')
+		
+		# Set the item to span all columns
+		table_widget.setSpan(row_count, 0, 1, table_widget.columnCount())  # Adjust row and column indices as needed
+		
+		# Set the item in the table
+		table_widget.setItem(row_count, 0, item)
+		pass
 		
 	def appendAsmText(self, addr, instr, args, comment, data, addLineNum = True, rip = ""):
 		if addLineNum:
@@ -438,11 +556,13 @@ class AssemblerTextEdit(QWidget):
 		
 	def setPC(self, pc):
 		for row in range(self.table.rowCount()):
-			if self.table.item(row, 3).text() == hex(pc):
-				self.table.item(row, 0).setText('>')
-				self.table.scrollToRow(row)
-			else:
-				self.table.item(row, 0).setText('')
+			if self.table.item(row, 3) != None:
+				if self.table.item(row, 3).text() == hex(pc):
+					self.table.item(row, 0).setText('>')
+					self.table.scrollToRow(row)
+					print(f'scrollToRow: {row}')
+				else:
+					self.table.item(row, 0).setText('')
 				
 		pass
 		

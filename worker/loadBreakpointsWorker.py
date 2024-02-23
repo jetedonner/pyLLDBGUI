@@ -76,10 +76,10 @@ class LoadBreakpointsWorker(BaseWorker):
 #				
 ##						self.tblBPs.resetContent()
 #				self.tblBPs.addRow(bp_cur.GetID(), idx, hex(bl.GetLoadAddress()), name, str(bp_cur.GetHitCount()), bp_cur.GetCondition())
-				def myTest(self):
-					print("MYTEST")
-					
-				print(f'bp_cur.GetID() ==> {bp_cur.GetID()}')
+#				def myTest(self):
+#					print("MYTEST")
+#					
+#				print(f'bp_cur.GetID() ==> {bp_cur.GetID()}')
 #				bl.SetScriptCallbackBody("print(f'HELLLLLLLLLLLLLLOOOOOOOOO SSSSCCCCRRRRIIIIIPPPTTTTT CALLBACK BLLLLLL!!!!! {bp_loc}');")
 				if self.initTable:
 					self.signals.loadBreakpointsValue.emit(bp_cur.GetID(), bp_cur.GetID(), hex(bl.GetLoadAddress()), name, bp_cur.GetHitCount(), bp_cur.GetCondition(), self.initTable, bp_cur.IsEnabled(), bp_cur)

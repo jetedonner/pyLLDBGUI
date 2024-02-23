@@ -323,7 +323,7 @@ def get_filenames(thread):
     Returns a sequence of file names from the stack frames of this thread.
     """
     def GetFilename(i):
-        return thread.GetFrameAtIndex(i).GetLineEntry().enu().GetFilename()
+        return thread.GetFrameAtIndex(i).GetLineEntry().GetFileSpec().GetFilename()
 
     return list(map(GetFilename, list(range(thread.GetNumFrames()))))
 
@@ -360,7 +360,7 @@ def get_stack_frames(thread):
 
 def print_stacktrace(thread, string_buffer = False):
     """Prints a simple stack trace of this thread."""
-
+#   stRet = ""
     output = StringIO.StringIO() if string_buffer else sys.stdout
     target = thread.GetProcess().GetTarget()
 
@@ -377,8 +377,8 @@ def print_stacktrace(thread, string_buffer = False):
         desc =  "stop reason=" + stop_reason_to_str(thread.GetStopReason())
     else:
         desc = ""
-    print("Stack trace for thread id={0:#x} name={1} queue={2} ".format(
-        thread.GetThreadID(), thread.GetName(), thread.GetQueueName()) + desc, file=output)
+#   print("Stack trace for thread id={0:#x} name={1} queue={2} ".format(
+#       thread.GetThreadID(), thread.GetName(), thread.GetQueueName()) + desc, file=output)
 
     for i in range(depth):
         frame = thread.GetFrameAtIndex(i)
@@ -389,18 +389,66 @@ def print_stacktrace(thread, string_buffer = False):
             file_addr = addrs[i].GetFileAddress()
             start_addr = frame.GetSymbol().GetStartAddress().GetFileAddress()
             symbol_offset = file_addr - start_addr
+#           stRet += "  frame #{num}: {addr:#016x} {mod}`{symbol} + {offset}".format(num=i, addr=load_addr, mod=mods[i], symbol=symbols[i], offset=symbol_offset)
             print("  frame #{num}: {addr:#016x} {mod}`{symbol} + {offset}".format(
                 num=i, addr=load_addr, mod=mods[i], symbol=symbols[i], offset=symbol_offset), file=output)
         else:
+#           stRet += "  frame #{num}: {addr:#016x} {mod}`{func} at {file}:{line} {args}".format(num=i, addr=load_addr, mod=mods[i], func='%s [inlined]' % funcs[i] if frame.IsInlined() else funcs[i], file=files[i], line=lines[i], args=get_args_as_string(frame, showFuncName=False) if not frame.IsInlined() else '()')
             print("  frame #{num}: {addr:#016x} {mod}`{func} at {file}:{line} {args}".format(
                 num=i, addr=load_addr, mod=mods[i],
                 func='%s [inlined]' % funcs[i] if frame.IsInlined() else funcs[i],
                 file=files[i], line=lines[i],
                 args=get_args_as_string(frame, showFuncName=False) if not frame.IsInlined() else '()'), file=output)
-
+    
+#   return stRet
     if string_buffer:
         return output.getvalue()
 
+#def get_stacktrace(thread, string_buffer = False):
+#   """Prints a simple stack trace of this thread."""
+#   stRet = ""
+#   output = StringIO.StringIO() if string_buffer else sys.stdout
+#   target = thread.GetProcess().GetTarget()
+#   
+#   depth = thread.GetNumFrames()
+#   
+#   mods = get_module_names(thread)
+#   funcs = get_function_names(thread)
+#   symbols = get_symbol_names(thread)
+#   files = get_filenames(thread)
+#   lines = get_line_numbers(thread)
+#   addrs = get_pc_addresses(thread)
+#   
+#   if thread.GetStopReason() != lldb.eStopReasonInvalid:
+#       desc =  "stop reason=" + stop_reason_to_str(thread.GetStopReason())
+#   else:
+#       desc = ""
+##   print("Stack trace for thread id={0:#x} name={1} queue={2} ".format(
+##       thread.GetThreadID(), thread.GetName(), thread.GetQueueName()) + desc, file=output)
+#       
+#   for i in range(depth):
+#       frame = thread.GetFrameAtIndex(i)
+#       function = frame.GetFunction()
+#       
+#       load_addr = addrs[i].GetLoadAddress(target)
+#       if not function:
+#           file_addr = addrs[i].GetFileAddress()
+#           start_addr = frame.GetSymbol().GetStartAddress().GetFileAddress()
+#           symbol_offset = file_addr - start_addr
+#           stRet += "  frame #{num}: {addr:#016x} {mod}`{symbol} + {offset}\n".format(num=i, addr=load_addr, mod=mods[i], symbol=symbols[i], offset=symbol_offset)
+##           print("  frame #{num}: {addr:#016x} {mod}`{symbol} + {offset}".format(
+##               num=i, addr=load_addr, mod=mods[i], symbol=symbols[i], offset=symbol_offset), file=output)
+#       else:
+#           stRet += "  frame #{num}: {addr:#016x} {mod}`{func} at {file}:{line} {args}\n".format(num=i, addr=load_addr, mod=mods[i], func='%s [inlined]' % funcs[i] if frame.IsInlined() else funcs[i], file=files[i], line=lines[i], args=get_args_as_string(frame, showFuncName=False) if not frame.IsInlined() else '()')
+##           print("  frame #{num}: {addr:#016x} {mod}`{func} at {file}:{line} {args}".format(
+##               num=i, addr=load_addr, mod=mods[i],
+##               func='%s [inlined]' % funcs[i] if frame.IsInlined() else funcs[i],
+##               file=files[i], line=lines[i],
+##               args=get_args_as_string(frame, showFuncName=False) if not frame.IsInlined() else '()'), file=output)
+#           
+#   return stRet
+##   if string_buffer:
+##       return output.getvalue()
 
 def print_stacktraces(process, string_buffer = False):
     """Prints the stack traces of all the threads."""
@@ -603,3 +651,4 @@ class RecursiveDecentFormatter(BasicFormatter):
                     BasicFormatter.format(self, child, buffer=output, indent=new_indent)
 
         return output.getvalue()
+    

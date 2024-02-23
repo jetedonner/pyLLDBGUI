@@ -113,7 +113,7 @@ class LLDBListenerThread(Thread):
       event = SBEvent()
       print("GOING to WAIT 4 EVENT...")
       if self.listener.WaitForEvent(lldb.UINT32_MAX, event):
-        print("GOT NEW EVENT!!")
+        print("GOT NEW EVENT DRIVER!!")
         if event.GetType() == SBTarget.eBroadcastBitModulesLoaded:
           print('Module load: %s' % str(event))
         elif event.GetType() == lldb.SBProcess.eBroadcastBitSTDOUT:

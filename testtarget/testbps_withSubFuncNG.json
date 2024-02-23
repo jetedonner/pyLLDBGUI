@@ -4,13 +4,12 @@
       "BKPTOptions" : {
         "AutoContinue" : false,
         "BKPTCMDData" : {
-          "ScriptSource" : "None",
+          "ScriptSource" : "Python",
           "StopOnError" : true,
           "UserSource" : [
-            "bpcb"
+            "lldbpyGUIWindow.my_callback(frame, bp_loc, internal_dict)"
           ]
         },
-        "ConditionText" : "",
         "EnabledState" : true,
         "IgnoreCount" : 0,
         "OneShotState" : false
@@ -18,7 +17,6 @@
       "BKPTResolver" : {
         "Options" : {
           "AddressOffset" : 4294983478,
-          "ModuleName" : "",
           "Offset" : 0
         },
         "Type" : "Address"
@@ -27,7 +25,10 @@
       "SearchFilter" : {
         "Options" : {},
         "Type" : "Unconstrained"
-      }
+      },
+      "Names" : [
+        "CallSub"
+      ]
     }
   },
   {
@@ -35,10 +36,10 @@
       "BKPTOptions" : {
         "AutoContinue" : false,
         "BKPTCMDData" : {
-          "ScriptSource" : "None",
+          "ScriptSource" : "Python",
           "StopOnError" : true,
           "UserSource" : [
-            "bpcb"
+            "lldbpyGUIWindow.my_callback(frame, bp_loc, internal_dict)"
           ]
         },
         "ConditionText" : "",
@@ -48,7 +49,7 @@
       },
       "BKPTResolver" : {
         "Options" : {
-          "AddressOffset" : 4294983524,
+          "AddressOffset" : 4294983531,
           "ModuleName" : "",
           "Offset" : 0
         },
@@ -58,7 +59,10 @@
       "SearchFilter" : {
         "Options" : {},
         "Type" : "Unconstrained"
-      }
+      },
+      "Names" : [
+        "Loop"
+      ]
     }
   }
 ]

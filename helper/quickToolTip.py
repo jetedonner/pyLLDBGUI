@@ -67,7 +67,7 @@ class QuickToolTip:
 			
 #		if len(parts) == 2:
 		rbp_value = frame.EvaluateExpression(f"${parts[0]}").GetValueAsUnsigned()
-		print(f"rbp_value: {rbp_value}")
+		print(f"rbp_value: {rbp_value} / {hex(rbp_value)}")
 		# Calculate the desired memory address
 		if isMinus:
 			offset_value = int(parts[1].replace("0x", ""), 16)

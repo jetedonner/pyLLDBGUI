@@ -53,6 +53,16 @@ except Exception as e:
     print("\033[1m\033[31m[-] failed to find out terminal size.")
     print("[!] lldbinit is best experienced with a terminal size at least {}x{}\033[0m".format(MIN_COLUMNS, MIN_ROWS))  
   
+def my_callback(frame, bp_loc, dict): # self, 
+  # Your code to execute when the breakpoint hits
+  print(f"Breakpoint hit!!!!!!!! =========>>>>>>>>  IN GUI CLAXX YEESSSS 123 {bp_loc}!!!!!!")
+  
+#	global pymobiledevice3GUIWindow
+  global pymobiledevice3GUIWindow
+  # Access the frame, breakpoint location, and any extra arguments passed to the callback
+  print(f'bp_loc.GetBreakpoint() => {bp_loc.GetBreakpoint()} / Debugger => {pymobiledevice3GUIWindow}')
+  
+  
 def breakpointHandlerNG(dummy, frame, bpno, err):
 #   print(dummy)
 #   print(frame)
@@ -66,6 +76,8 @@ def breakpointHandlerNG(dummy, frame, bpno, err):
 #def breakpointHandler(frame, bpno, err):
 #   print("MLIR debugger attaching (KIM)...")
 #   print("IIIIIIIIINNNNNNNN CCCCAAQALLLLLLBBBAAACCKKKK")
+#global
+#my_window = None
 
 def __lldb_init_module(debugger, internal_dict):
     ''' we can execute lldb commands using debugger.HandleCommand() which makes all output to default

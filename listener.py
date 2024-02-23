@@ -32,6 +32,7 @@ class LLDBListener(QtCore.QObject, Thread):
 	should_quit = False
 	
 	breakpointEvent = pyqtSignal(object)
+	stdoutEvent = pyqtSignal(object)
 	
 	def __init__(self, process):
 		super(LLDBListener, self).__init__()
@@ -90,11 +91,13 @@ class LLDBListener(QtCore.QObject, Thread):
 			event = SBEvent()
 			print("GOING to WAIT 4 EVENT...")
 			if self.listener.WaitForEvent(lldb.UINT32_MAX, event):
-				print("GOT NEW EVENT!!")
-				if event.GetType() == SBTarget.eBroadcastBitModulesLoaded:
+				print("GOT NEW EVENT LISTENER!!")
+				if event.GetType() == SBThread.eBroadcastBitThreadSuspended:
+					print('THREAD SUSPENDED: %s' % str(event))
+				elif event.GetType() == SBTarget.eBroadcastBitModulesLoaded:
 					print('Module load: %s' % str(event))
 				elif event.GetType() == lldb.SBProcess.eBroadcastBitSTDOUT:
-					print("STD OUT EVENT")
+					print("STD OUT EVENT LISTENER!!!")
 					stdout = SBProcess.GetProcessFromEvent(event).GetSTDOUT(256)
 					print(SBProcess.GetProcessFromEvent(event))
 					print(stdout)
@@ -102,8 +105,9 @@ class LLDBListener(QtCore.QObject, Thread):
 						message = {"status":"event", "type":"stdout", "output": "".join(["%02x" % ord(i) for i in stdout])}
 						print(message)
 						print("".join(["%02x" % ord(i) for i in stdout]))
+						self.stdoutEvent.emit("".join(["%02x" % ord(i) for i in stdout]))
 #             self.signals.event_output.emit("".join(["%02x" % ord(i) for i in stdout]))
-#             QCoreApplication.processEvents()
+						QCoreApplication.processEvents()
 				elif SBProcess.EventIsProcessEvent(event):
 					self._broadcast_process_state(SBProcess.GetProcessFromEvent(event))
 					print("STD OUT EVENT ALT!!!")

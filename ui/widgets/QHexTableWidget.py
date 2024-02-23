@@ -305,17 +305,6 @@ class QHexTableWidget(QTableWidget):
 		dataPos = int((hexPos + difToAdd) / 3)
 		return dataPos
 	
-	def dataPosToHex(self, dataPos):
-		hexPos = dataPos * 3
-		if hexPos % 2 > 0:
-			hexPos -= 1
-		
-		# FIXME: This is a ugly hack and not working properly
-		if hexPos % 6 == 0:
-			hexPos -= 1
-				
-		return hexPos
-	
 	def txtHex_selectionchanged(self):
 		if not self.updateHexSel or not self.updateTxt:
 			return
@@ -352,6 +341,20 @@ class QHexTableWidget(QTableWidget):
 	updateTxt = True
 	updateHexTxt = True
 	
+	def dataPosToHex(self, dataPos):
+		hexPos = dataPos * 3
+		if hexPos % 2 > 0:
+			hexPos -= 1
+			
+		if dataPos % 2 == 0:
+			hexPos -= 1
+			
+#		# FIXME: This is a ugly hack and not working properly
+#		if hexPos % 6 == 0:
+#			hexPos -= 1 # math.floor(hexPos / 6 ) * 1
+			
+		return hexPos
+	
 	def txtData_selectionchanged(self):
 		if not self.updateSel or not self.updateTxt:
 			return
@@ -359,13 +362,8 @@ class QHexTableWidget(QTableWidget):
 		cursorData = self.txtData.textCursor()
 		dataStart = cursorData.selectionStart()
 		dataEnd = cursorData.selectionEnd()
-		hexStart = self.dataPosToHex(dataStart)# - (int(dataStart / 16) * 1)
-		hexEnd = self.dataPosToHex(dataEnd)# - (int(dataEnd / 16) * 1)
-		
-#		if dataEnd > 16:
-#			hexEnd -= int(dataEnd / 16) * 2
-		
-		
+		hexStart = self.dataPosToHex(dataStart) - (int(dataStart / 17) * 3) # + ((int(dataStart / 17) * 1)) # math.floor
+		hexEnd = self.dataPosToHex(dataEnd) - (int(dataEnd / 17) * 3) # + ((int(dataEnd / 17) * 1))
 		
 		cursorHex = self.txtHex.textCursor()
 		cursorHex.clearSelection()
@@ -375,12 +373,12 @@ class QHexTableWidget(QTableWidget):
 		print(f'===> Hex-Start: {hexStart} / End: {hexEnd}')
 		print(f'(math.floor(hexEnd  / 48)) = {(math.floor(hexEnd  / 48))}')
 #		hexEnd -= (math.floor(hexEnd / 48))
-		if math.floor((hexEnd / 48)) > 0:
-			hexEnd -= (math.floor((hexEnd / 48) * 2))
+#		if math.floor((hexEnd / 48)) > 0:
+#			hexEnd -= (math.floor((hexEnd / 48) * 2))
 		print(f'=======> Hex-Start: {hexStart} / End: {hexEnd}')
 		
-		if hexStart % 2 == 0:
-			hexStart += 1
+#		if hexStart % 2 == 0:
+#			hexStart += 1
 			
 		if hexStart > txtLen:
 			hexStart = 0

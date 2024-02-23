@@ -36,7 +36,7 @@ class SettingsHelper(QObject):
 		
 	def getChecked(self, setting):
 		print(f'self.settings.value(setting.value[0], True, bool) => {self.settings.value(setting.value[0], True, bool)}')
-		return Qt.CheckState.Checked if self.settings.value(setting.value[0], setting.value[1], setting.value[2]) else Qt.CheckState.Unchecked
+		return Qt.CheckState.Checked if self.settings.value(setting.value[0], setting.value[1], setting.value[1]) else Qt.CheckState.Unchecked
 	
 	def getValue(self, setting):
 		return self.settings.value(setting.value[0], setting.value[1], setting.value[2])

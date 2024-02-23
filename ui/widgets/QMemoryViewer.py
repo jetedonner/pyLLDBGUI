@@ -98,10 +98,12 @@ class QMemoryViewer(QWidget):
 		for i in range(0, len(self.hexData), 16):
 			rawData = ""
 			current_values = self.hexData[i:i+16]
+			print(f'current_values => {current_values} => len: {len(current_values)}')
 			for single in current_values:
 				integer_value = int(single, 16)
 				utf_8_char = chr(integer_value)
-				rawData += utf_8_char	
+				rawData += utf_8_char
+			print(f'rawData => {rawData} => len: {len(rawData)}')
 			current_string = self.formatHexStringFourChars(' '.join(current_values), self.byteGrouping)
 			self.tblHex.addRow(hex(self.startAddress + i), current_string, rawData)
 			

@@ -1,0 +1,33 @@
+[
+  {
+    "Breakpoint" : {
+      "BKPTOptions" : {
+        "AutoContinue" : false,
+        "BKPTCMDData" : {
+          "ScriptSource" : "Python",
+          "StopOnError" : true,
+          "UserSource" : [
+            "lldbpyGUIWindow.my_callback(frame, bp_loc, internal_dict)"
+          ]
+        },
+        "ConditionText" : "",
+        "EnabledState" : true,
+        "IgnoreCount" : 0,
+        "OneShotState" : false
+      },
+      "BKPTResolver" : {
+        "Options" : {
+          "AddressOffset" : 4294983478,
+          "ModuleName" : "",
+          "Offset" : 0
+        },
+        "Type" : "Address"
+      },
+      "Hardware" : false,
+      "SearchFilter" : {
+        "Options" : {},
+        "Type" : "Unconstrained"
+      }
+    }
+  }
+]

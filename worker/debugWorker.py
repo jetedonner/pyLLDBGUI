@@ -41,23 +41,54 @@ class DebugWorker(BaseWorker):
 					print("Trying to StepInto ...")
 					thread.StepInstruction(False)
 					print("After StepInto ...")
+				elif self.kind == StepKind.StepOut:
+					print("Trying to StepOut ...")
+					thread.StepOut()
+					print("After StepOut ...")
+				elif self.kind == StepKind.StepOver:
+					print("Trying to StepOver ...")
+					thread.StepInstruction(True)
+					print("After StepOver ...")
+					ID = thread.GetThreadID()
+					if thread.GetStopReason() == lldb.eStopReasonBreakpoint:
+						print(f'GOT if thread.GetStopReason() == lldb.eStopReasonBreakpoint:')
+						from lldbutil import print_stacktrace
+						print_stacktrace(thread)
+						pass
+#					print("After StepOver ...")
 				elif self.kind == StepKind.Continue:
 					print("Trying to Continue ...")
 					error = process.Continue()
 					print("After Continue ...")
 					if error:
 						print(error)
+					
+#					for thread in process:
+#						if self.TraceOn():
+#							print_stacktrace(thread)
+					ID = thread.GetThreadID()
+					if thread.GetStopReason() == lldb.eStopReasonBreakpoint:
+#						print(f'GOT if thread.GetStopReason() == lldb.eStopReasonBreakpoint:')
+#						from lldbutil import print_stacktrace
+#						print_stacktrace(thread)
+						pass
 				else:
 					print("Trying to StepOver ...")
 					thread.StepInstruction(True)
 					print("After StepOver ...")
+					ID = thread.GetThreadID()
+					if thread.GetStopReason() == lldb.eStopReasonBreakpoint:
+#						print(f'GOT if thread.GetStopReason() == lldb.eStopReasonBreakpoint:')
+#						from lldbutil import print_stacktrace
+#						print_stacktrace(thread)
+						pass
 
 				frame = thread.GetFrameAtIndex(0)
 				if frame:
 					registerList = frame.GetRegisters()
 					numRegisters = registerList.GetSize()
 					if numRegisters > 0:
-						print(f'GetPCAddress => {hex(frame.GetPCAddress().GetFileAddress())}')
+#						print(f'GetPCAddress => {hex(frame.GetPCAddress().GetFileAddress())}')
 						self.signals.debugStepCompleted.emit(self.kind, True, frame.register["rip"].value, frame)
 						pass
 					else:

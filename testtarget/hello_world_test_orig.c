@@ -15,10 +15,6 @@
 // For sleep()
 #include <unistd.h>
 
-void subfunc(int idx) {
-  printf("\n%d", idx);
-}
-
 int main() {
 
   // Variable for iteration counter
@@ -36,8 +32,7 @@ int main() {
   while(1)
     {
       if(idx % 3 == 0){
-//      printf("\n%d", idx);
-        subfunc(idx);
+        printf("\n%d", idx);
       }
       printf("...");
       fflush(stdout);
