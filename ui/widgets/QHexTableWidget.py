@@ -77,6 +77,8 @@ class TransparentLineEdit(QLineEdit):
 		
 class QHexTableWidget(QTableWidget):
 	
+	startAddr = ""
+	
 	def __init__(self, parent=None):
 		QTableWidget.__init__(self, parent=parent)
 		
@@ -122,6 +124,7 @@ class QHexTableWidget(QTableWidget):
 			self.txtAddr = MyTextEdit()
 			self.txtAddr.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 			self.txtAddr.setText(address)
+			self.startAddr = int(address, 16)
 #			self.txtAddr.setStyleSheet("QTextEdit { paragraph-spacing: 20px; }")
 #			self.txtAddr.setStyleSheet("MyTextEdit { line-height: 3.5; }")
 			self.txtAddr.setFont(ConfigClass.font)
@@ -315,7 +318,8 @@ class QHexTableWidget(QTableWidget):
 		dataStart = self.hexPosToData(hexStart) + (int(hexStart / 48))
 		dataEnd = self.hexPosToData(hexEnd) + (int(hexEnd / 48))
 		
-		print("txtHex Selection start: %d end: %d" % (hexStart, hexEnd))
+		print(f"txtHex Selection start: %d end: %d => Address: {hex(self.startAddr + self.hexPosToData(hexStart))} - {hex(self.startAddr + self.hexPosToData(hexEnd))}" % (hexStart, hexEnd))
+		self.window().updateStatusBar(f'Selected memory: {hex(self.startAddr + self.hexPosToData(hexStart))} - {hex(self.startAddr + self.hexPosToData(hexEnd))}')
 		print(f'===> Data-Start: {dataStart} / End: {dataEnd}')
 		
 		cursorData = self.txtData.textCursor()
