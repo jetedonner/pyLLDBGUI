@@ -181,12 +181,11 @@ class LLDBPyGUIWindow(QMainWindow):
 			print(error)
 			print(main_wp)
 			
+			self.loadTarget()
+			
 			loop_wp = target.WatchAddress(int("0x304113098", 16), 0x4, False, True, error)
 			print(error)
 			print(loop_wp)
-			
-			
-			self.loadTarget()
 			
 	def my_callbackWindow(self, frame, bp_loc, dict): # self, 
 		# Your code to execute when the breakpoint hits
@@ -603,7 +602,7 @@ class LLDBPyGUIWindow(QMainWindow):
 				self.loadFileInfo(target.GetExecutable().GetDirectory() + "/" + target.GetExecutable().GetFilename())
 				self.loadFileStats(target)
 				
-#				self.loadTestBPs(ConfigClass.testBPsFilename)
+				self.loadTestBPs(ConfigClass.testBPsFilename)
 				
 				self.process = target.GetProcess()
 				if self.process:
@@ -755,6 +754,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.txtMultiline.setInstsAndAddr(None, self.rip)
 		self.txtMultiline.setPC(int(self.rip, 16))
 		self.loadStacktrace()
+#		self.loadTestBPs(ConfigClass.testBPsFilename)
 		
 	symFuncName = "" #== instruction.GetAddress().GetFunction().GetName()
 	def handle_loadInstruction(self, instruction):
