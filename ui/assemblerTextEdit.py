@@ -260,7 +260,7 @@ class DisassemblyTableWidget(QTableWidget):
 			self.toggleBPOn(row)
 		elif col in range(4, 6):
 			if self.item(self.selectedItems()[0].row(), 4) != None:
-				if self.item(self.selectedItems()[0].row(), 4).text().startswith(("jmp", "jne", "jz", "jnz")):
+				if self.item(self.selectedItems()[0].row(), 4).text().startswith(("call", "jmp", "jne", "jz", "jnz")):
 	#				frame = self.driver.getTarget().GetProcess().GetThreadAtIndex(0).GetFrameAtIndex(0)
 	#				if frame:
 	#					newPC = int(str(self.item(self.selectedItems()[0].row(), 5).text()), 16)
@@ -553,7 +553,20 @@ class AssemblerTextEdit(QWidget):
 			
 	def setTextColor(self, color = "black", lineNum = False):
 		pass
-		
+	
+	def viewAddress(self, address):
+		for row in range(self.table.rowCount()):
+			if self.table.item(row, 3) != None:
+				if self.table.item(row, 3).text() == address:
+#					self.table.item(row, 0).setText('>')
+					self.table.setFocus(Qt.FocusReason.NoFocusReason)
+					self.table.selectRow(row)
+					self.table.scrollToRow(row)
+					break
+#					print(f'scrollToRow: {row}')
+#				else:
+#					self.table.item(row, 0).setText('')
+					
 	def setPC(self, pc):
 		for row in range(self.table.rowCount()):
 			if self.table.item(row, 3) != None:

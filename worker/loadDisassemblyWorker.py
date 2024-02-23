@@ -43,6 +43,10 @@ class LoadDisassemblyWorker(BaseWorker):
 		Args:
 			target: The SBTarget object representing the debugged process.
 		"""
+		
+		thread = self.target.GetProcess().GetSelectedThread()
+#		print(f'thread.GetFrameAtIndex(0) => {thread.GetFrameAtIndex(0)}')
+		
 		idxOuter = 0
 		for module in self.target.module_iter():
 			if idxOuter != 0:
@@ -74,19 +78,19 @@ class LoadDisassemblyWorker(BaseWorker):
 							lstSym = module.symbol_in_section_iter(subsec)
 							secLen = module.num_symbols #len(lstSym)
 							for sym in lstSym:
-								
+#								print(f'get_instructions_from_current_target => {sym.get_instructions_from_current_target()}')
 #								if idxSym != 0:
 #									idxSym += 1
 #									continue
 #								print(sym)
 #							continue
-								start_address = sym.GetStartAddress().GetLoadAddress(self.target)
-								end_address = sym.GetEndAddress().GetLoadAddress(self.target)
-								size = end_address - start_address
-								print(f'start_address => {start_address} / {hex(start_address)}, end_address => {end_address} / {hex(end_address)}  => SIZE: {size}')
-								print(sym)
+#								start_address = sym.GetStartAddress().GetLoadAddress(self.target)
+#								end_address = sym.GetEndAddress().GetLoadAddress(self.target)
+#								size = end_address - start_address
+#								print(f'start_address => {start_address} / {hex(start_address)}, end_address => {end_address} / {hex(end_address)}  => SIZE: {size}')
+#								print(sym)
 								symFuncName = sym.GetStartAddress().GetFunction().GetName()
-								print(f'sym.GetName() => {sym.GetName()} / sym.GetStartAddress().GetFunction().GetName() => {sym.GetStartAddress().GetFunction().GetName()}')
+#								print(f'sym.GetName() => {sym.GetName()} / sym.GetStartAddress().GetFunction().GetName() => {sym.GetStartAddress().GetFunction().GetName()}')
 ###								start_address = subsec.GetLoadAddress(self.target)
 ###								print(f'start_address => {start_address} / {hex(start_address)}')
 ###								size = subsec.GetByteSize()
@@ -115,12 +119,13 @@ class LoadDisassemblyWorker(BaseWorker):
 #									remaining_bytes -= data_size
 #									print(f'start_address => {start_address} / remaining_bytes => {remaining_bytes} / data_size => {data_size}')
 ##								(50*100)/200
-								
+#								print(f'sym.GetStartAddress().GetFunction() => {sym.GetStartAddress().GetFunction()}')
 								for instruction in sym.GetStartAddress().GetFunction().GetInstructions(self.target):
 									if symFuncName == instruction.GetAddress().GetFunction().GetName():
-										print(f"Address: {instruction.GetAddress()}")
-										print(f"Instruction: {instruction}")
-										print(f'sym.GetName() => {sym.GetName()} / instruction.GetAddress().GetFunction().GetName() => {instruction.GetAddress().GetFunction().GetName()}')
+#										print(f"Address: {instruction.GetAddress()}")
+#										print(f"Instruction: {instruction}")
+#										print(f'sym.GetName() => {sym.GetName()} / instruction.GetAddress().GetFunction().GetName() => {instruction.GetAddress().GetFunction().GetName()}')
+#										print(f'COMMENT => {instruction.GetComment(self.target)}')
 										self.signals.loadInstruction.emit(instruction)
 								
 								idxSym += 1

@@ -65,8 +65,15 @@ class LoadRegisterWorker(BaseWorker):
 #						print(dir(var))
 #						print(var)
 #						print(hex(var.GetLoadAddress()))
-						string_value = var.GetValue()
+						if not var.IsValid():
+							print(f'{var.GetName()} var.IsValid() ==> FALSE!!!!')
+							
 						data = ""
+#						if var.GetValue() == None:
+#							print(f'{var.GetName()} var.GetValue() ==> NONE!!!!')
+#							string_value = "<Not initialized>"
+#						else:
+						string_value = var.GetValue()
 						if var.GetTypeName() == "int":
 							string_value = str(string_value)
 							data = hex(int(var.GetValue()))

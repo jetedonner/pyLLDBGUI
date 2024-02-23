@@ -100,6 +100,12 @@ class BreakpointsTableWidget(QTableWidget):
 #		itemCond.setText(text)
 #		pass
 		
+	def handle_gotoAddress(self):
+		if len(self.selectedItems()) > 0:
+			item = self.item(self.selectedItems()[0].row(), 2)
+			self.window().txtMultiline.viewAddress(item.text())
+		pass
+		
 	def handle_copyAddress(self):
 		if len(self.selectedItems()) > 0:
 			item = self.item(self.selectedItems()[0].row(), 2)
@@ -179,6 +185,8 @@ class BreakpointsTableWidget(QTableWidget):
 		actionEditCondition.triggered.connect(self.handle_editCondition)
 		
 		self.context_menu.addSeparator()
+		actionGotoAddress = self.context_menu.addAction("Goto address")
+		actionGotoAddress.triggered.connect(self.handle_gotoAddress)
 		actionCopyAddress = self.context_menu.addAction("Copy address")
 		actionCopyAddress.triggered.connect(self.handle_copyAddress)
 		
@@ -195,8 +203,8 @@ class BreakpointsTableWidget(QTableWidget):
 		self.setColumnCount(6)
 		self.setColumnWidth(0, 48)
 		self.setColumnWidth(1, 32)
-		self.setColumnWidth(2, 96)
-		self.setColumnWidth(3, 108)
+		self.setColumnWidth(2, 128)
+		self.setColumnWidth(3, 128)
 		self.setColumnWidth(4, 32)
 		self.setColumnWidth(5, 256)
 #		self.setColumnWidth(5, 324)

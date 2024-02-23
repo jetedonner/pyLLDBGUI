@@ -669,18 +669,19 @@ class LLDBPyGUIWindow(QMainWindow):
 					idx = 0
 					self.thread = self.process.GetThreadAtIndex(0)
 					if self.thread:
-							
-						self.treThreads.clear()
-						self.processNode = QTreeWidgetItem(self.treThreads, ["#0 " + str(self.process.GetProcessID()), hex(self.process.GetProcessID()) + "", self.process.GetTarget().GetExecutable().GetFilename(), '', ''])
 						
-						self.threadNode = QTreeWidgetItem(self.processNode, ["#" + str(idx) + " " + str(self.thread.GetThreadID()), hex(self.thread.GetThreadID()) + "", self.thread.GetQueueName(), '', ''])
-						
-						for idx2 in range(self.thread.GetNumFrames()):
-							frame = self.thread.GetFrameAtIndex(idx2)
-							frameNode = QTreeWidgetItem(self.threadNode, ["#" + str(frame.GetFrameID()), "", str(frame.GetPCAddress()), str(hex(frame.GetPC())), lldbHelper.GuessLanguage(frame)])
-						
-						self.processNode.setExpanded(True)
-						self.threadNode.setExpanded(True)
+#						self.loadStacktrace()
+#						self.treThreads.clear()
+#						self.processNode = QTreeWidgetItem(self.treThreads, ["#0 " + str(self.process.GetProcessID()), hex(self.process.GetProcessID()) + "", self.process.GetTarget().GetExecutable().GetFilename(), '', ''])
+#						
+#						self.threadNode = QTreeWidgetItem(self.processNode, ["#" + str(idx) + " " + str(self.thread.GetThreadID()), hex(self.thread.GetThreadID()) + "", self.thread.GetQueueName(), '', ''])
+#						
+#						for idx2 in range(self.thread.GetNumFrames()):
+#							frame = self.thread.GetFrameAtIndex(idx2)
+#							frameNode = QTreeWidgetItem(self.threadNode, ["#" + str(frame.GetFrameID()), "", str(frame.GetPCAddress()), str(hex(frame.GetPC())), lldbHelper.GuessLanguage(frame)])
+#						
+#						self.processNode.setExpanded(True)
+#						self.threadNode.setExpanded(True)
 						
 #						print(f'self.thread.GetNumFrames() {self.thread.GetNumFrames()}')
 						frame = self.thread.GetFrameAtIndex(0)
@@ -694,8 +695,9 @@ class LLDBPyGUIWindow(QMainWindow):
 #							addr = frame.GetPCAddress()
 #							load_addr = addr.GetLoadAddress(target)
 #							function = frame.GetFunction()
+#							print(f'function => {function}')
 #							mod_name = frame.GetModule().GetFileSpec().GetFilename()
-##							print(f'load_addr: {load_addr}')
+#							#							print(f'load_addr: {load_addr}')
 #							if not function:
 #								# No debug info for 'function'.
 #								symbol = frame.GetSymbol()
@@ -703,18 +705,18 @@ class LLDBPyGUIWindow(QMainWindow):
 #								start_addr = symbol.GetStartAddress().GetFileAddress()
 #								symbol_name = symbol.GetName()
 #								symbol_offset = file_addr - start_addr
-##								print(f'symbol_name: {symbol_name}')
-##								with open("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/my_output.txt", "w") as output:
-##								print('  frame #{num}: {addr:#016x} {mod}`{symbol} + {offset}'.format(num=i, addr=load_addr, mod=mod_name, symbol=symbol_name, offset=symbol_offset))
+#								#								print(f'symbol_name: {symbol_name}')
+#								#								with open("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/my_output.txt", "w") as output:
+#								#								print('  frame #{num}: {addr:#016x} {mod}`{symbol} + {offset}'.format(num=i, addr=load_addr, mod=mod_name, symbol=symbol_name, offset=symbol_offset))
 #							else:
 #								# Debug info is available for 'function'.
 #								func_name = frame.GetFunctionName()
 #								file_name = frame.GetLineEntry().GetFileSpec().GetFilename()
 #								line_num = frame.GetLineEntry().GetLine()
-##								print(f'function.GetStartAddress().GetFileAddress(): {function.GetStartAddress().	GetFileAddress()}')
-##								print(f'func_name: {func_name}')
-###								with open("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/my_output.txt", "w") as output:
-##								print('  frame #{num}: {addr:#016x} {mod}`{func} at {file}:{line} {args}'.format(num=i, addr=load_addr, mod=mod_name, func='%s [inlined]' % func_name if frame.IsInlined() else func_name, file=file_name, line=line_num, args=get_args_as_string(frame, showFuncName=False))) #args=get_args_as_string(frame, showFuncName=False)), output)
+#								#								print(f'function.GetStartAddress().GetFileAddress(): {function.GetStartAddress().	GetFileAddress()}')
+#								#								print(f'func_name: {func_name}')
+#								##								with open("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/pyLLDBGUI/my_output.txt", "w") as output:
+#								#								print('  frame #{num}: {addr:#016x} {mod}`{func} at {file}:{line} {args}'.format(num=i, addr=load_addr, mod=mod_name, func='%s [inlined]' % func_name if frame.IsInlined() else func_name, file=file_name, line=line_num, args=get_args_as_string(frame, showFuncName=False))) #args=get_args_as_string(frame, showFuncName=False)), output)
 #								
 #								
 #								self.disassemble_instructions(function.GetInstructions(target), target, rip)
@@ -791,6 +793,7 @@ class LLDBPyGUIWindow(QMainWindow):
 			
 #			self.txtMultiline.appendAsmSymbol(str(instruction.GetAddress().GetFileAddress()), self.symFuncName)
 
+#		print(f'instruction.GetComment(target) => {instruction.GetComment(target)}')
 		self.txtMultiline.appendAsmText(hex(int(str(instruction.GetAddress().GetFileAddress()), 10)), instruction.GetMnemonic(target),  instruction.GetOperands(target), instruction.GetComment(target), str(instruction.GetData(target)).replace("                             ", "\t\t").replace("		            ", "\t\t\t").replace("		         ", "\t\t").replace("		      ", "\t\t").replace("			   ", "\t\t\t"), True, self.rip)
 		pass
 		
@@ -804,6 +807,8 @@ class LLDBPyGUIWindow(QMainWindow):
 			idx += 1
 #			print(i.GetData(target))
 			self.txtMultiline.appendAsmText(hex(int(str(i.GetAddress().GetFileAddress()), 10)), i.GetMnemonic(target),  i.GetOperands(target), i.GetComment(target), str(i.GetData(target)).replace("                             ", "\t\t").replace("		            ", "\t\t\t").replace("		         ", "\t\t").replace("		      ", "\t\t").replace("			   ", "\t\t\t"), True, rip)
+			
+			print(f'i.GetComment(target) => {i.GetComment(target)}')
 			
 	def handle_output(self, output):
 		print(f">>>>>> OUTPUT: {output}")
@@ -1262,9 +1267,13 @@ class LLDBPyGUIWindow(QMainWindow):
 			
 			self.threadNode = QTreeWidgetItem(self.processNode, ["#" + str(idx) + " " + str(self.thread.GetThreadID()), hex(self.thread.GetThreadID()) + "", self.thread.GetQueueName(), '', ''])
 			
-			for idx2 in range(self.thread.GetNumFrames()):
+			numFrames = self.thread.GetNumFrames()
+			
+			for idx2 in range(numFrames):
+				self.setProgressValue(idx2 / numFrames)
 				frame = self.thread.GetFrameAtIndex(idx2)
 				frameNode = QTreeWidgetItem(self.threadNode, ["#" + str(frame.GetFrameID()), "", str(frame.GetPCAddress()), str(hex(frame.GetPC())), lldbHelper.GuessLanguage(frame)])
+				idx += 1
 				
 			self.processNode.setExpanded(True)
 			self.threadNode.setExpanded(True)
@@ -1375,6 +1384,9 @@ class LLDBPyGUIWindow(QMainWindow):
 		start_pos = position + 3
 		
 		end_pos = self.getNextNBSpace(text, start_pos)
+		if text[start_pos:end_pos] == '':
+			return
+		
 		linePos = int(text[start_pos:end_pos])
 
 		scroll_value = linePos * self.txtSource.fontMetrics().height()
