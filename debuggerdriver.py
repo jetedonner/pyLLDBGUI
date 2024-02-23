@@ -132,8 +132,12 @@ class LLDBListenerThread(Thread):
           print("STD OUT EVENT ALT!!!")
         elif SBBreakpoint.EventIsBreakpointEvent(event):
           self._breakpoint_event(event)
+        elif event.GetType() == lldb.SBTarget.eBroadcastBitWatchpointChanged:
+          wp = lldb.SBWatchpoint.GetWatchpointFromEvent(event)
+          print(f"WATCHPOINT CHANGED!!!! => {wp}")
         else:
           print("OTHER EVENT!!!!")
+          
     print("END LISTENER!!!")
           
 def breakpointHandlerDriver(dummy, frame, bpno, err):

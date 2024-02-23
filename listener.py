@@ -96,6 +96,8 @@ class LLDBListener(QtCore.QObject, Thread):
 					print('THREAD SUSPENDED: %s' % str(event))
 				elif event.GetType() == SBTarget.eBroadcastBitModulesLoaded:
 					print('Module load: %s' % str(event))
+					
+				
 				elif event.GetType() == lldb.SBProcess.eBroadcastBitSTDOUT:
 					print("STD OUT EVENT LISTENER!!!")
 					stdout = SBProcess.GetProcessFromEvent(event).GetSTDOUT(256)
@@ -114,6 +116,9 @@ class LLDBListener(QtCore.QObject, Thread):
 				elif SBBreakpoint.EventIsBreakpointEvent(event):
 					print("GOT BREAKPOINT EVENT YESSSSS!!!")
 					self._breakpoint_event(event)
+				elif event.GetType() == lldb.SBTarget.eBroadcastBitWatchpointChanged:
+					wp = lldb.SBWatchpoint.GetWatchpointFromEvent(event)
+					print(f"WATCHPOINT CHANGED!!!! => {wp}")
 				else:
 					print("OTHER EVENT!!!!")
 		print("END LISTENER!!!")

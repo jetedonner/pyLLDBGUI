@@ -6,21 +6,17 @@ from helper.dbgHelper import *
 #class LoadBreakpointsWorkerReceiver(BaseWorkerReceiver):
 #	interruptWorker = pyqtSignal()
 	
-def myTest():
-	print("MYTEST")
-	
 class LoadBreakpointsWorkerSignals(BaseWorkerSignals):
 	loadBreakpoints = pyqtSignal(str)
 	loadBreakpointsValue = pyqtSignal(int, int, str, str, int, str, bool, bool, object)
 	updateBreakpointsValue = pyqtSignal(int, int, str, str, int, str, bool, bool, object)
+	loadWatchpointsValue = pyqtSignal(object)
+	updateWatchpointsValue = pyqtSignal(object)
 #	updateRegisterValue = pyqtSignal(int, str, str, str)
 
 class LoadBreakpointsWorker(BaseWorker):
 	
 	initTable = True
-	
-	def myTest(self):
-		print("MYTEST")
 		
 	def __init__(self, driver, initTable = True):
 		super(LoadBreakpointsWorker, self).__init__(driver)
@@ -85,7 +81,13 @@ class LoadBreakpointsWorker(BaseWorker):
 					self.signals.loadBreakpointsValue.emit(bp_cur.GetID(), bp_cur.GetID(), hex(bl.GetLoadAddress()), name, bp_cur.GetHitCount(), bp_cur.GetCondition(), self.initTable, bp_cur.IsEnabled(), bp_cur)
 				else:
 					self.signals.updateBreakpointsValue.emit(bp_cur.GetID(), bp_cur.GetID(), hex(bl.GetLoadAddress()), name, bp_cur.GetHitCount(), bp_cur.GetCondition(), self.initTable, bp_cur.IsEnabled(), bp_cur)
-								
+		
+		for wp_loc in target.watchpoint_iter():
+#			print(wp_loc)
+			if self.initTable:
+				self.signals.loadWatchpointsValue.emit(wp_loc)
+			else:
+				self.signals.updateWatchpointsValue.emit(wp_loc)
 #		self.signals.finished.emit()
 		pass
 		

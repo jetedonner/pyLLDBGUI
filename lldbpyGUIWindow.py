@@ -171,10 +171,18 @@ class LLDBPyGUIWindow(QMainWindow):
 			main_bp = target.BreakpointCreateByName(fname, target.GetExecutable().GetFilename())
 			main_bp.AddName(fname)
 #			print(main_bp)
+			
+			
 						
 			process = target.LaunchSimple(None, None, os.getcwd())
+			
+#			error = lldb.SBError()
+#			main_wp = target.WatchAddress(int("0x3041130b4", 16), 0x1, True, True, error)
+#			print(error)
+#			print(main_wp)
+			
 			self.loadTarget()
-		
+			
 	def my_callbackWindow(self, frame, bp_loc, dict): # self, 
 		# Your code to execute when the breakpoint hits
 		print(f"Breakpoint hit!!!!!!!! =========>>>>>>>>  WINDOW !!!!!! {bp_loc}!!!!!!")
@@ -386,49 +394,56 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.gbpSource.layout().addWidget(self.txtSource)
 		self.tabWidgetDbg.addTab(self.gbpSource, "Source")
 		
-		self.tblBPs = BreakpointsTableWidget(self.driver)
-		self.tblBPs.sigEnableBP.connect(self.handle_enableBPTblBPs)
+		self.wdtBPsWPs = BPsWPsWidget(self.driver)
+#		self.tabWidgetBPsWPs = QTabWidget()
+#		
+#		self.tblBPs = BreakpointsTableWidget(self.driver)
+#		self.tblBPs.sigEnableBP.connect(self.handle_enableBPTblBPs)
+#		
+#		self.cmdSaveBP = ClickLabel()
+#		self.cmdSaveBP.setPixmap(ConfigClass.pixSave)
+#		self.cmdSaveBP.setToolTip("Save Breakpoints")
+#		self.cmdSaveBP.clicked.connect(self.click_saveBP)
+#		self.cmdSaveBP.setContentsMargins(0, 0, 0, 0)
+#		
+#		self.cmdLoadBP = ClickLabel()
+#		self.cmdLoadBP.setPixmap(ConfigClass.pixLoad)
+#		self.cmdLoadBP.setToolTip("Load Breakpoints")
+#		self.cmdLoadBP.clicked.connect(self.click_loadBP)
+#		self.cmdLoadBP.setContentsMargins(0, 0, 0, 0)
+#		
+#		self.cmdReloadBPs = ClickLabel()
+#		self.cmdReloadBPs.setPixmap(ConfigClass.pixReload)
+#		self.cmdReloadBPs.setToolTip("Reload Breakpoints")
+#		self.cmdReloadBPs.clicked.connect(self.click_reloadBP)
+#		self.cmdReloadBPs.setContentsMargins(0, 0, 0, 0)
+#		
+#		self.cmdDeleteAllBP = ClickLabel()
+#		self.cmdDeleteAllBP.setPixmap(ConfigClass.pixTrash)
+#		self.cmdDeleteAllBP.setToolTip("Delete ALL Breakpoints")
+#		self.cmdDeleteAllBP.clicked.connect(self.click_deleteAllBP)
+#		self.cmdDeleteAllBP.setContentsMargins(0, 0, 0, 0)
+#		
+#		self.wgtBPCtrls = QWidget()
+#		self.wgtBPCtrls.setContentsMargins(0, 10, 0, 0)
+#		self.wgtBPCtrls.setLayout(QHBoxLayout())
+#		self.wgtBPCtrls.layout().addWidget(self.cmdSaveBP)
+#		self.wgtBPCtrls.layout().addWidget(self.cmdLoadBP)
+#		self.wgtBPCtrls.layout().addWidget(self.cmdReloadBPs)
+#		self.wgtBPCtrls.layout().addWidget(self.cmdDeleteAllBP)
+##		self.wgtBPCtrls.layout().setContentsMargins(0, 0, 0, 0)
+#		self.wgtBPCtrls.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
+##		self.gbpBPs = QGroupBox("Breakpoints")
+##		self.gbpBPs.setLayout(QVBoxLayout())
+#		self.wdtBPs = QWidget()
+#		self.wdtBPs.setLayout(QVBoxLayout())
+#		self.wdtBPs.layout().addWidget(self.wgtBPCtrls)
+#		self.wdtBPs.layout().addWidget(self.tblBPs)
+#		self.wdtBPs.setContentsMargins(0, 0, 0, 0)
+#		
+#		self.tabWidgetBPsWPs.addTab(self.wdtBPs, "Breakpoints")
 		
-		self.cmdSaveBP = ClickLabel()
-		self.cmdSaveBP.setPixmap(ConfigClass.pixSave)
-		self.cmdSaveBP.setToolTip("Save Breakpoints")
-		self.cmdSaveBP.clicked.connect(self.click_saveBP)
-		self.cmdSaveBP.setContentsMargins(0, 0, 0, 0)
-		
-		self.cmdLoadBP = ClickLabel()
-		self.cmdLoadBP.setPixmap(ConfigClass.pixLoad)
-		self.cmdLoadBP.setToolTip("Load Breakpoints")
-		self.cmdLoadBP.clicked.connect(self.click_loadBP)
-		self.cmdLoadBP.setContentsMargins(0, 0, 0, 0)
-		
-		self.cmdReloadBPs = ClickLabel()
-		self.cmdReloadBPs.setPixmap(ConfigClass.pixReload)
-		self.cmdReloadBPs.setToolTip("Reload Breakpoints")
-		self.cmdReloadBPs.clicked.connect(self.click_reloadBP)
-		self.cmdReloadBPs.setContentsMargins(0, 0, 0, 0)
-		
-		self.cmdDeleteAllBP = ClickLabel()
-		self.cmdDeleteAllBP.setPixmap(ConfigClass.pixTrash)
-		self.cmdDeleteAllBP.setToolTip("Delete ALL Breakpoints")
-		self.cmdDeleteAllBP.clicked.connect(self.click_deleteAllBP)
-		self.cmdDeleteAllBP.setContentsMargins(0, 0, 0, 0)
-		
-		self.wgtBPCtrls = QWidget()
-		self.wgtBPCtrls.setContentsMargins(0, 10, 0, 0)
-		self.wgtBPCtrls.setLayout(QHBoxLayout())
-		self.wgtBPCtrls.layout().addWidget(self.cmdSaveBP)
-		self.wgtBPCtrls.layout().addWidget(self.cmdLoadBP)
-		self.wgtBPCtrls.layout().addWidget(self.cmdReloadBPs)
-		self.wgtBPCtrls.layout().addWidget(self.cmdDeleteAllBP)
-#		self.wgtBPCtrls.layout().setContentsMargins(0, 0, 0, 0)
-		self.wgtBPCtrls.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
-		self.gbpBPs = QGroupBox("Breakpoints")
-		self.gbpBPs.setLayout(QVBoxLayout())
-		self.gbpBPs.layout().addWidget(self.wgtBPCtrls)
-		self.gbpBPs.layout().addWidget(self.tblBPs)
-		self.gbpBPs.setContentsMargins(0, 0, 0, 0)
-		
-		self.tabWidgetDbg.addTab(self.gbpBPs, "Break-/Watchpoints")
+		self.tabWidgetDbg.addTab(self.wdtBPsWPs, "Break-/Watchpoints")
 		
 		self.treThreads = ThreadFrameTreeWidget()
 		self.treThreads.setFont(ConfigClass.font)
@@ -998,7 +1013,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.updateStatusBar("Reloading breakpoints ...")
 #		if initTable: # TODO: Implement Update instead of complete refresh
 		if initTable:
-			self.tblBPs.resetContent()
+			self.wdtBPsWPs.tblBPs.resetContent()
 		self.start_loadBreakpointsWorker(initTable)
 		
 	def reloadRegister(self, initTabs = True):
@@ -1034,15 +1049,27 @@ class LLDBPyGUIWindow(QMainWindow):
 #		self.loadBreakpointsWorker.signals.loadRegister.connect(self.handle_loadRegisterLoadRegister)
 		self.loadBreakpointsWorker.signals.loadBreakpointsValue.connect(self.handle_loadBreakpointsLoadBreakpointValue)
 		self.loadBreakpointsWorker.signals.updateBreakpointsValue.connect(self.handle_updateBreakpointsLoadBreakpointValue)
+		self.loadBreakpointsWorker.signals.loadWatchpointsValue.connect(self.handle_loadWatchpointsLoadBreakpointValue)
+		self.loadBreakpointsWorker.signals.updateWatchpointsValue.connect(self.handle_updateWatchpointsLoadBreakpointValue)
 #		self.loadBreakpointsWorker.signals.updateRegisterValue.connect(self.handle_loadRegisterUpdateRegisterValue)
 		
 		self.threadpool.start(self.loadBreakpointsWorker)
 		
 	
+	def handle_loadWatchpointsLoadBreakpointValue(self, wp):
+#		if initTable:
+#			self.txtMultiline.table.setBPAtAddress(loadAddr, True, False)
+		self.wdtBPsWPs.tblWPs.addRow(True, wp.GetID(), hex(wp.GetWatchAddress()), hex(wp.GetWatchSize()), ("read" if wp.IsWatchingReads() else "") + (" / " if wp.IsWatchingReads() and wp.IsWatchingWrites() else "") + ("write" if wp.IsWatchingWrites() else ""), wp.GetHitCount(), wp.GetCondition())
+	
+	def handle_updateWatchpointsLoadBreakpointValue(self, wp):
+#		if initTable:
+#			self.txtMultiline.table.setBPAtAddress(loadAddr, True, False)
+		self.wdtBPsWPs.tblWPs.updateRow(True, wp.GetID(), hex(wp.GetWatchAddress()), hex(wp.GetWatchSize()), ("read" if wp.IsWatchingReads() else "") + (" / " if wp.IsWatchingReads() and wp.IsWatchingWrites() else "") + ("write" if wp.IsWatchingWrites() else ""), wp.GetHitCount(), wp.GetCondition())
+		
 	def handle_loadBreakpointsLoadBreakpointValue(self, bpId, idx, loadAddr, name, hitCount, condition, initTable, enabled, bp):
 		if initTable:
 			self.txtMultiline.table.setBPAtAddress(loadAddr, True, False)
-		self.tblBPs.addRow(enabled, idx, loadAddr, name, str(hitCount), condition)
+		self.wdtBPsWPs.tblBPs.addRow(enabled, idx, loadAddr, name, str(hitCount), condition)
 #		bp.SetScriptCallbackBody("print('HELLLLLLLLLLLLLLOOOOOOOOO SSSSCCCCRRRRIIIIIPPPTTTTT CALLBACK!!!!!')")
 		extra_args = lldb.SBStructuredData()
 		# Add any extra data you want to pass to the callback (e.g., variables, settings)
@@ -1057,7 +1084,7 @@ class LLDBPyGUIWindow(QMainWindow):
 	def handle_updateBreakpointsLoadBreakpointValue(self, bpId, idx, loadAddr, name, hitCount, condition, initTable, enabled, bp):
 #		if initTable:
 #			self.txtMultiline.table.setBPAtAddress(loadAddr, True, False)
-		self.tblBPs.updateRow(enabled, idx, loadAddr, name, str(hitCount), condition)
+		self.wdtBPsWPs.tblBPs.updateRow(enabled, idx, loadAddr, name, str(hitCount), condition)
 		extra_args = lldb.SBStructuredData()
 		self.driver.handleCommand("command script import --allow-reload ./lldbpyGUIWindow.py")
 		bp.SetScriptCallbackFunction("lldbpyGUIWindow.my_callback", extra_args)

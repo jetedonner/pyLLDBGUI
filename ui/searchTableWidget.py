@@ -16,11 +16,16 @@ from config import *
 
 class SearchTableWidget(QTableWidget):
 		
+	def handle_showMemory(self):
+		if self.item(self.selectedItems()[0].row(), 1) != None:
+			self.window().doReadMemory(int(self.item(self.selectedItems()[0].row(), 1).text(), 16))
+		pass
+		
 	def __init__(self):
 		super().__init__()
 		self.context_menu = QMenu(self)
-#		actionToggleBP = self.context_menu.addAction("Toggle Breakpoint")
-#		actionToggleBP.triggered.connect(self.handle_toggleBP)
+		self.actionShowMemory = self.context_menu.addAction("Show Memory")
+		self.actionShowMemory.triggered.connect(self.handle_showMemory)
 #		actionDisableBP = self.context_menu.addAction("Enable / Disable Breakpoint")
 #		actionDisableBP.triggered.connect(self.handle_disableBP)
 #		
@@ -59,7 +64,7 @@ class SearchTableWidget(QTableWidget):
 #		print(event.pos())
 #		print(self.itemAt(event.pos().x(), event.pos().y()))
 #		print(self.selectedItems())
-#		self.context_menu.exec(event.globalPos())
+		self.context_menu.exec(event.globalPos())
 		pass
 		
 	def resetContent(self):
@@ -168,7 +173,7 @@ class SearchWidget(QWidget):
 							numFound += 1
 							end_index = data.find(b'\x00', string_index)
 							# Found the string!
-							print(f"Found string at address: {address + string_index} / {hex(address + string_index)} => {hex(address)} / {hex(string_index)} ===> {data}")
+#							print(f"Found string at address: {address + string_index} / {hex(address + string_index)} => {hex(address)} / {hex(string_index)} ===> {data}")
 							try:
 								self.table.addRow(str(numFound), hex(address + string_index), section.GetName() + "." + subsec.GetName(), data[string_index:end_index].decode(), self.bytearray_to_hex(data[string_index:end_index]))
 							except Exception as e:

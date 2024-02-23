@@ -34,6 +34,8 @@ class ConfigClass():
 	pixReload = None
 	pixTrash = None
 	
+	iconEyeRed = None
+	
 	iconBug = None
 	iconBugGreen = None
 	iconStd = None
@@ -74,6 +76,7 @@ class ConfigClass():
 		ConfigClass.iconSave = QIcon(os.path.join(resources_root, 'save.png'))
 		ConfigClass.iconLoad = QIcon(os.path.join(resources_root, 'folder.png'))
 		ConfigClass.iconInfo = QIcon(os.path.join(resources_root, 'info.png'))
+		ConfigClass.iconEyeRed = QIcon(os.path.join(resources_root, 'Eye_Red.png'))
 		ConfigClass.iconBug = QIcon(os.path.join(resources_root, 'bug.png'))
 		ConfigClass.iconBugGreen = QIcon(os.path.join(resources_root, 'bug_green2.png'))
 		ConfigClass.iconBPEnabled = QIcon(os.path.join(resources_root, 'bug.png'))
