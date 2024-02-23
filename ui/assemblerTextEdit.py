@@ -132,8 +132,8 @@ class DisassemblyTableWidget(QTableWidget):
 #		self.sigEnableBP.emit(self.item(self.selectedItems()[0].row(), 3).text(), item.isBPEnabled)
 		if self.item(self.selectedItems()[0].row(), 3) != None:
 			self.window().tabWidgetDbg.setCurrentIndex(3)
-			self.window().tblBPs.setFocus()
-			self.window().tblBPs.selectBPRow(self.item(self.selectedItems()[0].row(), 3).text())
+			self.window().wdtBPsWPs.tblBPs.setFocus()
+			self.window().wdtBPsWPs.tblBPs.selectBPRow(self.item(self.selectedItems()[0].row(), 3).text())
 #		pass
 		
 	def handle_enableBP(self):
@@ -506,7 +506,7 @@ class DisassemblyTableWidget(QTableWidget):
 		row_to_scroll = row
 		scroll_value = (row_to_scroll - self.viewport().height() / (2 * self.rowHeight(0))) * self.rowHeight(0)
 #		print(f'scroll_value => {scroll_value}')
-		self.verticalScrollBar().setValue(scroll_value)
+		self.verticalScrollBar().setValue(int(scroll_value))
 #		print(f'self.verticalScrollBar().value() => {self.verticalScrollBar().value()}')
 		QApplication.processEvents()
 #		QCoreApplication.processEvents()

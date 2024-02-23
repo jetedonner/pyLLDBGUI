@@ -64,6 +64,10 @@ def my_callback(frame, bp_loc, dict): # self,
   print(f'bp_loc.GetBreakpoint() => {bp_loc.GetBreakpoint()} / Debugger => {pymobiledevice3GUIWindow}')
   
   
+def watchpoint_callback(frame, wp, dict):
+  # Your code goes here
+  print("WATCHPOINT CALLBACK => CAAAAAAALLLLLLLLBBBBBBBBAAAAAAACCCCCCCKKKKKK!!!!!")
+  
 def breakpointHandlerNG(dummy, frame, bpno, err):
 #   print(dummy)
 #   print(frame)

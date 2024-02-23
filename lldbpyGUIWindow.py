@@ -176,10 +176,15 @@ class LLDBPyGUIWindow(QMainWindow):
 						
 			process = target.LaunchSimple(None, None, os.getcwd())
 			
-#			error = lldb.SBError()
-#			main_wp = target.WatchAddress(int("0x3041130b4", 16), 0x1, True, True, error)
-#			print(error)
-#			print(main_wp)
+			error = lldb.SBError()
+			main_wp = target.WatchAddress(int("0x304113094", 16), 0x1, False, True, error)
+			print(error)
+			print(main_wp)
+			
+			loop_wp = target.WatchAddress(int("0x304113098", 16), 0x4, False, True, error)
+			print(error)
+			print(loop_wp)
+			
 			
 			self.loadTarget()
 			
@@ -395,53 +400,6 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.tabWidgetDbg.addTab(self.gbpSource, "Source")
 		
 		self.wdtBPsWPs = BPsWPsWidget(self.driver)
-#		self.tabWidgetBPsWPs = QTabWidget()
-#		
-#		self.tblBPs = BreakpointsTableWidget(self.driver)
-#		self.tblBPs.sigEnableBP.connect(self.handle_enableBPTblBPs)
-#		
-#		self.cmdSaveBP = ClickLabel()
-#		self.cmdSaveBP.setPixmap(ConfigClass.pixSave)
-#		self.cmdSaveBP.setToolTip("Save Breakpoints")
-#		self.cmdSaveBP.clicked.connect(self.click_saveBP)
-#		self.cmdSaveBP.setContentsMargins(0, 0, 0, 0)
-#		
-#		self.cmdLoadBP = ClickLabel()
-#		self.cmdLoadBP.setPixmap(ConfigClass.pixLoad)
-#		self.cmdLoadBP.setToolTip("Load Breakpoints")
-#		self.cmdLoadBP.clicked.connect(self.click_loadBP)
-#		self.cmdLoadBP.setContentsMargins(0, 0, 0, 0)
-#		
-#		self.cmdReloadBPs = ClickLabel()
-#		self.cmdReloadBPs.setPixmap(ConfigClass.pixReload)
-#		self.cmdReloadBPs.setToolTip("Reload Breakpoints")
-#		self.cmdReloadBPs.clicked.connect(self.click_reloadBP)
-#		self.cmdReloadBPs.setContentsMargins(0, 0, 0, 0)
-#		
-#		self.cmdDeleteAllBP = ClickLabel()
-#		self.cmdDeleteAllBP.setPixmap(ConfigClass.pixTrash)
-#		self.cmdDeleteAllBP.setToolTip("Delete ALL Breakpoints")
-#		self.cmdDeleteAllBP.clicked.connect(self.click_deleteAllBP)
-#		self.cmdDeleteAllBP.setContentsMargins(0, 0, 0, 0)
-#		
-#		self.wgtBPCtrls = QWidget()
-#		self.wgtBPCtrls.setContentsMargins(0, 10, 0, 0)
-#		self.wgtBPCtrls.setLayout(QHBoxLayout())
-#		self.wgtBPCtrls.layout().addWidget(self.cmdSaveBP)
-#		self.wgtBPCtrls.layout().addWidget(self.cmdLoadBP)
-#		self.wgtBPCtrls.layout().addWidget(self.cmdReloadBPs)
-#		self.wgtBPCtrls.layout().addWidget(self.cmdDeleteAllBP)
-##		self.wgtBPCtrls.layout().setContentsMargins(0, 0, 0, 0)
-#		self.wgtBPCtrls.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
-##		self.gbpBPs = QGroupBox("Breakpoints")
-##		self.gbpBPs.setLayout(QVBoxLayout())
-#		self.wdtBPs = QWidget()
-#		self.wdtBPs.setLayout(QVBoxLayout())
-#		self.wdtBPs.layout().addWidget(self.wgtBPCtrls)
-#		self.wdtBPs.layout().addWidget(self.tblBPs)
-#		self.wdtBPs.setContentsMargins(0, 0, 0, 0)
-#		
-#		self.tabWidgetBPsWPs.addTab(self.wdtBPs, "Breakpoints")
 		
 		self.tabWidgetDbg.addTab(self.wdtBPsWPs, "Break-/Watchpoints")
 		
@@ -451,43 +409,13 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.treThreads.header().resizeSection(0, 148)
 		self.treThreads.header().resizeSection(1, 128)
 		self.treThreads.header().resizeSection(2, 512)
+		self.treThreads.header().resizeSection(3, 128)
 		
 		self.gbpThreads = QGroupBox("Threads / Frames")
 		self.gbpThreads.setLayout(QHBoxLayout())
 		self.gbpThreads.layout().addWidget(self.treThreads)
 		
 		self.tabWidgetDbg.addTab(self.gbpThreads, "Threads/Frames")
-		
-#		self.hxtMemory = QHEXTextEditSplitter()
-#		self.txtMemoryAddr = QLineEdit("0x100003f50")
-#		self.txtMemoryAddr.setContentsMargins(0, 0, 0, 0)
-#		self.txtMemoryAddr.returnPressed.connect(self.click_ReadMemory)
-#		self.txtMemorySize = QLineEdit("0x100")
-#		self.txtMemorySize.setContentsMargins(0, 0, 0, 0)
-#		self.txtMemorySize.returnPressed.connect(self.click_ReadMemory)
-#		self.lblMemoryAddr = QLabel("Address:")
-#		self.lblMemoryAddr.setContentsMargins(0, 0, 0, 0)
-#		self.hxtMemory.layoutTopPlaceholer.addWidget(self.lblMemoryAddr)
-#		self.hxtMemory.layoutTopPlaceholer.addWidget(self.txtMemoryAddr)
-#		self.lblMemorySize = QLabel("Size:")
-#		self.lblMemorySize.setContentsMargins(0, 0, 0, 0)
-#		self.hxtMemory.layoutTopPlaceholer.addWidget(self.lblMemorySize)
-#		self.hxtMemory.layoutTopPlaceholer.addWidget(self.txtMemorySize)
-#		self.hxtMemory.layoutTopPlaceholer.setContentsMargins(0, 0, 0, 0)
-#		self.cmdReadMemory = QPushButton("Read memory")
-#		self.cmdReadMemory.clicked.connect(self.click_ReadMemory)
-#		self.cmdReadMemory.setContentsMargins(0, 0, 0, 0)
-#		self.hxtMemory.layoutTopPlaceholer.addWidget(self.cmdReadMemory)
-#		self.hxtMemory.txtMultiline.setFont(ConfigClass.font)
-#		self.hxtMemory.txtMultiline.setContentsMargins(0, 0, 0, 0)
-#		self.hxtMemory.txtMultilineHex.setFont(ConfigClass.font)
-#		self.hxtMemory.txtMultilineHex.hexGrouping = HexGrouping.TwoChars
-#	
-#		self.tabMemory = QWidget()
-#		self.tabMemory.setLayout(QVBoxLayout())
-#		self.tabMemory.layout().addWidget(self.hxtMemory)
-#		
-#		self.tabWidgetDbg.addTab(self.tabMemory, "Memory")
 		
 		self.tblHex = QMemoryViewer(self.driver)
 		
@@ -496,31 +424,6 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.tabMemory.layout().addWidget(self.tblHex)
 		
 		self.tabWidgetDbg.addTab(self.tabMemory, "Memory")
-		
-		
-#		self.wdtSearchMain = QWidget()
-#		self.laySearchMain = QVBoxLayout()
-#		
-#		self.wdtSearchTop = QWidget()
-#		self.laySearchTop = QHBoxLayout()
-#		self.laySearchTop.addWidget(QLabel("Term:"))
-#		self.txtSearchTerm = QLineEdit()
-#		self.txtSearchTerm.setFixedWidth(300)
-#		self.txtSearchTerm.setText("Hello")
-#		self.laySearchTop.addWidget(self.txtSearchTerm)
-#		self.cmdSearch = QPushButton("Search")
-#		self.laySearchTop.addWidget(self.cmdSearch)
-#		self.laySearchTop.addWidget(QLabel("Type:"))
-#		self.cmbSearchType = QComboBox()
-#		self.cmbSearchType.addItems(["String", "Address", "Operand", "Data"])
-#		self.laySearchTop.addWidget(self.cmbSearchType)
-#		
-#		self.laySearchTop.addStretch(1)
-#		self.wdtSearchTop.setLayout(self.laySearchTop)
-#		self.laySearchMain.addWidget(self.wdtSearchTop)
-#		self.laySearchMain.addWidget(SearchTableWidget())
-#		self.wdtSearchMain.setLayout(self.laySearchMain)
-#		self.tabWidgetDbg.addTab(self.wdtSearchMain, "Search")
 		
 		self.wdtSearch = SearchWidget(self.driver)
 		self.tabWidgetDbg.addTab(self.wdtSearch, "Search")
@@ -674,7 +577,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		elif bpEventType == lldb.eBreakpointEventTypeRemoved:
 			print(f"BP ID: {breakpoint.GetID()} has been DELETED !!!!!!!!!!!!!!")
 #			self.bpHelper.handle_deleteBP(self.breakpoint.GetID())
-			self.tblBPs.removeRowWithId(breakpoint.GetID())
+			self.wdtBPsWPs.tblBPs.removeRowWithId(breakpoint.GetID())
 			
 			for i in range(breakpoint.GetNumLocations()):
 				self.txtMultiline.table.removeBPAtAddress(hex(breakpoint.GetLocationAtIndex(i).GetLoadAddress()))
@@ -685,7 +588,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		for i in range(bp.GetNumLocations()):
 			bl = bp.GetLocationAtIndex(i)
 			self.txtMultiline.table.event_bpAdded(bl)
-			self.tblBPs.event_bpAdded(bl)
+			self.wdtBPsWPs.tblBPs.event_bpAdded(bl)
 		
 	def loadTarget(self):
 		if self.debugger.GetNumTargets() > 0:
@@ -694,13 +597,13 @@ class LLDBPyGUIWindow(QMainWindow):
 			target = self.debugger.GetTargetAtIndex(0)
 			
 			if target:
-				
+				print(f'target.GetTriple() => {target.GetTriple()}')
 #				self.start_loadDisassemblyWorker(True)
 				
 				self.loadFileInfo(target.GetExecutable().GetDirectory() + "/" + target.GetExecutable().GetFilename())
 				self.loadFileStats(target)
 				
-				self.loadTestBPs(ConfigClass.testBPsFilename)
+#				self.loadTestBPs(ConfigClass.testBPsFilename)
 				
 				self.process = target.GetProcess()
 				if self.process:
@@ -903,7 +806,7 @@ class LLDBPyGUIWindow(QMainWindow):
 				print(bpevent)
 				for bl in bpevent:
 					print('breakpoint location load addr: %s' % hex(bl.GetLoadAddress()))
-					self.tblBPs.doBPOn(hex(bl.GetLoadAddress()), True)
+					self.wdtBPsWPs.tblBPs.doBPOn(hex(bl.GetLoadAddress()), True)
 					self.txtMultiline.table.setBPAtAddress(hex(bl.GetLoadAddress()), True, False)
 				self.driver.handleCommand("br com a -F lldbpyGUI.breakpointHandlerNG")
 				
@@ -1002,7 +905,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		if showQuestionDialog(self, "Delete all Breakpoints?", "Do you really want to delete all Breakpoints?"):
 			self.bpHelper.handle_deleteAllBPs()
 			self.txtMultiline.table.handle_deleteAllBPs()
-			self.tblBPs.resetContent()
+			self.wdtBPsWPs.tblBPs.resetContent()
 			self.updateStatusBar("All Breakpoints deleted!")
 		
 	def click_exit_action(self):
@@ -1030,7 +933,7 @@ class LLDBPyGUIWindow(QMainWindow):
 #		return hex(converted_address)
 	
 	def setProgressValue(self, newValue):
-		self.progressbar.setValue(newValue)
+		self.progressbar.setValue(int(newValue))
 		pass
 		
 	def updateStatusBar(self, msg):
@@ -1056,15 +959,23 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.threadpool.start(self.loadBreakpointsWorker)
 		
 	
+	wpsEnabled = {}
+	
 	def handle_loadWatchpointsLoadBreakpointValue(self, wp):
 #		if initTable:
 #			self.txtMultiline.table.setBPAtAddress(loadAddr, True, False)
-		self.wdtBPsWPs.tblWPs.addRow(True, wp.GetID(), hex(wp.GetWatchAddress()), hex(wp.GetWatchSize()), ("read" if wp.IsWatchingReads() else "") + (" / " if wp.IsWatchingReads() and wp.IsWatchingWrites() else "") + ("write" if wp.IsWatchingWrites() else ""), wp.GetHitCount(), wp.GetCondition())
+		self.wpsEnabled[wp.GetID()] = wp.IsEnabled()
+		self.wdtBPsWPs.tblWPs.addRow(wp.IsEnabled(), wp.GetID(), hex(wp.GetWatchAddress()), hex(wp.GetWatchSize()), wp.GetWatchSpec(), ("r" if wp.IsWatchingReads() else "") + ("" if wp.IsWatchingReads() and wp.IsWatchingWrites() else "") + ("w" if wp.IsWatchingWrites() else ""), wp.GetHitCount(), wp.GetIgnoreCount(), wp.GetCondition())
 	
 	def handle_updateWatchpointsLoadBreakpointValue(self, wp):
-#		if initTable:
-#			self.txtMultiline.table.setBPAtAddress(loadAddr, True, False)
-		self.wdtBPsWPs.tblWPs.updateRow(True, wp.GetID(), hex(wp.GetWatchAddress()), hex(wp.GetWatchSize()), ("read" if wp.IsWatchingReads() else "") + (" / " if wp.IsWatchingReads() and wp.IsWatchingWrites() else "") + ("write" if wp.IsWatchingWrites() else ""), wp.GetHitCount(), wp.GetCondition())
+		print(f'wp.GetWatchValueKind() =====================>>>>>>>>>>>>>> {wp.GetWatchValueKind()} / {lldb.eWatchPointValueKindExpression}')
+		
+		newEnabled = wp.IsEnabled()
+		if self.wpsEnabled[wp.GetID()] != newEnabled:
+			newEnabled = not newEnabled
+			wp.SetEnabled(newEnabled)
+			
+		self.wdtBPsWPs.tblWPs.updateRow(newEnabled, wp.GetID(), hex(wp.GetWatchAddress()), hex(wp.GetWatchSize()), wp.GetWatchSpec(), ("r" if wp.IsWatchingReads() else "") + ("" if wp.IsWatchingReads() and wp.IsWatchingWrites() else "") + ("w" if wp.IsWatchingWrites() else ""), wp.GetHitCount(), wp.GetIgnoreCount(), wp.GetCondition())
 		
 	def handle_loadBreakpointsLoadBreakpointValue(self, bpId, idx, loadAddr, name, hitCount, condition, initTable, enabled, bp):
 		if initTable:
@@ -1241,6 +1152,11 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.tblFileInfos.addRow("Num CMDs", str(mach_header.ncmds), hex(mach_header.ncmds))
 		self.tblFileInfos.addRow("Size CMDs", str(mach_header.sizeofcmds), hex(mach_header.sizeofcmds))
 		self.tblFileInfos.addRow("Flags", lldbHelper.MachoFlag.to_str(lldbHelper.MachoFlag.create_flag_value(mach_header.flags)), hex(mach_header.flags))
+		
+		self.tblFileInfos.addRow("----", str("-----"), '-----')
+		self.tblFileInfos.addRow("Triple", str(self.driver.getTarget().GetTriple()), '')
+		
+#		print(f'target.GetTriple() => {target.GetTriple()}')
 			
 	def loadFileStats(self, target):
 		statistics = target.GetStatistics()
@@ -1270,14 +1186,14 @@ class LLDBPyGUIWindow(QMainWindow):
 				self.driver.handleCommand("br com a -F lldbpyGUI.breakpointHandlerNG")
 	
 	def handle_enableBP(self, address, enabled):
-		self.tblBPs.doEnableBP(address, enabled)
+		self.wdtBPsWPs.tblBPs.doEnableBP(address, enabled)
 		if self.bpHelper.handle_checkBPExists(address) != None:
 			self.bpHelper.handle_enableBP(address, enabled)
 			if enabled:
 				self.driver.handleCommand("br com a -F lldbpyGUI.breakpointHandlerNG")
 	
 	def handle_BPOn(self, address, on):
-		self.tblBPs.doBPOn(address, on)
+		self.wdtBPsWPs.tblBPs.doBPOn(address, on)
 #		print(f"breakpoint set -a {address} -C bpcbdriver")
 		res = lldb.SBCommandReturnObject()
 		ci = self.driver.debugger.GetCommandInterpreter()
@@ -1476,7 +1392,7 @@ class LLDBPyGUIWindow(QMainWindow):
 #		print(f'scroll_value => {scroll_value}')
 		scroll_value -= self.txtSource.viewport().height() / 2  # Center vertically
 #		print(f'self.txtSource.viewport().height() / 2 => {self.txtSource.viewport().height() / 2}')
-		self.txtSource.verticalScrollBar().setValue(scroll_value)
+		self.txtSource.verticalScrollBar().setValue(int(scroll_value))
 #		print(f'scroll_value => {scroll_value}')
 	
 	def read_memory(self, process, address, size):

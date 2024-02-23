@@ -59,6 +59,7 @@ class LoadRegisterWorker(BaseWorker):
 					
 					
 					# Load VARIABLES
+					idx = 0
 					vars = frame.GetVariables(True, True, True, False)  # type of SBValueList
 					for var in vars:
 #						hexVal = ""
@@ -67,7 +68,7 @@ class LoadRegisterWorker(BaseWorker):
 #						print(hex(var.GetLoadAddress()))
 						if not var.IsValid():
 							print(f'{var.GetName()} var.IsValid() ==> FALSE!!!!')
-							
+						
 						data = ""
 #						if var.GetValue() == None:
 #							print(f'{var.GetName()} var.GetValue() ==> NONE!!!!')
@@ -83,9 +84,15 @@ class LoadRegisterWorker(BaseWorker):
 							data = var.GetPointeeData(0, var.GetByteSize())
 							
 						if self.initTabs:
+#							if idx == 0:
+#								error = lldb.SBError()
+#								wp = var.Watch(False, True, False, error)
+#								print(f'wp({idx}) => {wp}')
+							
 							self.signals.loadVariableValue.emit(str(var.GetName()), str(string_value), str(data), str(var.GetTypeName()), hex(var.GetLoadAddress()))
 						else:
 							self.signals.updateVariableValue.emit(str(var.GetName()), str(string_value), str(data), str(var.GetTypeName()), hex(var.GetLoadAddress()))
+						idx += 1
 					
 					QCoreApplication.processEvents()
 						
