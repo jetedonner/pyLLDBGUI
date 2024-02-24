@@ -177,13 +177,13 @@ class LLDBPyGUIWindow(QMainWindow):
 			process = target.LaunchSimple(None, None, os.getcwd())
 			
 			error = lldb.SBError()
-			main_wp = target.WatchAddress(int("0x304113094", 16), 0x1, False, True, error)
+			main_wp = target.WatchAddress(int("0x304113084", 16), 0x1, False, True, error)
 			print(error)
 			print(main_wp)
 			
 			self.loadTarget()
 			
-			loop_wp = target.WatchAddress(int("0x304113098", 16), 0x4, False, True, error)
+			loop_wp = target.WatchAddress(int("0x304113088", 16), 0x4, False, True, error)
 			print(error)
 			print(loop_wp)
 			
@@ -684,7 +684,7 @@ class LLDBPyGUIWindow(QMainWindow):
 									for sym in module.symbol_in_section_iter(subSec):
 										subSectionNode2 = QTreeWidgetItem(subSectionNode, [sym.GetName(), str(hex(sym.GetStartAddress().GetFileAddress())), str(hex(sym.GetEndAddress().GetFileAddress())), hex(sym.GetSize()), '', f'{lldbHelper.SymbolTypeString(sym.GetType())} ({sym.GetType()})'])
 							
-							self.start_loadRegisterWorker()	
+#							self.start_loadRegisterWorker()	
 						
 #						self.start_eventListenerWorker(self.debugger, self.interruptEventListenerWorker)
 							context = frame.GetSymbolContext(lldb.eSymbolContextEverything)
@@ -754,6 +754,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.txtMultiline.setInstsAndAddr(None, self.rip)
 		self.txtMultiline.setPC(int(self.rip, 16))
 		self.loadStacktrace()
+		self.start_loadRegisterWorker()	
 #		self.loadTestBPs(ConfigClass.testBPsFilename)
 		
 	symFuncName = "" #== instruction.GetAddress().GetFunction().GetName()
@@ -971,8 +972,12 @@ class LLDBPyGUIWindow(QMainWindow):
 		print(f'wp.GetWatchValueKind() =====================>>>>>>>>>>>>>> {wp.GetWatchValueKind()} / {lldb.eWatchPointValueKindExpression}')
 		
 		newEnabled = wp.IsEnabled()
-		if self.wpsEnabled[wp.GetID()] != newEnabled:
-			newEnabled = not newEnabled
+		if wp.GetID() in self.wpsEnabled.keys():
+			if self.wpsEnabled[wp.GetID()] != newEnabled:
+				newEnabled = not newEnabled
+				wp.SetEnabled(newEnabled)
+		else:
+			self.wpsEnabled[wp.GetID()] = newEnabled
 			wp.SetEnabled(newEnabled)
 			
 		self.wdtBPsWPs.tblWPs.updateRow(newEnabled, wp.GetID(), hex(wp.GetWatchAddress()), hex(wp.GetWatchSize()), wp.GetWatchSpec(), ("r" if wp.IsWatchingReads() else "") + ("" if wp.IsWatchingReads() and wp.IsWatchingWrites() else "") + ("w" if wp.IsWatchingWrites() else ""), wp.GetHitCount(), wp.GetIgnoreCount(), wp.GetCondition())

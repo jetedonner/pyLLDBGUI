@@ -188,3 +188,4 @@ lui/Readme
 lui/sandbox.py
 lui/sourcewin.py
 lui/statuswin.py
+lldbbridge.py

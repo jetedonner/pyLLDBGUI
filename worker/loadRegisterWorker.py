@@ -84,7 +84,7 @@ class LoadRegisterWorker(BaseWorker):
 							data = var.GetPointeeData(0, var.GetByteSize())
 							
 						if self.initTabs:
-#							if idx == 0:
+#							if idx == 2:
 #								error = lldb.SBError()
 #								wp = var.Watch(False, True, False, error)
 #								print(f'wp({idx}) => {wp}')

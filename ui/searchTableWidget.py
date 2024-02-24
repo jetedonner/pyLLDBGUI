@@ -115,7 +115,7 @@ class SearchWidget(QWidget):
 		self.laySearchTop.addWidget(self.cmdSearch)
 		self.laySearchTop.addWidget(QLabel("Type:"))
 		self.cmbSearchType = QComboBox()
-		self.cmbSearchType.addItems(["String", "Address", "Operand", "Data"])
+		self.cmbSearchType.addItems(["String", "Address", "Operand", "Data", "RegExp"])
 		self.laySearchTop.addWidget(self.cmbSearchType)
 		
 		self.swtCaseSensitive = QSwitch("Case sensitive", SwitchSize.Small, SwitchLabelPos.Trailing)
