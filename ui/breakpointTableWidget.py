@@ -100,6 +100,10 @@ class WatchpointsTableWidget(QTableWidget):
 	def on_double_click(self, row, col):
 		if col == 3:
 			self.oldBPName = self.item(row, 3).text()
+		elif col == 2:
+#			self.oldBPName = self.item(row, 3).text()
+			self.window().txtMultiline.viewAddress(self.item(row, 2).text())
+			pass
 		pass
 		
 	def contextMenuEvent(self, event):
@@ -416,6 +420,9 @@ class BreakpointsTableWidget(QTableWidget):
 	def on_double_click(self, row, col):
 		if col == 3:
 			self.oldBPName = self.item(row, 3).text()
+		elif col == 1 or col == 2:
+#			self.oldBPName = self.item(row, 3).text()
+			self.window().txtMultiline.viewAddress(self.item(row, 2).text())
 		pass
 			
 	def contextMenuEvent(self, event):

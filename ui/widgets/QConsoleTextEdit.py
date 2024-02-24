@@ -26,21 +26,10 @@ APP_VERSION = "v0.0.1"
 
 class QConsoleTextEdit(QTextEdit):
 	
-#	Black: \u001b[30m
-#	Red: \u001b[31m
-#	Green: \u001b[32m
-#	Yellow: \u001b[33m
-#	Blue: \u001b[34m
-#	Magenta: \u001b[35m
-#	Cyan: \u001b[36m
-#	White: \u001b[37m
-#	Reset: \u001b[0m
-	
 	ansi_dict = {"\x1b[30m": "black", "\x1b[31m": "red", "\x1b[32m": "green", "\x1b[33m": "yellow", "\x1b[34m": "blue", "\x1b[35m": "magenta", "\x1b[36m": "cyan", "\x1b[37m": "white", "\x1b[0m": "white", "\x1b[4m": "white", "\x1b[0;30m": "blacklight", "\x1b[0;31m": "IndianRed", "\x1b[0;32m": "LightGreen", "\x1b[0;33m": "LightYellow", "\x1b[0;34m": "LightBlue", "\x1b[0;35m": "LightPink", "\x1b[0;36m": "LightCyan", "\x1b[0;37m": "WhiteSmoke"}
 	
 	patternEscapedStdAnsi = re.compile(r"\x1b\[\d{1,}[m]")
 	patternEscapedLightAnsi = re.compile(r"\x1b\[[0][;]\d{1,}[m]")
-
 	
 	def __init__(self):
 		super().__init__()
@@ -57,7 +46,6 @@ class QConsoleTextEdit(QTextEdit):
 			self.append(htmlText)
 		else:
 			self.insertHtml(htmlText)
-#		self.append(text)
 		
 	def formatSpecialChars(self, text):
 #		text = text.replace("<", "&lt;")
@@ -121,17 +109,3 @@ class QConsoleTextEditWindow(QMainWindow):
 		self.layout.addWidget(self.txtConsole)
 		self.txtConsole.setEscapedText(self.mytext)
 		self.txtConsole.appendEscapedText(self.mytext)
-		
-		
-
-#def close_application():
-#	pass
-	
-#global pymobiledevice3GUIApp
-#pymobiledevice3GUIApp = QApplication([])
-#pymobiledevice3GUIApp.aboutToQuit.connect(close_application)
-#
-#pymobiledevice3GUIWindow = QConsoleTextEditWindow()
-#pymobiledevice3GUIWindow.show()
-#
-#sys.exit(pymobiledevice3GUIApp.exec())

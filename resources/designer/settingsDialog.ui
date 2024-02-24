@@ -17,7 +17,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
@@ -59,6 +59,11 @@
          <row>
           <property name="text">
            <string>Add commands to History</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>MemoryViewer show selected address range statusbar message</string>
           </property>
          </row>
          <column>
@@ -119,6 +124,22 @@
           </property>
          </item>
          <item row="3" column="1">
+          <property name="text">
+           <string/>
+          </property>
+          <property name="checkState">
+           <enum>Checked</enum>
+          </property>
+         </item>
+         <item row="4" column="0">
+          <property name="text">
+           <string>MemoryViewer show selected address range statusbar message</string>
+          </property>
+         </item>
+         <item row="4" column="1">
+          <property name="text">
+           <string/>
+          </property>
           <property name="checkState">
            <enum>Checked</enum>
           </property>

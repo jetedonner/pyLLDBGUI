@@ -16,27 +16,41 @@ from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
 from PyQt6 import uic, QtWidgets
 
+from config import *
+from helper.dbgHelper import *
+
 
 class SettingsValues(Enum):
+	ConfirmRestartTarget = ("Confirm restart target", True, bool)
+	ConfirmQuitApp = ("Confirm quit app", True, bool)
+	DisassemblerShowQuickTooltip = ("Disassembler show QuickTooltip", True, bool)
 	CmdHistory = ("Commands history", True, bool)
-	
-	
+	MemViewShowSelectedStatubarMsg = ("Memory-Viewer on select show statusbar message", True, bool)
+		
 class SettingsHelper(QObject):
 	
-	settings = QSettings("DaVe_inc", "LLDBPyGUI")
+	settings = QSettings(ConfigClass.companyName, ConfigClass.appName)
 	
 	def __init__(self):
 		super().__init__()
 		
 	def initDefaults(self):
+		self.settings.setValue(SettingsValues.ConfirmRestartTarget.value[0], True)
+		self.settings.setValue(SettingsValues.ConfirmQuitApp.value[0], True)
+		self.settings.setValue(SettingsValues.DisassemblerShowQuickTooltip.value[0], True)
 		self.settings.setValue(SettingsValues.CmdHistory.value[0], True)
+		self.settings.setValue(SettingsValues.MemViewShowSelectedStatubarMsg.value[0], True)
 	
 	def setChecked(self, setting, checkableItem):
 		self.settings.setValue(setting.value[0], checkableItem.checkState() == Qt.CheckState.Checked)
 		
 	def getChecked(self, setting):
-		print(f'self.settings.value(setting.value[0], True, bool) => {self.settings.value(setting.value[0], True, bool)}')
-		return Qt.CheckState.Checked if self.settings.value(setting.value[0], setting.value[1], setting.value[1]) else Qt.CheckState.Unchecked
+#		print(f'self.settings.value(setting.value[0], True, bool) => {self.settings.value(setting.value[0], True, bool)} / Key: {setting.value[0]} / Default: {setting.value[1]} / Datatype: {setting.value[2]}')
+#		if self.settings.value(setting.value[0], setting.value[1], setting.value[2]):
+#			print(f'IF => YESSSSSSS!!!!!')
+#		else:
+#			print(f'IF => NOOOOOOOOO!!!!!')
+		return Qt.CheckState.Checked if self.settings.value(setting.value[0], setting.value[1], setting.value[2]) else Qt.CheckState.Unchecked
 	
 	def getValue(self, setting):
 		return self.settings.value(setting.value[0], setting.value[1], setting.value[2])
@@ -47,18 +61,23 @@ class SettingsDialog(QDialog):
 	setHelper = None
 	
 	def initDefaults(self):
+		self.settings.setValue(SettingsValues.ConfirmRestartTarget.value[0], True)
+		self.settings.setValue(SettingsValues.ConfirmQuitApp.value[0], True)
+		self.settings.setValue(SettingsValues.DisassemblerShowQuickTooltip.value[0], True)
 		self.settings.setValue(SettingsValues.CmdHistory.value[0], True)
-	
+		self.settings.setValue(SettingsValues.MemViewShowSelectedStatubarMsg.value[0], True)
 	
 	def __init__(self, settingsHelper = None):
 		super().__init__()
+		
+#		self.initDefaults()
 		
 		# loading the ui file with uic module
 		project_root = dirname(realpath(__file__))
 		settingsDialogPath = os.path.join(project_root, '..', 'resources', 'designer', 'settingsDialog.ui')
 		
 		uic.loadUi(settingsDialogPath, self)
-		print("AFTER INIT settingsDialog.ui")
+#		print("AFTER INIT settingsDialog.ui")
 		
 		if settingsHelper != None:
 			self.setHelper = settingsHelper
@@ -71,19 +90,18 @@ class SettingsDialog(QDialog):
 		
 		self.cmdLoadDefaults.clicked.connect(self.click_loadDefaults)
 		self.cmdTest.clicked.connect(self.click_test)
-#		self.settings.setVal
-#		self.settings.setValue("TestSetting", "TESTVALUE")
 		
-		name = self.settings.value("TestSetting", "")
-		print(name)
-		print(f'SETTINGS-FILE: {self.settings.fileName()}')
+		log(f"Loading settings from file: '{self.settings.fileName()}'")
 		self.accepted.connect(self.click_saveSettings)
 		
 		self.loadSettings()
 		
 	def loadSettings(self):
+		self.table_widget.item(0, 1).setCheckState(self.setHelper.getChecked(SettingsValues.ConfirmRestartTarget))
+		self.table_widget.item(1, 1).setCheckState(self.setHelper.getChecked(SettingsValues.ConfirmQuitApp))
+		self.table_widget.item(2, 1).setCheckState(self.setHelper.getChecked(SettingsValues.DisassemblerShowQuickTooltip))
 		self.table_widget.item(3, 1).setCheckState(self.setHelper.getChecked(SettingsValues.CmdHistory))
-		pass
+		self.table_widget.item(4, 1).setCheckState(self.setHelper.getChecked(SettingsValues.MemViewShowSelectedStatubarMsg))
 		
 	def click_test(self):
 		print(f'{SettingsValues.CmdHistory.value[0]} => {self.settings.value(SettingsValues.CmdHistory.value[0], False)}')
@@ -92,9 +110,8 @@ class SettingsDialog(QDialog):
 		self.initDefaults()
 		
 	def click_saveSettings(self):
-		print(f'GOING TO SAVE SETTINGS !!!!')
-		
-		print(f'IsChecked: {self.table_widget.item(3, 1).checkState() == Qt.CheckState.Checked}')
-		print(f'Save Hist: {self.table_widget.item(3, 1).text()}')
-		
+		self.setHelper.setChecked(SettingsValues.ConfirmRestartTarget, self.table_widget.item(0, 1))
+		self.setHelper.setChecked(SettingsValues.ConfirmQuitApp, self.table_widget.item(1, 1))
+		self.setHelper.setChecked(SettingsValues.DisassemblerShowQuickTooltip, self.table_widget.item(2, 1))
 		self.setHelper.setChecked(SettingsValues.CmdHistory, self.table_widget.item(3, 1))
+		self.setHelper.setChecked(SettingsValues.MemViewShowSelectedStatubarMsg, self.table_widget.item(4, 1))

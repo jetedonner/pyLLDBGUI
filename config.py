@@ -14,6 +14,9 @@ from PyQt6 import uic, QtWidgets
 
 class ConfigClass():
 	
+	companyName = "DaVe_inc"
+	appName = "LLDBPyGUI"
+	
 	initialCommand = "breakpoint set -a 0x100003f6a" # re read
 	font = QFont("Courier New") # ("Monaco") #("Courier New")
 #	font.setFixedPitch(True)

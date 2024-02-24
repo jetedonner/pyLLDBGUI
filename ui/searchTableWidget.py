@@ -53,6 +53,7 @@ class SearchTableWidget(QTableWidget):
 		self.cellDoubleClicked.connect(self.on_double_click)
 		
 	def on_double_click(self, row, col):
+		self.handle_showMemory()
 #		if col in range(3):
 #			self.toggleBPOn(row)
 ##			self.sigBPOn.emit(self.item(self.selectedItems()[0].row(), 3).text(), self.item(self.selectedItems()[0].row(), 1).isBPOn)
