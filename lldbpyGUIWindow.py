@@ -176,16 +176,16 @@ class LLDBPyGUIWindow(QMainWindow):
 						
 			process = target.LaunchSimple(None, None, os.getcwd())
 			
-			error = lldb.SBError()
-			main_wp = target.WatchAddress(int("0x304113084", 16), 0x1, False, True, error)
-			print(error)
-			print(main_wp)
-			
+#			error = lldb.SBError()
+#			main_wp = target.WatchAddress(int("0x304113084", 16), 0x1, False, True, error)
+#			print(error)
+#			print(main_wp)
+#			
 			self.loadTarget()
-			
-			loop_wp = target.WatchAddress(int("0x304113088", 16), 0x4, False, True, error)
-			print(error)
-			print(loop_wp)
+#			
+#			loop_wp = target.WatchAddress(int("0x304113088", 16), 0x4, False, True, error)
+#			print(error)
+#			print(loop_wp)
 			
 	def my_callbackWindow(self, frame, bp_loc, dict): # self, 
 		# Your code to execute when the breakpoint hits
@@ -1088,6 +1088,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		if self.setHelper.getValue(SettingsValues.CmdHistory):
 			self.txtCmd.addCommandToHistory()
 			
+		self.txtCommands.append(f"({PROMPT_TEXT}) {self.txtCmd.text().strip()}")
 		if self.txtCmd.text().strip().lower() in ["clear", "clr"]:
 			self.clear_clicked()
 		else:

@@ -145,45 +145,112 @@ class SearchWidget(QWidget):
 		
 		thread = self.target.GetProcess().GetSelectedThread()
 		
-		numFound = 0
-		idxOuter = 0
-		for module in self.target.module_iter():
-			idx = 0
-			for section in module.section_iter():
-				for subsec in section:
-					
-					address = subsec.GetLoadAddress(self.target)
-					remaining_bytes = subsec.GetByteSize()
-					
-					while remaining_bytes > 0:
-						# Read a chunk of data
-						error = lldb.SBError()
-						data = self.target.ReadMemory(lldb.SBAddress(address, self.target), min(remaining_bytes, chunk_size), error)
-						if data == None:
-							break
+		if self.cmbSearchType.currentText() == "RegExp":
+			print(f'Searching with REGEXP!!!!')
+#			target = lldb.debugger.GetSelectedTarget()
+#			module = target.GetModuleAtIndex(0)  # Assuming the executable is the first module
+#			base_address = module.GetObjectFileHeaderAddress().GetLoadAddress(target)
+#			size = module.GetByteSize()
+			
+			pattern = re.compile(b"{searchTerm}")  # Compile the regex pattern
+			matches = []
+			
+			chunk_size = 4096  # Adjust as needed for performance
+			numFound = 0
+			idxOuter = 0
+			for module in self.target.module_iter():
+				idx = 0
+#				module = target.GetModuleAtIndex(0)  # Assuming the executable is the first module
+				base_address = module.GetObjectFileHeaderAddress().GetLoadAddress(self.target)
+				size = module.GetAddressByteSize()
+				
+				for address in range(base_address, base_address + size, chunk_size):
+					data = self.target.ReadMemory(lldb.SBAddress(address, self.target), chunk_size, lldb.SBError())
+					matches += pattern.findall(data)
+			
+			print(f'matches => {matches}')
+#				for section in module.section_iter():
+#					for subsec in section:
+#						
+#						address = subsec.GetLoadAddress(self.target)
+#						remaining_bytes = subsec.GetByteSize()
+#						
+#						for address in range(base_address, base_address + size, chunk_size):
+#							data = target.ReadMemory(address, chunk_size, lldb.SBError())
+#							matches += pattern.findall(data)
+							
+#						while remaining_bytes > 0:
+#							# Read a chunk of data
+#							error = lldb.SBError()
+#							data = self.target.ReadMemory(lldb.SBAddress(address, self.target), min(remaining_bytes, chunk_size), error)
+#							if data == None:
+#								break
+#							
+#							if self.caseSensitive:
+#								ascii_string = searchTerm.encode("utf-8") # b"Hello"  # Replace with the actual string
+#								string_index = data.find(ascii_string)
+#							else:
+#								ascii_string = searchTerm.encode("utf-8").lower() # b"Hello"  # Replace with the actual string
+#								string_index = data.lower().find(ascii_string)
+#								
+#							if string_index != -1:
+#								numFound += 1
+#								end_index = data.find(b'\x00', string_index)
+#								# Found the string!
+#	#							print(f"Found string at address: {address + string_index} / {hex(address + string_index)} => {hex(address)} / {hex(string_index)} ===> {data}")
+#								try:
+#									self.table.addRow(str(numFound), hex(address + string_index), section.GetName() + "." + subsec.GetName(), data[string_index:end_index].decode(), self.bytearray_to_hex(data[string_index:end_index]))
+#								except Exception as e:
+#									print(f'Error while searching: {e}')
+#	#							break  # Stop searching if found
+#									
+#							address += len(data)
+#							remaining_bytes -= len(data)
+#				idx += 1
+#			idxOuter += 1
+			
+		else:
+			print(f'Searching WITHOUT REGEXP!!!!')
+			
+			numFound = 0
+			idxOuter = 0
+			for module in self.target.module_iter():
+				idx = 0
+				for section in module.section_iter():
+					for subsec in section:
 						
-						if self.caseSensitive:
-							ascii_string = searchTerm.encode("utf-8") # b"Hello"  # Replace with the actual string
-							string_index = data.find(ascii_string)
-						else:
-							ascii_string = searchTerm.encode("utf-8").lower() # b"Hello"  # Replace with the actual string
-							string_index = data.lower().find(ascii_string)
+						address = subsec.GetLoadAddress(self.target)
+						remaining_bytes = subsec.GetByteSize()
 						
-						if string_index != -1:
-							numFound += 1
-							end_index = data.find(b'\x00', string_index)
-							# Found the string!
-#							print(f"Found string at address: {address + string_index} / {hex(address + string_index)} => {hex(address)} / {hex(string_index)} ===> {data}")
-							try:
-								self.table.addRow(str(numFound), hex(address + string_index), section.GetName() + "." + subsec.GetName(), data[string_index:end_index].decode(), self.bytearray_to_hex(data[string_index:end_index]))
-							except Exception as e:
-								print(f'Error while searching: {e}')
-#							break  # Stop searching if found
-						
-						address += len(data)
-						remaining_bytes -= len(data)
-			idx += 1
-		idxOuter += 1
+						while remaining_bytes > 0:
+							# Read a chunk of data
+							error = lldb.SBError()
+							data = self.target.ReadMemory(lldb.SBAddress(address, self.target), min(remaining_bytes, chunk_size), error)
+							if data == None:
+								break
+							
+							if self.caseSensitive:
+								ascii_string = searchTerm.encode("utf-8") # b"Hello"  # Replace with the actual string
+								string_index = data.find(ascii_string)
+							else:
+								ascii_string = searchTerm.encode("utf-8").lower() # b"Hello"  # Replace with the actual string
+								string_index = data.lower().find(ascii_string)
+							
+							if string_index != -1:
+								numFound += 1
+								end_index = data.find(b'\x00', string_index)
+								# Found the string!
+	#							print(f"Found string at address: {address + string_index} / {hex(address + string_index)} => {hex(address)} / {hex(string_index)} ===> {data}")
+								try:
+									self.table.addRow(str(numFound), hex(address + string_index), section.GetName() + "." + subsec.GetName(), data[string_index:end_index].decode(), self.bytearray_to_hex(data[string_index:end_index]))
+								except Exception as e:
+									print(f'Error while searching: {e}')
+	#							break  # Stop searching if found
+							
+							address += len(data)
+							remaining_bytes -= len(data)
+				idx += 1
+			idxOuter += 1
 		
 	def bytearray_to_hex(self, byte_array):
 #		return "{:02x}".format(byte_array)
