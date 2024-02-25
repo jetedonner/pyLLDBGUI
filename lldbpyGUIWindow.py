@@ -1003,8 +1003,8 @@ class LLDBPyGUIWindow(QMainWindow):
 		bp.GetCommandLineCommands(cmds)
 		num_cmds = cmds.GetSize()
 		cmd = cmds.GetStringAtIndex(0)
-		bpNode = QTreeWidgetItem(self.wdtBPsWPs.treBPs, [str(bp.GetID()), '', '', name, str(bp.GetHitCount()), bp.GetCondition(), cmd])
-		bpNode.setIcon(0, ConfigClass.iconBPEnabled)
+		bpNode = EditableTreeItem(self.wdtBPsWPs.treBPs, [str(bp.GetID()), '', '', name, str(bp.GetHitCount()), bp.GetCondition(), cmd])
+		bpNode.setIcon(1, ConfigClass.iconBPEnabled)
 #		if initTable:
 #			
 #			self.wdtBPsWPs.treBPs.setItemWidget(bpNode, 0, QLabel("Hello"))
@@ -1021,8 +1021,8 @@ class LLDBPyGUIWindow(QMainWindow):
 			bp.SetScriptCallbackFunction("lldbpyGUIWindow.my_callback", extra_args)
 			
 			txtID = str(bp.GetID()) + "." + str(idx)
-			sectionNode = QTreeWidgetItem(bpNode, [txtID, '', hex(bl.GetLoadAddress()), name, str(bl.GetHitCount()), bl.GetCondition(), ''])
-			sectionNode.setIcon(0, ConfigClass.iconBPEnabled)
+			sectionNode = EditableTreeItem(bpNode, [txtID, '', hex(bl.GetLoadAddress()), name, str(bl.GetHitCount()), bl.GetCondition(), ''])
+			sectionNode.setIcon(1, ConfigClass.iconBPEnabled)
 #			line_edit = QtWidgets.QLineEdit(self.wdtBPsWPs.treBPs)
 #			
 ##			push_button = QtWidgets.QPushButton(self.treewidget)

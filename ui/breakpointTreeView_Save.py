@@ -110,7 +110,8 @@ class BreakpointTreeWidget(QTreeWidget):
 					if self.currentItem().childCount() == 0:
 						col = self.currentColumn()
 						if col == 3 or col == 5 or col == 6:
-							self.openPersistentEditor(self.currentItem(), col)
+#							self.openPersistentEditor(self.currentItem(), col)
+							self.editItem(self.currentItem(), self.currentColumn())
 						return True
 #			print(dir(event))
 		return super().event(event)
