@@ -41,10 +41,16 @@ class DebugWorker(BaseWorker):
 				if self.kind == StepKind.StepInto:
 					print("Trying to StepInto ...")
 					thread.StepInstruction(False)
+#					frame = thread.GetFrameAtIndex(0)
+#					self.signals.setPC.emit(frame.register["rip"].value)
+#					QCoreApplication.processEvents()
 					print("After StepInto ...")
 				elif self.kind == StepKind.StepOut:
 					print("Trying to StepOut ...")
 					thread.StepOut()
+#					frame = thread.GetFrameAtIndex(0)
+#					self.signals.setPC.emit(frame.register["rip"].value)
+#					QCoreApplication.processEvents()
 					print("After StepOut ...")
 				elif self.kind == StepKind.StepOver:
 					print("Trying to StepOver ...")
@@ -53,7 +59,11 @@ class DebugWorker(BaseWorker):
 					ID = thread.GetThreadID()
 					if thread.GetStopReason() == lldb.eStopReasonBreakpoint:
 						
-						print(f'GOT if thread.GetStopReason() == lldb.eStopReasonBreakpoint:')
+#						print(f'GOT if thread.GetStopReason() == lldb.eStopReasonBreakpoint:')
+#						frame = thread.GetFrameAtIndex(0)
+#						self.signals.setPC.emit(frame.register["rip"].value)
+#						QCoreApplication.processEvents()
+						
 						from lldbutil import print_stacktrace
 						print_stacktrace(thread)
 						pass
@@ -73,11 +83,12 @@ class DebugWorker(BaseWorker):
 #						print(f'GOT if thread.GetStopReason() == lldb.eStopReasonBreakpoint:')
 #						from lldbutil import print_stacktrace
 #						print_stacktrace(thread)
-						frame = thread.GetFrameAtIndex(0)
-						self.signals.setPC.emit(frame.register["rip"].value)
-						QCoreApplication.processEvents()
-#						self.window().wdtBPsWPs.tblBPs.setPC(int(frame.register["rip"].value))
 						pass
+#					frame = thread.GetFrameAtIndex(0)
+#					self.signals.setPC.emit(frame.register["rip"].value)
+#					QCoreApplication.processEvents()
+#						self.window().wdtBPsWPs.tblBPs.setPC(int(frame.register["rip"].value))
+#					pass
 				else:
 					print("Trying to StepOver ...")
 					thread.StepInstruction(True)
@@ -88,6 +99,9 @@ class DebugWorker(BaseWorker):
 #						from lldbutil import print_stacktrace
 #						print_stacktrace(thread)
 						pass
+#					frame = thread.GetFrameAtIndex(0)
+#					self.signals.setPC.emit(frame.register["rip"].value)
+#					QCoreApplication.processEvents()
 
 				frame = thread.GetFrameAtIndex(0)
 				if frame:

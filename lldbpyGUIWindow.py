@@ -1250,9 +1250,13 @@ class LLDBPyGUIWindow(QMainWindow):
 #			self.txtMultiline.setPC(frame.GetPC())
 			self.reloadRegister(False)
 			self.reloadBreakpoints(False)
-			
+			self.wdtBPsWPs.tblBPs.setPC(rip)
 #			print(f'GOT if thread.GetStopReason() == lldb.eStopReasonBreakpoint:')
 			self.loadStacktrace()
+#			frame = thread.GetFrameAtIndex(0)
+			
+#			QCoreApplication.processEvents()
+			
 #			self.driver.getTarget()
 			context = frm.GetSymbolContext(lldb.eSymbolContextEverything)
 #			print(f'.GetLineEntry() => {context.GetLineEntry()} => {context.GetLineEntry().GetLine()}')
