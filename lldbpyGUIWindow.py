@@ -808,7 +808,7 @@ class LLDBPyGUIWindow(QMainWindow):
 				print(bpevent)
 				for bl in bpevent:
 					print('breakpoint location load addr: %s' % hex(bl.GetLoadAddress()))
-					self.wdtBPsWPs.tblBPs.doBPOn(hex(bl.GetLoadAddress()), True)
+					self.wdtBPsWPs.tblBPs.doBPOn(bpevent.GetID(), hex(bl.GetLoadAddress()), True)
 					self.txtMultiline.table.setBPAtAddress(hex(bl.GetLoadAddress()), True, False)
 				self.driver.handleCommand("br com a -F lldbpyGUI.breakpointHandlerNG")
 				
@@ -986,7 +986,8 @@ class LLDBPyGUIWindow(QMainWindow):
 	def handle_loadBreakpointsLoadBreakpointValue(self, bpId, idx, loadAddr, name, hitCount, condition, initTable, enabled, bp):
 		if initTable:
 			self.txtMultiline.table.setBPAtAddress(loadAddr, True, False)
-		self.wdtBPsWPs.tblBPs.addRow(enabled, idx, loadAddr, name, str(hitCount), condition)
+		print(f'handle_loadBreakpointsLoadBreakpointValue => {bpId}')
+		self.wdtBPsWPs.tblBPs.addRow(enabled, bpId, loadAddr, name, str(hitCount), condition)
 #		bp.SetScriptCallbackBody("print('HELLLLLLLLLLLLLLOOOOOOOOO SSSSCCCCRRRRIIIIIPPPTTTTT CALLBACK!!!!!')")
 		extra_args = lldb.SBStructuredData()
 		# Add any extra data you want to pass to the callback (e.g., variables, settings)
@@ -1001,7 +1002,8 @@ class LLDBPyGUIWindow(QMainWindow):
 	def handle_updateBreakpointsLoadBreakpointValue(self, bpId, idx, loadAddr, name, hitCount, condition, initTable, enabled, bp):
 #		if initTable:
 #			self.txtMultiline.table.setBPAtAddress(loadAddr, True, False)
-		self.wdtBPsWPs.tblBPs.updateRow(enabled, idx, loadAddr, name, str(hitCount), condition)
+		print(f'handle_updateBreakpointsLoadBreakpointValue => {bpId}')
+		self.wdtBPsWPs.tblBPs.updateRow(enabled, bpId, loadAddr, name, str(hitCount), condition)
 		extra_args = lldb.SBStructuredData()
 		self.driver.handleCommand("command script import --allow-reload ./lldbpyGUIWindow.py")
 		bp.SetScriptCallbackFunction("lldbpyGUIWindow.my_callback", extra_args)
@@ -1012,6 +1014,7 @@ class LLDBPyGUIWindow(QMainWindow):
 	def handle_loadBreakpointsFinished(self):
 #		print("handle_loadBreakpointsFinished")
 #		self.tblBPs.setCurrentBPHit(str(self.rip))
+		self.wdtBPsWPs.tblBPs.setPC(self.rip)
 		pass
 		
 	def start_loadRegisterWorker(self, initTabs = True):
@@ -1200,8 +1203,8 @@ class LLDBPyGUIWindow(QMainWindow):
 				self.driver.handleCommand("br com a -F lldbpyGUI.breakpointHandlerNG")
 	
 	def handle_BPOn(self, address, on):
-		self.wdtBPsWPs.tblBPs.doBPOn(address, on)
-#		print(f"breakpoint set -a {address} -C bpcbdriver")
+#		self.wdtBPsWPs.tblBPs.doBPOn(id, address, on)
+##		print(f"breakpoint set -a {address} -C bpcbdriver")
 		res = lldb.SBCommandReturnObject()
 		ci = self.driver.debugger.GetCommandInterpreter()
 		if on:
@@ -1242,17 +1245,20 @@ class LLDBPyGUIWindow(QMainWindow):
 	def handle_debugSetPC(self, newPC):
 		self.wdtBPsWPs.tblBPs.setPC(newPC)
 		pass
-		
+	
+	rip = ""
+	
 	def handle_debugStepCompleted(self, kind, success, rip, frm):
 		if success:
 #			print(f"Debug STEP ({kind}) completed SUCCESSFULLY")
-			self.txtMultiline.setPC(int(str(rip), 16))
+			self.rip = rip
+			self.txtMultiline.setPC(int(str(self.rip), 16))
 			
 #			print(f'NEXT INSTRUCTION {rip}')
 #			self.txtMultiline.setPC(frame.GetPC())
 			self.reloadRegister(False)
 			self.reloadBreakpoints(False)
-			self.wdtBPsWPs.tblBPs.setPC(rip)
+#			self.wdtBPsWPs.tblBPs.setPC(rip)
 #			print(f'GOT if thread.GetStopReason() == lldb.eStopReasonBreakpoint:')
 			self.loadStacktrace()
 #			frame = thread.GetFrameAtIndex(0)

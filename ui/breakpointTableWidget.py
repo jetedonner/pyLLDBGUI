@@ -226,28 +226,23 @@ class BreakpointsTableWidget(QTableWidget):
 	driver = None
 	
 	def setPC(self, pc):
-		print(f'def setPC(self, pc): {pc}')
+#		print(f'def setPC(self, pc): {pc}')
 		self.clearSelection()
 		for row in range(self.rowCount()):
 			if self.item(row, 2) != None:
 				if int(self.item(row, 2).text(), 16) == int(pc, 16):
-					print(f'SETTING PC: {self.item(row, 2).text()}')
+#					print(f'SETTING PC: {self.item(row, 2).text()}')
 					for i in range(self.colorCount()):
 						if self.item(row, i) != None:
 							self.item(row, i).setBackground(ConfigClass.colorGreen)
 #					break
 				else:
-					print(f'UNSET PC: {self.item(row, 2).text()}')
+#					print(f'UNSET PC: {self.item(row, 2).text()}')
 					for i in range(self.colorCount()):
 						if self.item(row, i) != None:
 							self.item(row, i).setBackground(ConfigClass.colorTransparent)
-#					self.table.item(row, 0).setText('>')
-#					self.table.scrollToRow(row)
-#					print(f'scrollToRow: {row}')
-#				else:
-#					self.table.item(row, 0).setText('')
 		
-		pass
+#		pass
 	
 	def handle_deleteBP(self):
 		if len(self.selectedItems()) > 0:
@@ -354,7 +349,7 @@ class BreakpointsTableWidget(QTableWidget):
 #				itemCell.toggleBPOn()
 				break
 			
-	def doBPOn(self, address, on):
+	def doBPOn(self, id, address, on):
 		bBPFound = False
 		for i in range(self.rowCount()):
 			if self.item(i, 2).text() == address:
@@ -363,7 +358,7 @@ class BreakpointsTableWidget(QTableWidget):
 				itemCell.toggleBPOn()
 				break
 		if on and not bBPFound:
-			self.addRow(on, self.rowCount() + 1, address, '', '0', '')
+			self.addRow(on, id, address, '', '0', '')
 	
 	def event_bpAdded(self, bp):
 		bBPFound = False
@@ -528,7 +523,7 @@ class BreakpointsTableWidget(QTableWidget):
 		currRowCount = self.rowCount()
 		self.setRowCount(currRowCount + 1)
 		item = DisassemblyImageTableWidgetItem()
-
+		print(f'BREAKPOINT ADD ROW NUM => {num}')
 		item.enableBP(state)
 		self.setItem(currRowCount, 0, item)
 		self.addItem(currRowCount, 1, "#" + str(num))
@@ -729,9 +724,9 @@ class BPsWPsWidget(QWidget):
 		pass
 		
 	def click_deleteAllBP(self):
-#		if showQuestionDialog(self, "Delete all Breakpoints?", "Do you really want to delete all Breakpoints?"):
-#			self.bpHelper.handle_deleteAllBPs()
-#			self.txtMultiline.table.handle_deleteAllBPs()
-#			self.tblBPs.resetContent()
-#			self.updateStatusBar("All Breakpoints deleted!")
+		if showQuestionDialog(self, "Delete all Breakpoints?", "Do you really want to delete all Breakpoints?"):
+			self.window().bpHelper.handle_deleteAllBPs()
+			self.window().txtMultiline.table.handle_deleteAllBPs()
+			self.tblBPs.resetContent()
+			self.window().updateStatusBar("All Breakpoints deleted!")
 		pass
