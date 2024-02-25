@@ -23,7 +23,7 @@ class DebugWorkerSignals(BaseWorkerSignals):
 class DebugWorker(BaseWorker):
 	
 	kind = StepKind.StepOver
-	
+	isRunning = False
 	def __init__(self, driver, kind):
 		super(DebugWorker, self).__init__(driver)
 		self.kind = kind
@@ -31,6 +31,10 @@ class DebugWorker(BaseWorker):
 		
 	def workerFunc(self):
 		super(DebugWorker, self).workerFunc()
+		if not self.isRunning:
+			self.isRunning = True
+		else:
+			return
 		
 		self.sendStatusBarUpdate("Debug step ...")
 		target = self.driver.getTarget()
@@ -121,4 +125,5 @@ class DebugWorker(BaseWorker):
 		else:
 			print("NO PROCESS")
 #		self.signals.finished.emit()
+		self.isRunning = False
 		pass

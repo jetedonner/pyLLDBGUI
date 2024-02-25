@@ -227,6 +227,7 @@ class BreakpointsTableWidget(QTableWidget):
 	
 	def setPC(self, pc):
 		print(f'def setPC(self, pc): {pc}')
+		self.clearSelection()
 		for row in range(self.rowCount()):
 			if self.item(row, 2) != None:
 				if int(self.item(row, 2).text(), 16) == int(pc, 16):

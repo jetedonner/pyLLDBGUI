@@ -1229,13 +1229,15 @@ class LLDBPyGUIWindow(QMainWindow):
 		if error:
 			print(error)
 	
-	
+	workerDebug = None
 	def start_debugWorker(self, driver, kind):
-		self.workerDebug = DebugWorker(driver, kind)
-		self.workerDebug.signals.debugStepCompleted.connect(self.handle_debugStepCompleted)
-		self.workerDebug.signals.setPC.connect(self.handle_debugSetPC)
-		
-		self.threadpool.start(self.workerDebug)
+		if self.workerDebug == None or not self.workerDebug.isRunning:
+			self.setResumeActionIcon(ConfigClass.iconPause)
+			self.workerDebug = DebugWorker(driver, kind)
+			self.workerDebug.signals.debugStepCompleted.connect(self.handle_debugStepCompleted)
+			self.workerDebug.signals.setPC.connect(self.handle_debugSetPC)
+			
+			self.threadpool.start(self.workerDebug)
 		
 	def handle_debugSetPC(self, newPC):
 		self.wdtBPsWPs.tblBPs.setPC(newPC)
