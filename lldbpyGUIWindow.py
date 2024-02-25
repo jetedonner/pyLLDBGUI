@@ -983,11 +983,18 @@ class LLDBPyGUIWindow(QMainWindow):
 			
 		self.wdtBPsWPs.tblWPs.updateRow(newEnabled, wp.GetID(), hex(wp.GetWatchAddress()), hex(wp.GetWatchSize()), wp.GetWatchSpec(), ("r" if wp.IsWatchingReads() else "") + ("" if wp.IsWatchingReads() and wp.IsWatchingWrites() else "") + ("w" if wp.IsWatchingWrites() else ""), wp.GetHitCount(), wp.GetIgnoreCount(), wp.GetCondition())
 		
-	def handle_loadBreakpointsLoadBreakpointValue(self, bpId, idx, loadAddr, name, hitCount, condition, initTable, enabled, bp):
+#	def handle_loadBreakpointsLoadBreakpointValue(self, bpId, idx, loadAddr, name, hitCount, condition, initTable, enabled, bp):
+	def handle_loadBreakpointsLoadBreakpointValue(self, bp, bl, initTable):	
+#		bp_cur.GetID(), bp_cur.GetID(), hex(bl.GetLoadAddress()), name, bp_cur.GetHitCount(), bp_cur.GetCondition(), self.initTable, bp_cur.IsEnabled(), bp_cur
+		
 		if initTable:
-			self.txtMultiline.table.setBPAtAddress(loadAddr, True, False)
-		print(f'handle_loadBreakpointsLoadBreakpointValue => {bpId}')
-		self.wdtBPsWPs.tblBPs.addRow(enabled, bpId, loadAddr, name, str(hitCount), condition)
+			self.txtMultiline.table.setBPAtAddress(hex(bl.GetLoadAddress()), True, False)
+#		print(f'handle_loadBreakpointsLoadBreakpointValue => {bpId}')
+		name_list = lldb.SBStringList()
+		bp.GetNames(name_list)
+		num_names = name_list.GetSize()
+		name = name_list.GetStringAtIndex(0)
+		self.wdtBPsWPs.tblBPs.addRow(bp.IsEnabled(), bp.GetID(), hex(bl.GetLoadAddress()), name, str(bp.GetHitCount()), bp.GetCondition())
 #		bp.SetScriptCallbackBody("print('HELLLLLLLLLLLLLLOOOOOOOOO SSSSCCCCRRRRIIIIIPPPTTTTT CALLBACK!!!!!')")
 		extra_args = lldb.SBStructuredData()
 		# Add any extra data you want to pass to the callback (e.g., variables, settings)
@@ -999,11 +1006,16 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 #		print("Reloading BPs ...")
 	
-	def handle_updateBreakpointsLoadBreakpointValue(self, bpId, idx, loadAddr, name, hitCount, condition, initTable, enabled, bp):
+	def handle_updateBreakpointsLoadBreakpointValue(self, bp, bl):
+#	def handle_updateBreakpointsLoadBreakpointValue(self, bpId, idx, loadAddr, name, hitCount, condition, initTable, enabled, bp):
 #		if initTable:
 #			self.txtMultiline.table.setBPAtAddress(loadAddr, True, False)
-		print(f'handle_updateBreakpointsLoadBreakpointValue => {bpId}')
-		self.wdtBPsWPs.tblBPs.updateRow(enabled, bpId, loadAddr, name, str(hitCount), condition)
+#		print(f'handle_updateBreakpointsLoadBreakpointValue => {bpId}')
+		name_list = lldb.SBStringList()
+		bp.GetNames(name_list)
+		num_names = name_list.GetSize()
+		name = name_list.GetStringAtIndex(0)
+		self.wdtBPsWPs.tblBPs.updateRow(bp.IsEnabled(), bp.GetID(), hex(bl.GetLoadAddress()), name, str(bp.GetHitCount()), bp.GetCondition())
 		extra_args = lldb.SBStructuredData()
 		self.driver.handleCommand("command script import --allow-reload ./lldbpyGUIWindow.py")
 		bp.SetScriptCallbackFunction("lldbpyGUIWindow.my_callback", extra_args)

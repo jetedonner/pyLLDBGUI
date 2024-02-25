@@ -158,6 +158,15 @@ class DisassemblyTableWidget(QTableWidget):
 					newPC = int(str(dlg.txtInput.text()), 16)
 					frame.SetPC(newPC)
 					self.window().txtMultiline.setPC(newPC)
+					
+	def handle_gotoAddr(self):
+		if self.item(self.selectedItems()[0].row(), 3) != None:
+			gotoDlg = GotoAddressDialog(self.item(self.selectedItems()[0].row(), 3).text())
+			if gotoDlg.exec():
+				print(f"GOING TO ADDRESS: {gotoDlg.txtInput.text()}")
+				newPC = str(gotoDlg.txtInput.text())
+				self.window().txtMultiline.viewAddress(newPC)
+			pass
 		
 	driver = None
 	
@@ -195,6 +204,8 @@ class DisassemblyTableWidget(QTableWidget):
 		self.context_menu.addSeparator()
 		self.actionSetPC = self.context_menu.addAction("Set new PC")
 		self.actionSetPC.triggered.connect(self.handle_setPC)
+		self.actionGotoAddr = self.context_menu.addAction("Goto Address")
+		self.actionGotoAddr.triggered.connect(self.handle_gotoAddr)
 		
 		self.verticalScrollBar().valueChanged.connect(self.handle_valueChanged)
 		self.verticalScrollBar().rangeChanged.connect(self.handle_rangeChanged)
@@ -525,10 +536,11 @@ class DisassemblyTableWidget(QTableWidget):
 		
 		
 	def handle_valueChanged(self, value):
-		print(f'handle_valueChanged => {value}')
+#		print(f'handle_valueChanged => {value}')
+		pass
 		
 	def handle_rangeChanged(self, min, max):
-		print(f'handle_rangeChanged: min => {min} / max => {max}')
+#		print(f'handle_rangeChanged: min => {min} / max => {max}')
 		pass
 	
 	symbolCount = 0
@@ -586,7 +598,7 @@ class AssemblerTextEdit(QWidget):
 	def viewAddress(self, address):
 		for row in range(self.table.rowCount()):
 			if self.table.item(row, 3) != None:
-				if self.table.item(row, 3).text() == address:
+				if self.table.item(row, 3).text().lower() == address.lower():
 #					self.table.item(row, 0).setText('>')
 					self.table.setFocus(Qt.FocusReason.NoFocusReason)
 					self.table.selectRow(row)
@@ -596,7 +608,7 @@ class AssemblerTextEdit(QWidget):
 	def setPC(self, pc):
 		for row in range(self.table.rowCount()):
 			if self.table.item(row, 3) != None:
-				if self.table.item(row, 3).text() == hex(pc):
+				if self.table.item(row, 3).text().lower() == hex(pc).lower():
 					self.table.item(row, 0).setText('>')
 					self.table.scrollToRow(row)
 					print(f'scrollToRow: {row}')

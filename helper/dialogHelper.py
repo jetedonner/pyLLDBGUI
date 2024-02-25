@@ -26,7 +26,7 @@ class ConfirmDialog(QDialog):
 		self.setLayout(self.layout)
 
 class InputDialog(QDialog):
-	def __init__(self, title, prompt, preset = ""):
+	def __init__(self, title = "", prompt = "", preset = ""):
 		super().__init__()
 		
 		self.setWindowTitle(title)
@@ -46,6 +46,31 @@ class InputDialog(QDialog):
 		self.layout.addWidget(self.buttonBox)
 		self.setLayout(self.layout)
 		self.txtInput.setFocus()
+		
+class GotoAddressDialog(InputDialog):
+	def __init__(self, presetAddress="0x"):
+		super().__init__("Address to goto", "Enter an address to goto:", presetAddress)
+		
+#		self.setWindowTitle("Select goto address")
+#		self.message
+#		self.message.setText("Select an address to goto")
+#		self.setWindowTitle(title)
+#		
+#		QBtn = QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+#		
+#		self.buttonBox = QDialogButtonBox(QBtn)
+#		self.buttonBox.accepted.connect(self.accept)
+#		self.buttonBox.rejected.connect(self.reject)
+#		
+#		self.layout = QVBoxLayout()
+#		self.message = QLabel(prompt)
+#		self.txtInput = QLineEdit()
+#		self.txtInput.setText(preset)
+#		self.layout.addWidget(self.message)
+#		self.layout.addWidget(self.txtInput)
+#		self.layout.addWidget(self.buttonBox)
+#		self.setLayout(self.layout)
+#		self.txtInput.setFocus()
 
 def showQuestionDialog(parent, title, question):
 	dlg = QMessageBox(parent)

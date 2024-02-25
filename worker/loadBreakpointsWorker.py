@@ -8,8 +8,10 @@ from helper.dbgHelper import *
 	
 class LoadBreakpointsWorkerSignals(BaseWorkerSignals):
 	loadBreakpoints = pyqtSignal(str)
-	loadBreakpointsValue = pyqtSignal(int, int, str, str, int, str, bool, bool, object)
-	updateBreakpointsValue = pyqtSignal(int, int, str, str, int, str, bool, bool, object)
+#	loadBreakpointsValue = pyqtSignal(int, int, str, str, int, str, bool, bool, object)
+#	updateBreakpointsValue = pyqtSignal(int, int, str, str, int, str, bool, bool, object)
+	loadBreakpointsValue = pyqtSignal(object, object, bool)
+	updateBreakpointsValue = pyqtSignal(object, object)
 	loadWatchpointsValue = pyqtSignal(object)
 	updateWatchpointsValue = pyqtSignal(object)
 #	updateRegisterValue = pyqtSignal(int, str, str, str)
@@ -79,10 +81,14 @@ class LoadBreakpointsWorker(BaseWorker):
 #				bl.SetScriptCallbackBody("print(f'HELLLLLLLLLLLLLLOOOOOOOOO SSSSCCCCRRRRIIIIIPPPTTTTT CALLBACK BLLLLLL!!!!! {bp_loc}');")
 				if self.initTable:
 					print(f'RELOADING BREAKPOINT NUM => {bp_cur.GetID()}')
-					self.signals.loadBreakpointsValue.emit(bp_cur.GetID(), bp_cur.GetID(), hex(bl.GetLoadAddress()), name, bp_cur.GetHitCount(), bp_cur.GetCondition(), self.initTable, bp_cur.IsEnabled(), bp_cur)
+					self.signals.loadBreakpointsValue.emit(bp_cur, bl, self.initTable)
+#					self.signals.loadBreakpointsValue.emit(bp_cur.GetID(), bp_cur.GetID(), hex(bl.GetLoadAddress()), name, bp_cur.GetHitCount(), bp_cur.GetCondition(), self.initTable, bp_cur.IsEnabled(), bp_cur)
 				else:
 					print(f'RELOADING BREAKPOINT NUM => {bp_cur.GetID()}')
-					self.signals.updateBreakpointsValue.emit(bp_cur.GetID(), bp_cur.GetID(), hex(bl.GetLoadAddress()), name, bp_cur.GetHitCount(), bp_cur.GetCondition(), self.initTable, bp_cur.IsEnabled(), bp_cur)
+					self.signals.updateBreakpointsValue.emit(bp_cur, bl)
+#					self.signals.updateBreakpointsValue.emit(bp_cur.GetID(), bp_cur.GetID(), hex(bl.GetLoadAddress()), name, bp_cur.GetHitCount(), bp_cur.GetCondition(), self.initTable, bp_cur.IsEnabled(), bp_cur)
+#					
+#					self.signals.updateBreakpointsValue.emit(bp_cur.GetID(), bp_cur.GetID(), hex(bl.GetLoadAddress()), name, bp_cur.GetHitCount(), bp_cur.GetCondition(), self.initTable, bp_cur.IsEnabled(), bp_cur)
 		
 		for wp_loc in target.watchpoint_iter():
 #			print(wp_loc)
