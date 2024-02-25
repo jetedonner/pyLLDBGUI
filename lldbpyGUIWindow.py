@@ -448,7 +448,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.tabWidgetFileInfo = QTabWidget()
 		
-		self.gbFileInfo = QGroupBox("File Header")
+		self.gbFileInfo = QGroupBox("File Header / General Infos")
 		self.gbFileInfo.setLayout(QHBoxLayout())
 		self.gbFileInfo.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Maximum)
 		self.gbFileInfo.layout().addWidget(self.tblFileInfos)
@@ -753,6 +753,7 @@ class LLDBPyGUIWindow(QMainWindow):
 #		QCoreApplication.processEvents()
 		self.txtMultiline.setInstsAndAddr(None, self.rip)
 		self.txtMultiline.setPC(int(self.rip, 16))
+		self.wdtBPsWPs.tblBPs.setPC(self.rip)
 		self.loadStacktrace()
 		self.start_loadRegisterWorker()	
 #		self.loadTestBPs(ConfigClass.testBPsFilename)
@@ -764,7 +765,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		if self.symFuncName != instruction.GetAddress().GetFunction().GetName():
 			self.symFuncName = instruction.GetAddress().GetFunction().GetName()
 			
-#			self.txtMultiline.appendAsmSymbol(str(instruction.GetAddress().GetFileAddress()), self.symFuncName)
+			self.txtMultiline.appendAsmSymbol(str(instruction.GetAddress().GetFileAddress()), self.symFuncName)
 
 #		print(f'instruction.GetComment(target) => {instruction.GetComment(target)}')
 		self.txtMultiline.appendAsmText(hex(int(str(instruction.GetAddress().GetFileAddress()), 10)), instruction.GetMnemonic(target),  instruction.GetOperands(target), instruction.GetComment(target), str(instruction.GetData(target)).replace("                             ", "\t\t").replace("		            ", "\t\t\t").replace("		         ", "\t\t").replace("		      ", "\t\t").replace("			   ", "\t\t\t"), True, self.rip)
@@ -1160,7 +1161,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.tblFileInfos.addRow("Flags", lldbHelper.MachoFlag.to_str(lldbHelper.MachoFlag.create_flag_value(mach_header.flags)), hex(mach_header.flags))
 		
 		self.tblFileInfos.addRow("----", str("-----"), '-----')
-		self.tblFileInfos.addRow("Triple", str(self.driver.getTarget().GetTriple()), '')
+		self.tblFileInfos.addRow("Triple", str(self.driver.getTarget().GetTriple()), '-')
 		
 #		print(f'target.GetTriple() => {target.GetTriple()}')
 			
@@ -1232,8 +1233,13 @@ class LLDBPyGUIWindow(QMainWindow):
 	def start_debugWorker(self, driver, kind):
 		self.workerDebug = DebugWorker(driver, kind)
 		self.workerDebug.signals.debugStepCompleted.connect(self.handle_debugStepCompleted)
+		self.workerDebug.signals.setPC.connect(self.handle_debugSetPC)
 		
 		self.threadpool.start(self.workerDebug)
+		
+	def handle_debugSetPC(self, newPC):
+		self.wdtBPsWPs.tblBPs.setPC(newPC)
+		pass
 		
 	def handle_debugStepCompleted(self, kind, success, rip, frm):
 		if success:

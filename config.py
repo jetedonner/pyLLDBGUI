@@ -27,10 +27,13 @@ class ConfigClass():
 	
 	toolbarIconSize = 24
 	
+	iconAdd = None
 	iconSave = None
 	iconLoad = None
 	iconReload = None
 	iconInfo = None
+	
+	pixAdd = None
 	pixInfo = None
 	pixSave = None
 	pixLoad = None
@@ -63,6 +66,9 @@ class ConfigClass():
 	
 	iconGithub = None
 	
+	colorGreen = QColor(0, 255, 0, 128)
+	colorTransparent = QColor(0, 0, 0, 0)
+	
 	@staticmethod
 	def initIcons():
 		project_root = dirname(realpath(__file__))
@@ -70,6 +76,7 @@ class ConfigClass():
 		
 		ConfigClass.iconStd = QIcon()
 		
+		ConfigClass.pixAdd = QPixmap(os.path.join(resources_root, 'add.png')).scaled(QSize(18, 18))
 		ConfigClass.pixSave = QPixmap(os.path.join(resources_root, 'save.png')).scaled(QSize(18, 18))
 		ConfigClass.pixLoad = QPixmap(os.path.join(resources_root, 'folder.png')).scaled(QSize(18, 18))
 		ConfigClass.pixReload = QPixmap(os.path.join(resources_root, 'reload.png')).scaled(QSize(18, 18))
@@ -78,6 +85,7 @@ class ConfigClass():
 #		ui->label->setStyleSheet("border-image:url(:/2.png);");
 #		ui->label->setPixmap(pix);
 		
+		ConfigClass.iconAdd = QIcon(os.path.join(resources_root, 'add.png'))
 		ConfigClass.iconSave = QIcon(os.path.join(resources_root, 'save.png'))
 		ConfigClass.iconLoad = QIcon(os.path.join(resources_root, 'folder.png'))
 		ConfigClass.iconInfo = QIcon(os.path.join(resources_root, 'info.png'))

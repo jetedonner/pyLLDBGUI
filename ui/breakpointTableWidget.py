@@ -14,7 +14,9 @@ from config import *
 		
 from ui.clickLabel import *
 from ui.assemblerTextEdit import *
+from helper.dialogHelper import *
 from helper.breakpointHelper import *
+from ui.addBreakpointDialog import *
 
 def breakpointHandlerAuto(dummy, frame, bpno, err):
 		print("breakpointHandlerAuto ...")
@@ -107,10 +109,10 @@ class WatchpointsTableWidget(QTableWidget):
 		pass
 		
 	def contextMenuEvent(self, event):
-#		if self.item(self.selectedItems()[0].row(), 0).isWPEnabled:
-#			self.actionEnableWP.setText("Disable Watchpoint")
-#		else:
-#			self.actionEnableWP.setText("Enable Watchpoint")
+		if self.item(self.selectedItems()[0].row(), 0).isBPEnabled:
+			self.actionEnableWP.setText("Disable Watchpoint")
+		else:
+			self.actionEnableWP.setText("Enable Watchpoint")
 			
 #		for i in dir(event):
 #			print(i)
@@ -222,6 +224,29 @@ class BreakpointsTableWidget(QTableWidget):
 #		pass
 	
 	driver = None
+	
+	def setPC(self, pc):
+		print(f'def setPC(self, pc): {pc}')
+		for row in range(self.rowCount()):
+			if self.item(row, 2) != None:
+				if int(self.item(row, 2).text(), 16) == int(pc, 16):
+					print(f'SETTING PC: {self.item(row, 2).text()}')
+					for i in range(self.colorCount()):
+						if self.item(row, i) != None:
+							self.item(row, i).setBackground(ConfigClass.colorGreen)
+#					break
+				else:
+					print(f'UNSET PC: {self.item(row, 2).text()}')
+					for i in range(self.colorCount()):
+						if self.item(row, i) != None:
+							self.item(row, i).setBackground(ConfigClass.colorTransparent)
+#					self.table.item(row, 0).setText('>')
+#					self.table.scrollToRow(row)
+#					print(f'scrollToRow: {row}')
+#				else:
+#					self.table.item(row, 0).setText('')
+		
+		pass
 	
 	def handle_deleteBP(self):
 		if len(self.selectedItems()) > 0:
@@ -571,6 +596,12 @@ class BPsWPsWidget(QWidget):
 		self.tblBPs = BreakpointsTableWidget(self.driver)
 		self.tblBPs.sigEnableBP.connect(self.handle_enableBPTblBPs)
 		
+		self.cmdAddBP = ClickLabel()
+		self.cmdAddBP.setPixmap(ConfigClass.pixAdd)
+		self.cmdAddBP.setToolTip("Add Breakpoints")
+		self.cmdAddBP.clicked.connect(self.click_addBP)
+		self.cmdAddBP.setContentsMargins(0, 0, 0, 0)
+		
 		self.cmdSaveBP = ClickLabel()
 		self.cmdSaveBP.setPixmap(ConfigClass.pixSave)
 		self.cmdSaveBP.setToolTip("Save Breakpoints")
@@ -598,6 +629,7 @@ class BPsWPsWidget(QWidget):
 		self.wgtBPCtrls = QWidget()
 		self.wgtBPCtrls.setContentsMargins(0, 10, 0, 0)
 		self.wgtBPCtrls.setLayout(QHBoxLayout())
+		self.wgtBPCtrls.layout().addWidget(self.cmdAddBP)
 		self.wgtBPCtrls.layout().addWidget(self.cmdSaveBP)
 		self.wgtBPCtrls.layout().addWidget(self.cmdLoadBP)
 		self.wgtBPCtrls.layout().addWidget(self.cmdReloadBPs)
@@ -650,13 +682,27 @@ class BPsWPsWidget(QWidget):
 #		self.bpHelper.handle_enableBP(address, on)
 		pass
 		
+	def click_addBP(self):
+		
+		print("Opening AddBreakpointDialog ...")
+		self.window().updateStatusBar("Opening AddBreakpointDialog ...")
+		
+#		project_root = dirname(realpath(__file__))
+#		helpDialogPath = os.path.join(project_root, 'resources', 'designer', 'helpDialog.ui')
+#		
+#		window = uic.loadUi(helpDialogPath)
+		addBreakpointDialog = AddBreakpointDialog()
+		if addBreakpointDialog.exec():
+			print(f'AddBreakpointDialog closed')
+		pass
+		
 	def click_saveBP(self):
-#		filename = showSaveFileDialog()
-#		if filename != None:
-#			print(f'Saving to: {filename} ...')
-#			self.bpHelper.handle_saveBreakpoints(self.driver.getTarget(), filename)
-#			self.updateStatusBar(f"Saving breakpoints to {filename} ...")
-##			self.driver.handleCommand(f"breakpoint write -f {filename}")
+		filename = showSaveFileDialog()
+		if filename != None:
+			print(f'Saving to: {filename} ...')
+			self.window().bpHelper.handle_saveBreakpoints(self.driver.getTarget(), filename)
+			self.window().updateStatusBar(f"Saving breakpoints to {filename} ...")
+			#			self.driver.handleCommand(f"breakpoint write -f {filename}")
 		pass
 			
 	def loadTestBPs(self, filename):

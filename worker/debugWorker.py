@@ -18,6 +18,7 @@ class DebugWorkerSignals(BaseWorkerSignals):
 	debugStepCompleted = pyqtSignal(object, bool, str, object)
 #	debugValue = pyqtSignal(int, str, str, str)
 	updateRegisterValue = pyqtSignal(int, str, str, str)
+	setPC = pyqtSignal(str)
 
 class DebugWorker(BaseWorker):
 	
@@ -72,6 +73,10 @@ class DebugWorker(BaseWorker):
 #						print(f'GOT if thread.GetStopReason() == lldb.eStopReasonBreakpoint:')
 #						from lldbutil import print_stacktrace
 #						print_stacktrace(thread)
+						frame = thread.GetFrameAtIndex(0)
+						self.signals.setPC.emit(frame.register["rip"].value)
+						QCoreApplication.processEvents()
+#						self.window().wdtBPsWPs.tblBPs.setPC(int(frame.register["rip"].value))
 						pass
 				else:
 					print("Trying to StepOver ...")

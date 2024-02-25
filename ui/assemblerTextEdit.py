@@ -196,8 +196,8 @@ class DisassemblyTableWidget(QTableWidget):
 		self.actionSetPC = self.context_menu.addAction("Set new PC")
 		self.actionSetPC.triggered.connect(self.handle_setPC)
 		
-#		self.verticalScrollBar().valueChanged.connect(self.handle_valueChanged)
-#		self.verticalScrollBar().rangeChanged.connect(self.handle_rangeChanged)
+		self.verticalScrollBar().valueChanged.connect(self.handle_valueChanged)
+		self.verticalScrollBar().rangeChanged.connect(self.handle_rangeChanged)
 		
 		self.setColumnCount(8)
 		self.setColumnWidth(0, 24)
@@ -266,12 +266,22 @@ class DisassemblyTableWidget(QTableWidget):
 	#					newPC = int(str(self.item(self.selectedItems()[0].row(), 5).text()), 16)
 	#					frame.SetPC(newPC)
 	#					self.window().txtMultiline.setPC(newPC)
-					for row in range(self.window().txtMultiline.table.rowCount()):
-						if self.window().txtMultiline.table.item(row, 3) != None and self.window().txtMultiline.table.item(row, 5) != None: 
-							if self.window().txtMultiline.table.item(row, 3).text() == str(self.item(self.selectedItems()[0].row(), 5).text()):
+#					for row in range(self.window().txtMultiline.table.rowCount()):
+#						if self.window().txtMultiline.table.item(row, 3) != None and self.window().txtMultiline.table.item(row, 5) != None: 
+#							if self.window().txtMultiline.table.item(row, 3).text() == str(self.item(self.selectedItems()[0].row(), 5).text()):
+#		#							self.table.item(row, 0).setText('>')
+#								self.window().txtMultiline.table.scrollToRow(row)
+#								self.window().txtMultiline.table.selectRow(row)
+#		#						else:
+#		#							self.table.item(row, 0).setText('')
+#								print(f'JUMPING!!!')
+#								break
+					for row in range(self.rowCount()):
+						if self.item(row, 3) != None and self.item(row, 5) != None: 
+							if self.item(row, 3).text() == str(self.item(self.selectedItems()[0].row(), 5).text()):
 		#							self.table.item(row, 0).setText('>')
-								self.window().txtMultiline.table.scrollToRow(row)
-								self.window().txtMultiline.table.selectRow(row)
+								self.scrollToRow(row)
+								self.selectRow(row)
 		#						else:
 		#							self.table.item(row, 0).setText('')
 								print(f'JUMPING!!!')
@@ -503,21 +513,25 @@ class DisassemblyTableWidget(QTableWidget):
 		self.setItem(row, col, item)
 		
 	def scrollToRow(self, row):
-		row_to_scroll = row
-		scroll_value = (row_to_scroll - self.viewport().height() / (2 * self.rowHeight(0))) * self.rowHeight(0)
-#		print(f'scroll_value => {scroll_value}')
-		self.verticalScrollBar().setValue(int(scroll_value))
-#		print(f'self.verticalScrollBar().value() => {self.verticalScrollBar().value()}')
-		QApplication.processEvents()
+		if self.rowCount() >= 1:
+			
+			row_to_scroll = row + self.symbolCount
+			scroll_value = (row_to_scroll - self.viewport().height() / (2 * self.rowHeight(1))) * self.rowHeight(1)
+			print(f'scroll_value => {scroll_value}')
+			self.verticalScrollBar().setValue(int(scroll_value))
+			print(f'self.verticalScrollBar().value() => {self.verticalScrollBar().value()}')
+			QApplication.processEvents()
 #		QCoreApplication.processEvents()
 		
 		
-#	def handle_valueChanged(self, value):
-#		print(f'handle_valueChanged => {value}')
-#		
-#	def handle_rangeChanged(self, min, max):
-##		print(f'handle_rangeChanged: min => {min} / max => {max}')
-#		pass
+	def handle_valueChanged(self, value):
+		print(f'handle_valueChanged => {value}')
+		
+	def handle_rangeChanged(self, min, max):
+		print(f'handle_rangeChanged: min => {min} / max => {max}')
+		pass
+	
+	symbolCount = 0
 		
 # THIS ONE IS USED FOR NG IMPLEMENTATION !!!
 class AssemblerTextEdit(QWidget):
@@ -556,6 +570,7 @@ class AssemblerTextEdit(QWidget):
 		
 		# Set the item in the table
 		table_widget.setItem(row_count, 0, item)
+		self.table.symbolCount += 1
 		pass
 		
 	def appendAsmText(self, addr, instr, args, comment, data, addLineNum = True, rip = ""):
@@ -577,10 +592,7 @@ class AssemblerTextEdit(QWidget):
 					self.table.selectRow(row)
 					self.table.scrollToRow(row)
 					break
-#					print(f'scrollToRow: {row}')
-#				else:
-#					self.table.item(row, 0).setText('')
-					
+				
 	def setPC(self, pc):
 		for row in range(self.table.rowCount()):
 			if self.table.item(row, 3) != None:

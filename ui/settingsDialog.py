@@ -26,6 +26,7 @@ class SettingsValues(Enum):
 	DisassemblerShowQuickTooltip = ("Disassembler show QuickTooltip", True, bool)
 	CmdHistory = ("Commands history", True, bool)
 	MemViewShowSelectedStatubarMsg = ("Memory-Viewer on select show statusbar message", True, bool)
+	VisualizeCurrentBP = ("Visualise current breakpoint", True, bool)
 		
 class SettingsHelper(QObject):
 	
