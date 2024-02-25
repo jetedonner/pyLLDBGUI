@@ -17,6 +17,7 @@ from ui.assemblerTextEdit import *
 from helper.dialogHelper import *
 from helper.breakpointHelper import *
 from ui.addBreakpointDialog import *
+from ui.breakpointTreeView import *
 
 def breakpointHandlerAuto(dummy, frame, bpno, err):
 		print("breakpointHandlerAuto ...")
@@ -589,8 +590,21 @@ class BPsWPsWidget(QWidget):
 		
 		self.tabWidgetBPsWPs = QTabWidget()
 		
+		self.treBPs = BreakpointTreeWidget()
+		self.treBPs.itemDoubleClicked.connect(self.handle_itemDoubleClicked)
+		self.treBPs.currentItemChanged.connect(self.handle_currentItemChanged)
+#		
+#		self.treBPs.focus
+		# Set custom CSS stylesheet
+		self.treBPs.setStyleSheet("""
+			QTreeView::item {
+				padding-left: -5px;  /* Adjust indentation width here */
+			}
+		""")
+		
 		self.tblBPs = BreakpointsTableWidget(self.driver)
 		self.tblBPs.sigEnableBP.connect(self.handle_enableBPTblBPs)
+		
 		
 		self.cmdAddBP = ClickLabel()
 		self.cmdAddBP.setPixmap(ConfigClass.pixAdd)
@@ -637,7 +651,7 @@ class BPsWPsWidget(QWidget):
 		self.wdtBPs = QWidget()
 		self.wdtBPs.setLayout(QVBoxLayout())
 		self.wdtBPs.layout().addWidget(self.wgtBPCtrls)
-		self.wdtBPs.layout().addWidget(self.tblBPs)
+		self.wdtBPs.layout().addWidget(self.treBPs)
 		self.wdtBPs.setContentsMargins(0, 0, 0, 0)
 		
 		self.tabWidgetBPsWPs.addTab(self.wdtBPs, "Breakpoints")
@@ -647,6 +661,20 @@ class BPsWPsWidget(QWidget):
 		
 		self.layBPWPMain.addWidget(self.tabWidgetBPsWPs)
 		self.setLayout(self.layBPWPMain)
+		
+	def handle_currentItemChanged(self, cur, prev):
+		if self.treBPs.isPersistentEditorOpen(prev, 5):
+			self.treBPs.closePersistentEditor(prev, 5)
+		if self.treBPs.isPersistentEditorOpen(prev, 6):
+			self.treBPs.closePersistentEditor(prev, 6)
+		pass
+		
+	def handle_itemDoubleClicked(self, item, col):
+#		print(f'ITEM DOUBLECLICKED: {item} => {col}')
+		if col == 5 or col == 6:
+#			self.treBPs.closePe
+			self.treBPs.openPersistentEditor(item, col)
+		pass
 		
 	def handle_enableBPTblBPs(self, address, enabled):
 #		self.txtMultiline.table.doEnableBP(address, enabled)

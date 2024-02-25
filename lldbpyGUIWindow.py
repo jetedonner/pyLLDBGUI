@@ -551,7 +551,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.threadpool = QThreadPool()
 		
-		self.tabWidgetDbg.setCurrentIndex(6)
+		self.tabWidgetDbg.setCurrentIndex(3)
 	
 	def my_callback(self, frame, bp_loc, dict):
 		# Your code to execute when the breakpoint hits
@@ -567,7 +567,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		breakpoint = SBBreakpoint.GetBreakpointFromEvent(event)
 		bpEventType = SBBreakpoint.GetBreakpointEventTypeFromEvent(event)
 		
-		print(f'GOT BREAKPOINT EVENT: {breakpoint} => TYPE: {bpEventType}')
+		print(f'GOT BREAKPOINT EVENT NG: {breakpoint} => TYPE: {bpEventType}')
 		
 		if bpEventType == lldb.eBreakpointEventTypeAdded:
 			print(f"BP ID: {breakpoint.GetID()} has been ADDED !!!!!!!!!!!!!!")
@@ -581,6 +581,11 @@ class LLDBPyGUIWindow(QMainWindow):
 			for i in range(breakpoint.GetNumLocations()):
 				self.txtMultiline.table.removeBPAtAddress(hex(breakpoint.GetLocationAtIndex(i).GetLoadAddress()))
 				pass
+			pass
+		elif bpEventType == lldb.eBreakpointEventTypeDisabled:
+			pass
+		elif bpEventType == lldb.eBreakpointEventTypeEnabled:
+			pass
 		
 	def event_bpAdded(self, bp):
 		print(f'bp.GetID() => {bp.GetID()}')
@@ -968,6 +973,7 @@ class LLDBPyGUIWindow(QMainWindow):
 #			self.txtMultiline.table.setBPAtAddress(loadAddr, True, False)
 		self.wpsEnabled[wp.GetID()] = wp.IsEnabled()
 		self.wdtBPsWPs.tblWPs.addRow(wp.IsEnabled(), wp.GetID(), hex(wp.GetWatchAddress()), hex(wp.GetWatchSize()), wp.GetWatchSpec(), ("r" if wp.IsWatchingReads() else "") + ("" if wp.IsWatchingReads() and wp.IsWatchingWrites() else "") + ("w" if wp.IsWatchingWrites() else ""), wp.GetHitCount(), wp.GetIgnoreCount(), wp.GetCondition())
+		
 	
 	def handle_updateWatchpointsLoadBreakpointValue(self, wp):
 		print(f'wp.GetWatchValueKind() =====================>>>>>>>>>>>>>> {wp.GetWatchValueKind()} / {lldb.eWatchPointValueKindExpression}')
@@ -984,29 +990,60 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.wdtBPsWPs.tblWPs.updateRow(newEnabled, wp.GetID(), hex(wp.GetWatchAddress()), hex(wp.GetWatchSize()), wp.GetWatchSpec(), ("r" if wp.IsWatchingReads() else "") + ("" if wp.IsWatchingReads() and wp.IsWatchingWrites() else "") + ("w" if wp.IsWatchingWrites() else ""), wp.GetHitCount(), wp.GetIgnoreCount(), wp.GetCondition())
 		
 #	def handle_loadBreakpointsLoadBreakpointValue(self, bpId, idx, loadAddr, name, hitCount, condition, initTable, enabled, bp):
-	def handle_loadBreakpointsLoadBreakpointValue(self, bp, bl, initTable):	
+	def handle_loadBreakpointsLoadBreakpointValue(self, bp, initTable):	
 #		bp_cur.GetID(), bp_cur.GetID(), hex(bl.GetLoadAddress()), name, bp_cur.GetHitCount(), bp_cur.GetCondition(), self.initTable, bp_cur.IsEnabled(), bp_cur
 		
-		if initTable:
-			self.txtMultiline.table.setBPAtAddress(hex(bl.GetLoadAddress()), True, False)
+		
 #		print(f'handle_loadBreakpointsLoadBreakpointValue => {bpId}')
-		name_list = lldb.SBStringList()
-		bp.GetNames(name_list)
-		num_names = name_list.GetSize()
-		name = name_list.GetStringAtIndex(0)
-		self.wdtBPsWPs.tblBPs.addRow(bp.IsEnabled(), bp.GetID(), hex(bl.GetLoadAddress()), name, str(bp.GetHitCount()), bp.GetCondition())
-#		bp.SetScriptCallbackBody("print('HELLLLLLLLLLLLLLOOOOOOOOO SSSSCCCCRRRRIIIIIPPPTTTTT CALLBACK!!!!!')")
-		extra_args = lldb.SBStructuredData()
-		# Add any extra data you want to pass to the callback (e.g., variables, settings)
-		self.driver.handleCommand("command script import --allow-reload ./lldbpyGUIWindow.py")
-		bp.SetScriptCallbackFunction("lldbpyGUIWindow.my_callback", extra_args)
+		names = lldb.SBStringList()
+		bp.GetNames(names)
+		num_names = names.GetSize()
+		name = names.GetStringAtIndex(0)
+		cmds = lldb.SBStringList()
+		bp.GetCommandLineCommands(cmds)
+		num_cmds = cmds.GetSize()
+		cmd = cmds.GetStringAtIndex(0)
+		bpNode = QTreeWidgetItem(self.wdtBPsWPs.treBPs, [str(bp.GetID()), '', '', name, str(bp.GetHitCount()), bp.GetCondition(), cmd])
+		bpNode.setIcon(0, ConfigClass.iconBPEnabled)
+#		if initTable:
+#			
+#			self.wdtBPsWPs.treBPs.setItemWidget(bpNode, 0, QLabel("Hello"))
+#			print(self.wdtBPsWPs.treBPs.itemDelegate())
+		idx = 1
+		for bl in bp:
+			if initTable:
+				self.txtMultiline.table.setBPAtAddress(hex(bl.GetLoadAddress()), True, False)
+			self.wdtBPsWPs.tblBPs.addRow(bp.IsEnabled(), bp.GetID(), hex(bl.GetLoadAddress()), name, str(bp.GetHitCount()), bp.GetCondition())
+	#		bp.SetScriptCallbackBody("print('HELLLLLLLLLLLLLLOOOOOOOOO SSSSCCCCRRRRIIIIIPPPTTTTT CALLBACK!!!!!')")
+			extra_args = lldb.SBStructuredData()
+			# Add any extra data you want to pass to the callback (e.g., variables, settings)
+			self.driver.handleCommand("command script import --allow-reload ./lldbpyGUIWindow.py")
+			bp.SetScriptCallbackFunction("lldbpyGUIWindow.my_callback", extra_args)
+			
+			txtID = str(bp.GetID()) + "." + str(idx)
+			sectionNode = QTreeWidgetItem(bpNode, [txtID, '', hex(bl.GetLoadAddress()), name, str(bl.GetHitCount()), bl.GetCondition(), ''])
+			sectionNode.setIcon(0, ConfigClass.iconBPEnabled)
+#			line_edit = QtWidgets.QLineEdit(self.wdtBPsWPs.treBPs)
+#			
+##			push_button = QtWidgets.QPushButton(self.treewidget)
+##			push_button.setText('TEST')
+#			line_edit.setText(bl.GetCondition())
+#			self.wdtBPsWPs.treBPs.setItemWidget(sectionNode, 5, line_edit)
+#			
+#			line_edit2 = QtWidgets.QLineEdit(self.wdtBPsWPs.treBPs)
+#			line_edit2.setText(cmd)
+#			self.wdtBPsWPs.treBPs.setItemWidget(sectionNode, 6, line_edit2)
+			
+			sectionNode.setTextAlignment(0, Qt.AlignmentFlag.AlignLeft)
+#			print(sectionNode.itemWidget)
+			idx += 1
 		
 #		self.driver.handleCommand("command script import --allow-reload ./lldbpyGUI.py")
 #		bp.SetScriptCallbackFunction("lldbpyGUI.my_callback", extra_args)
 		
 #		print("Reloading BPs ...")
 	
-	def handle_updateBreakpointsLoadBreakpointValue(self, bp, bl):
+	def handle_updateBreakpointsLoadBreakpointValue(self, bp):
 #	def handle_updateBreakpointsLoadBreakpointValue(self, bpId, idx, loadAddr, name, hitCount, condition, initTable, enabled, bp):
 #		if initTable:
 #			self.txtMultiline.table.setBPAtAddress(loadAddr, True, False)
@@ -1015,13 +1052,18 @@ class LLDBPyGUIWindow(QMainWindow):
 		bp.GetNames(name_list)
 		num_names = name_list.GetSize()
 		name = name_list.GetStringAtIndex(0)
-		self.wdtBPsWPs.tblBPs.updateRow(bp.IsEnabled(), bp.GetID(), hex(bl.GetLoadAddress()), name, str(bp.GetHitCount()), bp.GetCondition())
-		extra_args = lldb.SBStructuredData()
-		self.driver.handleCommand("command script import --allow-reload ./lldbpyGUIWindow.py")
-		bp.SetScriptCallbackFunction("lldbpyGUIWindow.my_callback", extra_args)
-#		self.driver.handleCommand("command script import --allow-reload ./lldbpyGUI.py")
-#		bp.SetScriptCallbackFunction("lldbpyGUI.my_callback", extra_args)
-#		print("Reloading BPs ...")
+		for bl in bp:
+#			name_list = lldb.SBStringList()
+#			bp.GetNames(name_list)
+#			num_names = name_list.GetSize()
+#			name = name_list.GetStringAtIndex(0)
+			self.wdtBPsWPs.tblBPs.updateRow(bp.IsEnabled(), bp.GetID(), hex(bl.GetLoadAddress()), name, str(bp.GetHitCount()), bp.GetCondition())
+			extra_args = lldb.SBStructuredData()
+			self.driver.handleCommand("command script import --allow-reload ./lldbpyGUIWindow.py")
+			bp.SetScriptCallbackFunction("lldbpyGUIWindow.my_callback", extra_args)
+	#		self.driver.handleCommand("command script import --allow-reload ./lldbpyGUI.py")
+	#		bp.SetScriptCallbackFunction("lldbpyGUI.my_callback", extra_args)
+	#		print("Reloading BPs ...")
 		
 	def handle_loadBreakpointsFinished(self):
 #		print("handle_loadBreakpointsFinished")

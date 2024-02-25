@@ -14,7 +14,20 @@ from config import *
 from helper.breakpointHelper import *
 from helper.quickToolTip import *
 from helper.dialogHelper import *
-		
+
+class BreakpointTreeWidgetItem(QTreeWidgetItem):
+	iconStd = None
+	iconBPEnabled = None
+	iconBPDisabled = None
+	
+	isBPOn = False
+	isBPEnabled = False
+	
+	def __init__(self, parent=None):
+		super().__init__(parent)
+		self.setIcon(0, ConfigClass.iconBPEnabled)
+	pass
+	
 class DisassemblyImageTableWidgetItem(QTableWidgetItem):
 	
 	iconStd = None

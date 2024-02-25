@@ -10,8 +10,8 @@ class LoadBreakpointsWorkerSignals(BaseWorkerSignals):
 	loadBreakpoints = pyqtSignal(str)
 #	loadBreakpointsValue = pyqtSignal(int, int, str, str, int, str, bool, bool, object)
 #	updateBreakpointsValue = pyqtSignal(int, int, str, str, int, str, bool, bool, object)
-	loadBreakpointsValue = pyqtSignal(object, object, bool)
-	updateBreakpointsValue = pyqtSignal(object, object)
+	loadBreakpointsValue = pyqtSignal(object, bool)
+	updateBreakpointsValue = pyqtSignal(object)
 	loadWatchpointsValue = pyqtSignal(object)
 	updateWatchpointsValue = pyqtSignal(object)
 #	updateRegisterValue = pyqtSignal(int, str, str, str)
@@ -45,16 +45,16 @@ class LoadBreakpointsWorker(BaseWorker):
 			bp_cur = target.GetBreakpointAtIndex(i)
 #			print(bp_cur)
 #			print(bp_cur.GetCondition())
-			for bl in bp_cur:
-				# Make sure the name list has the remaining name:
-				name_list = lldb.SBStringList()
-				bp_cur.GetNames(name_list)
-				num_names = name_list.GetSize()
+#			for bl in bp_cur:
+			# Make sure the name list has the remaining name:
+			name_list = lldb.SBStringList()
+			bp_cur.GetNames(name_list)
+			num_names = name_list.GetSize()
 #               self.assertEquals(
 #                   num_names, 1, "Name list has %d items, expected 1." % (num_names)
 #               )
-				
-				name = name_list.GetStringAtIndex(0)
+			
+			name = name_list.GetStringAtIndex(0)
 #               self.assertEquals(
 #                   name,
 #                   other_bkpt_name,
@@ -67,8 +67,8 @@ class LoadBreakpointsWorker(BaseWorker):
 #               print(bl.GetQueueName())
 #               print(get_description(bp_cur))
 #               print(dir(get_description(bp_cur)))
-				
-				
+			
+			
 #				self.txtMultiline.table.toggleBPAtAddress(hex(bl.GetLoadAddress()), False)
 #				
 #				
@@ -79,13 +79,13 @@ class LoadBreakpointsWorker(BaseWorker):
 #					
 #				print(f'bp_cur.GetID() ==> {bp_cur.GetID()}')
 #				bl.SetScriptCallbackBody("print(f'HELLLLLLLLLLLLLLOOOOOOOOO SSSSCCCCRRRRIIIIIPPPTTTTT CALLBACK BLLLLLL!!!!! {bp_loc}');")
-				if self.initTable:
-					print(f'RELOADING BREAKPOINT NUM => {bp_cur.GetID()}')
-					self.signals.loadBreakpointsValue.emit(bp_cur, bl, self.initTable)
+			if self.initTable:
+				print(f'RELOADING BREAKPOINT NUM => {bp_cur.GetID()}')
+				self.signals.loadBreakpointsValue.emit(bp_cur, self.initTable)
 #					self.signals.loadBreakpointsValue.emit(bp_cur.GetID(), bp_cur.GetID(), hex(bl.GetLoadAddress()), name, bp_cur.GetHitCount(), bp_cur.GetCondition(), self.initTable, bp_cur.IsEnabled(), bp_cur)
-				else:
-					print(f'RELOADING BREAKPOINT NUM => {bp_cur.GetID()}')
-					self.signals.updateBreakpointsValue.emit(bp_cur, bl)
+			else:
+				print(f'RELOADING BREAKPOINT NUM => {bp_cur.GetID()}')
+				self.signals.updateBreakpointsValue.emit(bp_cur)
 #					self.signals.updateBreakpointsValue.emit(bp_cur.GetID(), bp_cur.GetID(), hex(bl.GetLoadAddress()), name, bp_cur.GetHitCount(), bp_cur.GetCondition(), self.initTable, bp_cur.IsEnabled(), bp_cur)
 #					
 #					self.signals.updateBreakpointsValue.emit(bp_cur.GetID(), bp_cur.GetID(), hex(bl.GetLoadAddress()), name, bp_cur.GetHitCount(), bp_cur.GetCondition(), self.initTable, bp_cur.IsEnabled(), bp_cur)
