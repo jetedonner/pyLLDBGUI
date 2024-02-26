@@ -759,6 +759,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.txtMultiline.setInstsAndAddr(None, self.rip)
 		self.txtMultiline.setPC(int(self.rip, 16))
 		self.wdtBPsWPs.tblBPs.setPC(self.rip)
+		self.wdtBPsWPs.treBPs.setPC(self.rip)
 		self.loadStacktrace()
 		self.start_loadRegisterWorker()	
 #		self.loadTestBPs(ConfigClass.testBPsFilename)
@@ -1025,6 +1026,7 @@ class LLDBPyGUIWindow(QMainWindow):
 			sectionNode = EditableTreeItem(bpNode, [txtID, '', hex(bl.GetLoadAddress()), name, str(bl.GetHitCount()), bl.GetCondition(), ''])
 #			sectionNode.setIcon(1, ConfigClass.iconBPEnabled)
 			sectionNode.enableBP(bl.IsEnabled())
+			sectionNode.setToolTip(1, "State: Enabled")
 #			sectionNode.textEdited.connect(lambda item, col, new_text: print(f"Item {item.text(0)} edited in column {col}, new text: {new_text}"))
 #			line_edit = QtWidgets.QLineEdit(self.wdtBPsWPs.treBPs)
 #			
@@ -1040,6 +1042,7 @@ class LLDBPyGUIWindow(QMainWindow):
 			sectionNode.setTextAlignment(0, Qt.AlignmentFlag.AlignLeft)
 #			print(sectionNode.itemWidget)
 			idx += 1
+		bpNode.setExpanded(True)
 		
 #		self.driver.handleCommand("command script import --allow-reload ./lldbpyGUI.py")
 #		bp.SetScriptCallbackFunction("lldbpyGUI.my_callback", extra_args)
@@ -1072,6 +1075,7 @@ class LLDBPyGUIWindow(QMainWindow):
 #		print("handle_loadBreakpointsFinished")
 #		self.tblBPs.setCurrentBPHit(str(self.rip))
 		self.wdtBPsWPs.tblBPs.setPC(self.rip)
+		self.wdtBPsWPs.treBPs.setPC(self.rip)
 		pass
 		
 	def start_loadRegisterWorker(self, initTabs = True):
@@ -1303,6 +1307,8 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 	def handle_debugSetPC(self, newPC):
 		self.wdtBPsWPs.tblBPs.setPC(newPC)
+		self.wdtBPsWPs.treBPs.setPC(hex(newPC))
+		
 		pass
 	
 	rip = ""
@@ -1312,7 +1318,7 @@ class LLDBPyGUIWindow(QMainWindow):
 #			print(f"Debug STEP ({kind}) completed SUCCESSFULLY")
 			self.rip = rip
 			self.txtMultiline.setPC(int(str(self.rip), 16))
-			
+			self.wdtBPsWPs.treBPs.setPC(self.rip)
 #			print(f'NEXT INSTRUCTION {rip}')
 #			self.txtMultiline.setPC(frame.GetPC())
 			self.reloadRegister(False)

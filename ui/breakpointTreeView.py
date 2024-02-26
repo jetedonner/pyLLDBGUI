@@ -86,10 +86,13 @@ class BreakpointTreeWidget(QTreeWidget):
 		super().__init__()
 #       self.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
 		self.context_menu = QMenu(self)
-		actionShowInfos = self.context_menu.addAction("Show infos")
+		self.actionShowInfos = self.context_menu.addAction("Show infos")
 		
 		self.actionShowMemoryFrom = self.context_menu.addAction("Show memory")
 		self.actionShowMemoryTo = self.context_menu.addAction("Show memory after End")
+		self.context_menu.addSeparator()
+		self.actionGoToAddress = self.context_menu.addAction("GoTo address")
+		self.actionGoToAddress.triggered.connect(self.handle_gotoAddr)
 		
 		self.setFont(ConfigClass.font)
 #		self.setSelectionModel(QItemSelectionModel())
@@ -108,9 +111,11 @@ class BreakpointTreeWidget(QTreeWidget):
 		self.header().resizeSection(6, 32)
 		self.header().resizeSection(7, 48)
 		self.header().resizeSection(8, 256)
+		self.setMouseTracking(True)
 #		self.treBPs.itemDoubleClicked.connect(self.handle_itemDoubleClicked)
 		self.currentItemChanged.connect(self.handle_currentItemChanged)
 		self.itemChanged.connect(self.handle_itemChanged)
+		self.itemEntered.connect(self.handle_itemEntered)
 #		self.currentItem()
 #		self.chan
 #		self.model().dataChanged.connect(self.handle_return_pressed)
@@ -127,6 +132,61 @@ class BreakpointTreeWidget(QTreeWidget):
 #	def keyPressEvent(self, event):
 #		print(f'keyPressEvent: {event}')
 #		return super().keyPressEvent(event)
+		
+	def setPC(self, address):
+#		for row in range(self.table.rowCount()):
+#			if self.table.item(row, 3) != None:
+#				if self.table.item(row, 3).text().lower() == hex(pc).lower():
+#					self.table.item(row, 0).setText('>')
+#					self.table.scrollToRow(row)
+##					print(f'scrollToRow: {row}')
+#				else:
+#					self.table.item(row, 0).setText('')
+		print(f'SETTING PC: {address}')
+		for childPar in range(self.invisibleRootItem().childCount()):
+			for childChild in range(self.invisibleRootItem().childCount()):
+				if self.invisibleRootItem().child(childPar).child(childChild) != None:
+					print(f'self.invisibleRootItem().child(childPar).child(childChild): {self.invisibleRootItem().child(childPar).child(childChild).text(2)} / {address}')
+					if int(self.invisibleRootItem().child(childPar).child(childChild).text(2), 16) == int(address, 16):
+#					if self.invisibleRootItem().child(childPar).child(childChild).text(2) == address:
+						print(f'FOUND ADDRESS FOR PC: {address}')
+						for i in range(self.invisibleRootItem().child(childPar).child(childChild).columnCount()):
+							self.invisibleRootItem().child(childPar).child(childChild).setBackground(i, ConfigClass.colorGreen)
+#						self.invisibleRootItem().child(childPar).child(childChild).enableBP(enabled)
+##						if daItem.parent() != None:
+#		#				newEnabled = daItem.isBPEnabled
+#						allDisabled = True
+#						for i in range(self.invisibleRootItem().child(childPar).childCount()):
+#							if self.invisibleRootItem().child(childPar).child(i).isBPEnabled:
+#								allDisabled = False
+#								break
+#						self.invisibleRootItem().child(childPar).enableBP(not allDisabled)
+#						break
+					else:
+						for i in range(self.invisibleRootItem().child(childPar).child(childChild).columnCount()):
+							self.invisibleRootItem().child(childPar).child(childChild).setBackground(i, ConfigClass.colorTransparent)
+#		pass()
+					
+		pass
+		
+	def handle_gotoAddr(self):
+		newAddr = self.currentItem().text(2)
+		if newAddr != "":
+			print(f'GoTo address: {newAddr}')
+			self.window().txtMultiline.viewAddress(newAddr)
+#		if self.item(self.selectedItems()[0].row(), 3) != None:
+#			gotoDlg = GotoAddressDialog(self.item(self.selectedItems()[0].row(), 3).text())
+#			if gotoDlg.exec():
+#				print(f"GOING TO ADDRESS: {gotoDlg.txtInput.text()}")
+#				newPC = str(gotoDlg.txtInput.text())
+#				self.window().txtMultiline.viewAddress(newPC)
+#			pass
+		pass
+		
+	def handle_itemEntered(self, item, col):
+		if col == 1:
+			item.setToolTip(col, "State: " + str(item.isBPEnabled))
+		pass
 		
 	def event(self, event):
 		if isinstance(event, QKeyEvent):
