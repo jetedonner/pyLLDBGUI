@@ -144,7 +144,7 @@ class BreakpointTreeWidget(QTreeWidget):
 #					self.table.item(row, 0).setText('')
 		print(f'SETTING PC: {address}')
 		for childPar in range(self.invisibleRootItem().childCount()):
-			for childChild in range(self.invisibleRootItem().childCount()):
+			for childChild in range(self.invisibleRootItem().child(childPar).childCount()):
 				if self.invisibleRootItem().child(childPar).child(childChild) != None:
 					print(f'self.invisibleRootItem().child(childPar).child(childChild): {self.invisibleRootItem().child(childPar).child(childChild).text(2)} / {address}')
 					if int(self.invisibleRootItem().child(childPar).child(childChild).text(2), 16) == int(address, 16):
@@ -215,12 +215,38 @@ class BreakpointTreeWidget(QTreeWidget):
 		self.context_menu.exec(event.globalPos())
 	
 	def handle_itemChanged(self, item, col):
-#		print(f'ITEM CHANGED => {item.text(col)} / {col}')
+		print(f'ITEM CHANGED => {item.text(col)} / {col}')
+		if col == 5 and item.childCount() == 0:
+			print(f"UPDATEING BP Condition of BP {item.text(0)} to '{item.text(col)}'")
+			target = self.window().driver.getTarget()
+			
+			for i in range(target.GetNumBreakpoints()):
+				bp = target.GetBreakpointAtIndex(i)
+				for bl in bp:
+					if item.text(0) == str(bp.GetID()) + "." + str(bl.GetID()):
+						bp.SetCondition(item.text(col))
+						bl.SetCondition(item.text(col))
+						rootItem = self.invisibleRootItem()
+						for childPar in range(rootItem.childCount()):
+							parentItem = rootItem.child(childPar)
+							if parentItem.text(0) == str(bp.GetID()):
+#								parentItem.setText(4, str(bp.GetHitCount()))
+								if item.text(col) != None and item.text(col) != "":
+									parentItem.setText(5, str(item.text(col)))
+								else:
+									parentItem.setText(5, "")
+								break
+						print(f"GOT BP {item.text(0)}")
+						break
+			
+			
+			
+#			print(target.FindBreakpointByID(item.text(0)))
 		pass
 		
 	def enableAllBPs():
 		for childPar in range(self.invisibleRootItem().childCount()):
-			for childChild in range(self.invisibleRootItem().childCount()):
+			for childChild in range(self.invisibleRootItem().child(childPar).childCount()):
 				if self.invisibleRootItem().child(childPar).child(childChild) != None:
 #					print(f'self.invisibleRootItem().child(childPar).child(childChild): {self.invisibleRootItem().child(childPar).child(childChild).text(2)} / {address}')
 #					if self.invisibleRootItem().child(childPar).child(childChild).text(2) :
@@ -229,7 +255,7 @@ class BreakpointTreeWidget(QTreeWidget):
 		
 	def enableBPByAddress(self, address, enabled):
 		for childPar in range(self.invisibleRootItem().childCount()):
-			for childChild in range(self.invisibleRootItem().childCount()):
+			for childChild in range(self.invisibleRootItem().child(childPar).childCount()):
 				if self.invisibleRootItem().child(childPar).child(childChild) != None:
 					print(f'self.invisibleRootItem().child(childPar).child(childChild): {self.invisibleRootItem().child(childPar).child(childChild).text(2)} / {address}')
 					if self.invisibleRootItem().child(childPar).child(childChild).text(2) == address:

@@ -719,10 +719,6 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.findReferencesWorker.signals.sendProgressUpdate.connect(self.handle_progressUpdate)
 		
 		self.findReferencesWorker.signals.referenceFound.connect(self.handle_referenceFound)
-##		self.loadBreakpointsWorker.signals.loadRegister.connect(self.handle_loadRegisterLoadRegister)
-#		self.loadDisassemblyWorker.signals.loadBreakpointsValue.connect(self.handle_loadBreakpointsLoadBreakpointValue)
-#		self.loadDisassemblyWorker.signals.updateBreakpointsValue.connect(self.handle_updateBreakpointsLoadBreakpointValue)
-##		self.loadBreakpointsWorker.signals.updateRegisterValue.connect(self.handle_loadRegisterUpdateRegisterValue)
 		
 		self.threadpool.start(self.findReferencesWorker)
 		
@@ -744,10 +740,6 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.loadDisassemblyWorker.signals.sendProgressUpdate.connect(self.handle_progressUpdate)
 		
 		self.loadDisassemblyWorker.signals.loadInstruction.connect(self.handle_loadInstruction)
-##		self.loadBreakpointsWorker.signals.loadRegister.connect(self.handle_loadRegisterLoadRegister)
-#		self.loadDisassemblyWorker.signals.loadBreakpointsValue.connect(self.handle_loadBreakpointsLoadBreakpointValue)
-#		self.loadDisassemblyWorker.signals.updateBreakpointsValue.connect(self.handle_updateBreakpointsLoadBreakpointValue)
-##		self.loadBreakpointsWorker.signals.updateRegisterValue.connect(self.handle_loadRegisterUpdateRegisterValue)
 		
 		self.threadpool.start(self.loadDisassemblyWorker)
 		
@@ -957,12 +949,10 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.loadBreakpointsWorker.signals.sendStatusBarUpdate.connect(self.handle_statusBarUpdate)
 		self.loadBreakpointsWorker.signals.sendProgressUpdate.connect(self.handle_progressUpdate)
 		
-#		self.loadBreakpointsWorker.signals.loadRegister.connect(self.handle_loadRegisterLoadRegister)
 		self.loadBreakpointsWorker.signals.loadBreakpointsValue.connect(self.handle_loadBreakpointsLoadBreakpointValue)
 		self.loadBreakpointsWorker.signals.updateBreakpointsValue.connect(self.handle_updateBreakpointsLoadBreakpointValue)
 		self.loadBreakpointsWorker.signals.loadWatchpointsValue.connect(self.handle_loadWatchpointsLoadBreakpointValue)
 		self.loadBreakpointsWorker.signals.updateWatchpointsValue.connect(self.handle_updateWatchpointsLoadBreakpointValue)
-#		self.loadBreakpointsWorker.signals.updateRegisterValue.connect(self.handle_loadRegisterUpdateRegisterValue)
 		
 		self.threadpool.start(self.loadBreakpointsWorker)
 		
@@ -994,8 +984,6 @@ class LLDBPyGUIWindow(QMainWindow):
 	def handle_loadBreakpointsLoadBreakpointValue(self, bp, initTable):	
 #		bp_cur.GetID(), bp_cur.GetID(), hex(bl.GetLoadAddress()), name, bp_cur.GetHitCount(), bp_cur.GetCondition(), self.initTable, bp_cur.IsEnabled(), bp_cur
 		
-		
-#		print(f'handle_loadBreakpointsLoadBreakpointValue => {bpId}')
 		names = lldb.SBStringList()
 		bp.GetNames(names)
 		num_names = names.GetSize()
@@ -1005,49 +993,23 @@ class LLDBPyGUIWindow(QMainWindow):
 		num_cmds = cmds.GetSize()
 		cmd = cmds.GetStringAtIndex(0)
 		bpNode = EditableTreeItem(self.wdtBPsWPs.treBPs, [str(bp.GetID()), '', '', name, str(bp.GetHitCount()), bp.GetCondition(), cmd])
-#		print(f'RELOADING BP: {bp.IsEnabled()}')
 		bpNode.enableBP(bp.IsEnabled())
-#		if initTable:
-#			
-#			self.wdtBPsWPs.treBPs.setItemWidget(bpNode, 0, QLabel("Hello"))
-#			print(self.wdtBPsWPs.treBPs.itemDelegate())
 		idx = 1
 		for bl in bp:
 			if initTable:
 				self.txtMultiline.table.setBPAtAddress(hex(bl.GetLoadAddress()), True, False)
 			self.wdtBPsWPs.tblBPs.addRow(bp.IsEnabled(), bp.GetID(), hex(bl.GetLoadAddress()), name, str(bp.GetHitCount()), bp.GetCondition())
-	#		bp.SetScriptCallbackBody("print('HELLLLLLLLLLLLLLOOOOOOOOO SSSSCCCCRRRRIIIIIPPPTTTTT CALLBACK!!!!!')")
 			extra_args = lldb.SBStructuredData()
-			# Add any extra data you want to pass to the callback (e.g., variables, settings)
 			self.driver.handleCommand("command script import --allow-reload ./lldbpyGUIWindow.py")
 			bp.SetScriptCallbackFunction("lldbpyGUIWindow.my_callback", extra_args)
 			
 			txtID = str(bp.GetID()) + "." + str(idx)
 			sectionNode = EditableTreeItem(bpNode, [txtID, '', hex(bl.GetLoadAddress()), name, str(bl.GetHitCount()), bl.GetCondition(), ''])
-#			sectionNode.setIcon(1, ConfigClass.iconBPEnabled)
 			sectionNode.enableBP(bl.IsEnabled())
-			sectionNode.setToolTip(1, "State: Enabled")
-#			sectionNode.textEdited.connect(lambda item, col, new_text: print(f"Item {item.text(0)} edited in column {col}, new text: {new_text}"))
-#			line_edit = QtWidgets.QLineEdit(self.wdtBPsWPs.treBPs)
-#			
-##			push_button = QtWidgets.QPushButton(self.treewidget)
-##			push_button.setText('TEST')
-#			line_edit.setText(bl.GetCondition())
-#			self.wdtBPsWPs.treBPs.setItemWidget(sectionNode, 5, line_edit)
-#			
-#			line_edit2 = QtWidgets.QLineEdit(self.wdtBPsWPs.treBPs)
-#			line_edit2.setText(cmd)
-#			self.wdtBPsWPs.treBPs.setItemWidget(sectionNode, 6, line_edit2)
-			
+			sectionNode.setToolTip(1, f"Enabled: {bl.IsEnabled()}")
 			sectionNode.setTextAlignment(0, Qt.AlignmentFlag.AlignLeft)
-#			print(sectionNode.itemWidget)
 			idx += 1
 		bpNode.setExpanded(True)
-		
-#		self.driver.handleCommand("command script import --allow-reload ./lldbpyGUI.py")
-#		bp.SetScriptCallbackFunction("lldbpyGUI.my_callback", extra_args)
-		
-#		print("Reloading BPs ...")
 	
 	def handle_updateBreakpointsLoadBreakpointValue(self, bp):
 #	def handle_updateBreakpointsLoadBreakpointValue(self, bpId, idx, loadAddr, name, hitCount, condition, initTable, enabled, bp):
@@ -1070,6 +1032,56 @@ class LLDBPyGUIWindow(QMainWindow):
 	#		self.driver.handleCommand("command script import --allow-reload ./lldbpyGUI.py")
 	#		bp.SetScriptCallbackFunction("lldbpyGUI.my_callback", extra_args)
 	#		print("Reloading BPs ...")
+		
+#		print(f'SETTING PC: {address}')
+		rootItem = self.wdtBPsWPs.treBPs.invisibleRootItem()
+		for childPar in range(rootItem.childCount()):
+			parentItem = rootItem.child(childPar)
+			if parentItem.text(0) == str(bp.GetID()):
+				parentItem.setText(4, str(bp.GetHitCount()))
+				if bp.GetCondition() != None:
+					parentItem.setText(5, str(bp.GetCondition()))
+				else:
+					parentItem.setText(5, "")
+					
+				idx = 0
+				for bl in bp:
+					for childChild in range(parentItem.childCount()):
+						childItem = parentItem.child(childChild)
+						if childItem != None:
+							if childItem.text(0) == str(bp.GetID()) + "." + str(bl.GetID()):
+								childItem.setText(4, str(bl.GetHitCount()))
+								if bl.GetCondition() != None:
+									childItem.setText(5, str(bl.GetCondition()))
+								else:
+									childItem.setText(5, "")
+								break
+					idx += 1
+				break
+#			for childChild in range(parentItem.childCount()):
+#				childItem = parentItem.child(childChild)
+#				if childItem != None:
+#					print(f'childItem: {childItem.text(0)} / {childItem.text(4)}')
+##					if int(self.invisibleRootItem().child(childPar).child(childChild).text(2), 16) == int(address, 16):
+#					if childItem.text(0) == bp.GetID():
+#						
+#						break
+#						print(f'FOUND ADDRESS FOR PC: {address}')
+#						for i in range(self.invisibleRootItem().child(childPar).child(childChild).columnCount()):
+#							self.invisibleRootItem().child(childPar).child(childChild).setBackground(i, ConfigClass.colorGreen)
+##						self.invisibleRootItem().child(childPar).child(childChild).enableBP(enabled)
+###						if daItem.parent() != None:
+##		#				newEnabled = daItem.isBPEnabled
+##						allDisabled = True
+##						for i in range(self.invisibleRootItem().child(childPar).childCount()):
+##							if self.invisibleRootItem().child(childPar).child(i).isBPEnabled:
+##								allDisabled = False
+##								break
+##						self.invisibleRootItem().child(childPar).enableBP(not allDisabled)
+##						break
+#					else:
+#						for i in range(self.invisibleRootItem().child(childPar).child(childChild).columnCount()):
+#							self.invisibleRootItem().child(childPar).child(childChild).setBackground(i, ConfigClass.colorTransparent)
 		
 	def handle_loadBreakpointsFinished(self):
 #		print("handle_loadBreakpointsFinished")
