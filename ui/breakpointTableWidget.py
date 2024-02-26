@@ -783,5 +783,6 @@ class BPsWPsWidget(QWidget):
 			self.window().bpHelper.handle_deleteAllBPs()
 			self.window().txtMultiline.table.handle_deleteAllBPs()
 			self.tblBPs.resetContent()
+			self.treBPs.clear()
 			self.window().updateStatusBar("All Breakpoints deleted!")
 		pass

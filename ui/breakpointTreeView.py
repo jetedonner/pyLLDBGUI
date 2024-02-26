@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import lldb
 
 from PyQt6.QtGui import *
 from PyQt6.QtCore import *
@@ -86,7 +87,13 @@ class BreakpointTreeWidget(QTreeWidget):
 		super().__init__()
 #       self.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
 		self.context_menu = QMenu(self)
+		
 		self.actionShowInfos = self.context_menu.addAction("Show infos")
+		self.context_menu.addSeparator()
+		self.actionEnableBP = self.context_menu.addAction("Enable / Disable Breakpoint")
+		self.actionEnableAllBP = self.context_menu.addAction("Enable All Breakpoints")
+		self.actionDisableAllBP = self.context_menu.addAction("Disable All Breakpoints")
+		self.context_menu.addSeparator()
 		
 		self.actionShowMemoryFrom = self.context_menu.addAction("Show memory")
 		self.actionShowMemoryTo = self.context_menu.addAction("Show memory after End")
@@ -169,9 +176,12 @@ class BreakpointTreeWidget(QTreeWidget):
 		if newAddr != "":
 			self.window().txtMultiline.viewAddress(newAddr)
 			
+	oldBPName = ""
 	def handle_itemEntered(self, item, col):
 		if col == 1:
 			item.setToolTip(col, "State: " + str(item.isBPEnabled))
+			
+		self.oldBPName = item.text(3)
 		pass
 		
 	def event(self, event):
@@ -187,18 +197,15 @@ class BreakpointTreeWidget(QTreeWidget):
 						if col == 3 or col == 5 or col == 6:
 							self.openPersistentEditor(self.currentItem(), col)
 							self.editItem(self.currentItem(), col)
-#						return True
-#			print(dir(event))
 		return super().event(event)
 
 	def contextMenuEvent(self, event):
-		# Show the context menu
 		self.context_menu.exec(event.globalPos())
 	
 	def handle_itemChanged(self, item, col):
 		print(f'ITEM CHANGED => {item.text(col)} / {col}')
 		if col == 5 and item.childCount() == 0:
-			print(f"UPDATEING BP Condition of BP {item.text(0)} to '{item.text(col)}'")
+#			print(f"UPDATEING BP Condition of BP {item.text(0)} to '{item.text(col)}'")
 			target = self.window().driver.getTarget()
 			
 			for i in range(target.GetNumBreakpoints()):
@@ -217,13 +224,29 @@ class BreakpointTreeWidget(QTreeWidget):
 								else:
 									parentItem.setText(5, "")
 								break
-						print(f"GOT BP {item.text(0)}")
+#						print(f"GOT BP {item.text(0)}")
 						break
-			
-			
-			
-#			print(target.FindBreakpointByID(item.text(0)))
-		pass
+		elif col == 3 and item.childCount() == 0:
+#			print(f"UPDATEING BP-NAME: {item.text(0)} => {item.text(col)}")
+			target = self.window().driver.getTarget()
+			bpFound = False
+			for i in range(target.GetNumBreakpoints()):
+				bp = target.GetBreakpointAtIndex(i)
+				for bl in bp:
+					name_list = lldb.SBStringList()
+					bp.GetNames(name_list)
+					num_names = name_list.GetSize()
+					name_list.AppendString("")
+					num_names = 1
+					for j in range(num_names):
+						name = name_list.GetStringAtIndex(j)
+						if name == self.oldBPName:
+							bp.RemoveName(self.oldBPName)
+							bp.AddName(item.text(col))
+							bpFound = True
+							break
+					if bpFound:
+						break
 		
 	def getAllItemsAndSubitems(self):
 		itemsRet = []

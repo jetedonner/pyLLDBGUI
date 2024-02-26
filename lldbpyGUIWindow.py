@@ -30,7 +30,6 @@ from ui.settingsDialog import *
 from ui.widgets.QHexTableWidget import *
 from ui.widgets.QMemoryViewer import *
 from ui.searchTableWidget import *
-#from ui.testTableWidget import *
 
 from worker.eventListenerWorker import *
 from worker.loadSourceWorker import *
@@ -58,15 +57,7 @@ except ImportError:
 
 global event_queueBP
 event_queueBP = queue.Queue()
-#from debuggerdriver import LLDBListenerThread
-#from test.lldbutil import *
 
-#APP_NAME = "LLDB-PyGUI"
-#WINDOW_SIZE = 680
-
-#APP_VERSION = "v0.0.1"
-#global myProcess
-#myProcess = None
 #
 #def worker2():
 #	from lldbutil import print_stacktrace
@@ -1183,8 +1174,10 @@ class LLDBPyGUIWindow(QMainWindow):
 			self.start_execCommandWorker(self.txtCmd.text())
 		
 	def start_execCommandWorker(self, command):
-		workerExecCommand = ExecCommandWorker(self.debugger, command)
-		workerExecCommand.signals.finished.connect(self.handle_commandFinished)
+		workerExecCommand = ExecCommandWorker(self.driver, command)
+		
+		workerExecCommand.signals.commandCompleted.connect(self.handle_commandFinished)
+#		workerExecCommand.signals.finished.connect(self.handle_commandFinished)
 		
 		self.threadpool.start(workerExecCommand)
 		
