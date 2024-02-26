@@ -57,7 +57,7 @@ class ExecCommandWorker(QRunnable):
 		
 		# Execute the 'frame variable' command
 		command_interpreter.HandleCommand(self.command, res)
-		
+#		print(res)
 		self.isExecCommandActive = False
 		self.signals.finished.emit(res)
 		QCoreApplication.processEvents()

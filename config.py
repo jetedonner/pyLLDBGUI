@@ -33,6 +33,8 @@ class ConfigClass():
 	iconReload = None
 	iconInfo = None
 	
+	pixBug = None
+	pixBugGreen = None
 	pixAdd = None
 	pixInfo = None
 	pixSave = None
@@ -76,6 +78,8 @@ class ConfigClass():
 		
 		ConfigClass.iconStd = QIcon()
 		
+		ConfigClass.pixBug = QPixmap(os.path.join(resources_root, 'bug.png')).scaled(QSize(18, 18))
+		ConfigClass.pixBugGreen = QPixmap(os.path.join(resources_root, 'bug_green2.png')).scaled(QSize(18, 18))
 		ConfigClass.pixAdd = QPixmap(os.path.join(resources_root, 'add.png')).scaled(QSize(18, 18))
 		ConfigClass.pixSave = QPixmap(os.path.join(resources_root, 'save.png')).scaled(QSize(18, 18))
 		ConfigClass.pixLoad = QPixmap(os.path.join(resources_root, 'folder.png')).scaled(QSize(18, 18))

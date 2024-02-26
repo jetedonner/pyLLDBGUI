@@ -1004,7 +1004,8 @@ class LLDBPyGUIWindow(QMainWindow):
 		num_cmds = cmds.GetSize()
 		cmd = cmds.GetStringAtIndex(0)
 		bpNode = EditableTreeItem(self.wdtBPsWPs.treBPs, [str(bp.GetID()), '', '', name, str(bp.GetHitCount()), bp.GetCondition(), cmd])
-		bpNode.setIcon(1, ConfigClass.iconBPEnabled)
+#		print(f'RELOADING BP: {bp.IsEnabled()}')
+		bpNode.enableBP(bp.IsEnabled())
 #		if initTable:
 #			
 #			self.wdtBPsWPs.treBPs.setItemWidget(bpNode, 0, QLabel("Hello"))
@@ -1022,7 +1023,9 @@ class LLDBPyGUIWindow(QMainWindow):
 			
 			txtID = str(bp.GetID()) + "." + str(idx)
 			sectionNode = EditableTreeItem(bpNode, [txtID, '', hex(bl.GetLoadAddress()), name, str(bl.GetHitCount()), bl.GetCondition(), ''])
-			sectionNode.setIcon(1, ConfigClass.iconBPEnabled)
+#			sectionNode.setIcon(1, ConfigClass.iconBPEnabled)
+			sectionNode.enableBP(bl.IsEnabled())
+#			sectionNode.textEdited.connect(lambda item, col, new_text: print(f"Item {item.text(0)} edited in column {col}, new text: {new_text}"))
 #			line_edit = QtWidgets.QLineEdit(self.wdtBPsWPs.treBPs)
 #			
 ##			push_button = QtWidgets.QPushButton(self.treewidget)
@@ -1160,6 +1163,8 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 	def handle_commandFinished(self, res):
 		if res.Succeeded():
+#			print(dir(res))
+#			print(res.GetOutput())
 			self.txtCommands.appendEscapedText(res.GetOutput())
 		else:
 			self.txtCommands.appendEscapedText(f"{res.GetError()}")
@@ -1243,14 +1248,14 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.threadpool.start(self.workerLoadSource)
 	
 	def handle_enableBPTblBPs(self, address, enabled):
-		self.txtMultiline.table.doEnableBP(address, enabled)
+		self.txtMultiline.table.enableBP(address, enabled)
 		if self.bpHelper.handle_checkBPExists(address) != None:
 			self.bpHelper.handle_enableBP(address, enabled)
 			if enabled:
 				self.driver.handleCommand("br com a -F lldbpyGUI.breakpointHandlerNG")
 	
 	def handle_enableBP(self, address, enabled):
-		self.wdtBPsWPs.tblBPs.doEnableBP(address, enabled)
+		self.wdtBPsWPs.tblBPs.enableBP(address, enabled)
 		if self.bpHelper.handle_checkBPExists(address) != None:
 			self.bpHelper.handle_enableBP(address, enabled)
 			if enabled:

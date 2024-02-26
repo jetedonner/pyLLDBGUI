@@ -116,8 +116,8 @@ class BreakpointTreeWidget(QTreeWidget):
 #			print(dir(event))
 		return super().event(event)
 		
-	def some_function(self):
-		print("some_function")
+#	def some_function(self):
+#		print("some_function")
 		
 	def contextMenuEvent(self, event):
 		# Show the context menu
@@ -149,18 +149,18 @@ class BreakpointTreeWidget(QTreeWidget):
 #		self.closeAllEditors
 		
 	def handle_currentItemChanged(self, cur, prev):
-		print("ITEM CHANGED")
+#		print("ITEM CHANGED")
 		self.closeAllEditors(prev)
 		
 	def closeAllEditors(self, item):
 		if self.isPersistentEditorOpen(item, 3):
-			print("Closing 3")
+#			print("Closing 3")
 			self.closePersistentEditor(item, 3)
 		if self.isPersistentEditorOpen(item, 5):
-			print("Closing 5")
+#			print("Closing 5")
 			self.closePersistentEditor(item, 5)
 		if self.isPersistentEditorOpen(item, 6):
-			print("Closing 6")
+#			print("Closing 6")
 			self.closePersistentEditor(item, 6)
 #		pass
 		

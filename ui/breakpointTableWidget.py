@@ -19,9 +19,9 @@ from helper.breakpointHelper import *
 from ui.addBreakpointDialog import *
 from ui.breakpointTreeView import *
 
-def breakpointHandlerAuto(dummy, frame, bpno, err):
-		print("breakpointHandlerAuto ...")
-		print("YESSSSSSS GETTTTTTTIIIIINNNNNNNGGGGG THERE!!!!!!")
+#def breakpointHandlerAuto(dummy, frame, bpno, err):
+#		print("breakpointHandlerAuto ...")
+#		print("YESSSSSSS GETTTTTTTIIIIINNNNNNNGGGGG THERE!!!!!!")
 
 class WatchpointsTableWidget(QTableWidget):
 	
@@ -331,7 +331,7 @@ class BreakpointsTableWidget(QTableWidget):
 				itemCell.toggleBPOn()
 				break
 			
-	def doEnableBP(self, address, enabled):
+	def enableBP(self, address, enabled):
 		for i in range(self.rowCount()):
 			if self.item(i, 2).text() == address:
 				item = self.item(i, 0)
@@ -524,7 +524,7 @@ class BreakpointsTableWidget(QTableWidget):
 		currRowCount = self.rowCount()
 		self.setRowCount(currRowCount + 1)
 		item = DisassemblyImageTableWidgetItem()
-		print(f'BREAKPOINT ADD ROW NUM => {num}')
+#		print(f'BREAKPOINT ADD ROW NUM => {num}')
 		item.enableBP(state)
 		self.setItem(currRowCount, 0, item)
 		self.addItem(currRowCount, 1, "#" + str(num))
@@ -626,6 +626,12 @@ class BPsWPsWidget(QWidget):
 		self.cmdAddBP.clicked.connect(self.click_addBP)
 		self.cmdAddBP.setContentsMargins(0, 0, 0, 0)
 		
+		self.cmdEnableAll = ClickLabel()
+		self.cmdEnableAll.setPixmap(ConfigClass.pixBugGreen)
+		self.cmdEnableAll.setToolTip("Enable ALL Breakpoints")
+		self.cmdEnableAll.clicked.connect(self.click_enableAll)
+		self.cmdEnableAll.setContentsMargins(0, 0, 0, 0)
+		
 		self.cmdSaveBP = ClickLabel()
 		self.cmdSaveBP.setPixmap(ConfigClass.pixSave)
 		self.cmdSaveBP.setToolTip("Save Breakpoints")
@@ -654,6 +660,7 @@ class BPsWPsWidget(QWidget):
 		self.wgtBPCtrls.setContentsMargins(0, 10, 0, 0)
 		self.wgtBPCtrls.setLayout(QHBoxLayout())
 		self.wgtBPCtrls.layout().addWidget(self.cmdAddBP)
+		self.wgtBPCtrls.layout().addWidget(self.cmdEnableAll)
 		self.wgtBPCtrls.layout().addWidget(self.cmdSaveBP)
 		self.wgtBPCtrls.layout().addWidget(self.cmdLoadBP)
 		self.wgtBPCtrls.layout().addWidget(self.cmdReloadBPs)
@@ -690,6 +697,11 @@ class BPsWPsWidget(QWidget):
 #			self.treBPs.openPersistentEditor(item, col)
 #		pass
 		
+	def click_enableAll(self):
+#		print(f'Enable ALL BPs ...')
+		self.driver.getTarget().EnableAllBreakpoints()
+		pass
+		
 	def handle_enableBPTblBPs(self, address, enabled):
 #		self.txtMultiline.table.doEnableBP(address, enabled)
 #		if self.bpHelper.handle_checkBPExists(address) != None:
@@ -722,7 +734,7 @@ class BPsWPsWidget(QWidget):
 		
 	def click_addBP(self):
 		
-		print("Opening AddBreakpointDialog ...")
+#		print("Opening AddBreakpointDialog ...")
 		self.window().updateStatusBar("Opening AddBreakpointDialog ...")
 		
 #		project_root = dirname(realpath(__file__))

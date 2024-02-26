@@ -132,7 +132,7 @@ class DisassemblyTableWidget(QTableWidget):
 			if self.item(i, 1) != None:
 				self.item(i, 1).setBPOn(False)
 		
-	def doEnableBP(self, address, enabled):
+	def enableBP(self, address, enabled):
 		for i in range(self.rowCount()):
 			if self.item(i, 3) != None and self.item(i, 3).text() == address:
 				item = self.item(i, 1)
@@ -153,8 +153,9 @@ class DisassemblyTableWidget(QTableWidget):
 		if self.item(self.selectedItems()[0].row(), 1) != None:
 			item = self.item(self.selectedItems()[0].row(), 1)
 			item.enableBP(not item.isBPEnabled)
+			self.window().wdtBPsWPs.treBPs.enableBPByAddress(self.item(self.selectedItems()[0].row(), 3).text(),  item.isBPEnabled)
 	#		item.toggleBPEnabled()
-			self.sigEnableBP.emit(self.item(self.selectedItems()[0].row(), 3).text(), item.isBPEnabled)
+#			self.sigEnableBP.emit(self.item(self.selectedItems()[0].row(), 3).text(), item.isBPEnabled)
 	#		pass
 		
 	def handle_editCondition(self):
@@ -319,6 +320,7 @@ class DisassemblyTableWidget(QTableWidget):
 				self.actionEnableBP.setText("Disable Breakpoint")
 			else:
 				self.actionEnableBP.setText("Enable Breakpoint")
+			self.actionEnableBP.setData(self.item(self.selectedItems()[0].row(), 1).isBPEnabled)
 			
 			self.actionShowMemoryFor.setText("Show memory for:")
 			self.actionShowMemoryFor.setEnabled(False)
@@ -541,9 +543,9 @@ class DisassemblyTableWidget(QTableWidget):
 			
 			row_to_scroll = row + self.symbolCount
 			scroll_value = (row_to_scroll - self.viewport().height() / (2 * self.rowHeight(1))) * self.rowHeight(1)
-			print(f'scroll_value => {scroll_value}')
+#			print(f'scroll_value => {scroll_value}')
 			self.verticalScrollBar().setValue(int(scroll_value))
-			print(f'self.verticalScrollBar().value() => {self.verticalScrollBar().value()}')
+#			print(f'self.verticalScrollBar().value() => {self.verticalScrollBar().value()}')
 			QApplication.processEvents()
 #		QCoreApplication.processEvents()
 		
@@ -624,7 +626,7 @@ class AssemblerTextEdit(QWidget):
 				if self.table.item(row, 3).text().lower() == hex(pc).lower():
 					self.table.item(row, 0).setText('>')
 					self.table.scrollToRow(row)
-					print(f'scrollToRow: {row}')
+#					print(f'scrollToRow: {row}')
 				else:
 					self.table.item(row, 0).setText('')
 				

@@ -80,11 +80,11 @@ class LoadBreakpointsWorker(BaseWorker):
 #				print(f'bp_cur.GetID() ==> {bp_cur.GetID()}')
 #				bl.SetScriptCallbackBody("print(f'HELLLLLLLLLLLLLLOOOOOOOOO SSSSCCCCRRRRIIIIIPPPTTTTT CALLBACK BLLLLLL!!!!! {bp_loc}');")
 			if self.initTable:
-				print(f'RELOADING BREAKPOINT NUM => {bp_cur.GetID()}')
+#				print(f'RELOADING BREAKPOINT NUM => {bp_cur.GetID()}')
 				self.signals.loadBreakpointsValue.emit(bp_cur, self.initTable)
 #					self.signals.loadBreakpointsValue.emit(bp_cur.GetID(), bp_cur.GetID(), hex(bl.GetLoadAddress()), name, bp_cur.GetHitCount(), bp_cur.GetCondition(), self.initTable, bp_cur.IsEnabled(), bp_cur)
 			else:
-				print(f'RELOADING BREAKPOINT NUM => {bp_cur.GetID()}')
+#				print(f'RELOADING BREAKPOINT NUM => {bp_cur.GetID()}')
 				self.signals.updateBreakpointsValue.emit(bp_cur)
 #					self.signals.updateBreakpointsValue.emit(bp_cur.GetID(), bp_cur.GetID(), hex(bl.GetLoadAddress()), name, bp_cur.GetHitCount(), bp_cur.GetCondition(), self.initTable, bp_cur.IsEnabled(), bp_cur)
 #					

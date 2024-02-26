@@ -11,6 +11,7 @@ from config import *
 class EditableTreeItem(QTreeWidgetItem):
 	
 	isBPEnabled = True
+	textEdited = pyqtSignal(object, int, str)
 	
 	def __init__(self, parent, text):
 		super().__init__(parent, text)
@@ -23,22 +24,36 @@ class EditableTreeItem(QTreeWidgetItem):
 	def enableBP(self, enabled):
 		if self.isBPEnabled and not enabled:
 			self.isBPEnabled = False
-			self.setIcon(1, ConfigClass.iconBPDisabled)
+			self.setIcon(1, ConfigClass.iconBug)
+			print(f'ENABLING BP!!!!!!!!!!!!!!!!!!!')
 		elif not self.isBPEnabled and enabled: 
 			self.isBPEnabled = True
-			self.setIcon(1, ConfigClass.iconBPEnabled)
+			self.setIcon(1, ConfigClass.iconBugGreen)
+		else:
+			if enabled:
+				self.setIcon(1, ConfigClass.iconBugGreen) 
+			else:
+				self.setIcon(1, ConfigClass.iconBug) 
+	
+	
+	
 #	def setData(self, column, role, value):
-#		print("SET DATA")
+#		print(f"SET DATA {column}")
 #		# Intercept data setting behavior to handle editing
-#		if column == 0 and self.flags() & Qt.ItemFlag.ItemIsEditable:
+#		if column == 5: # and self.flags() & Qt.ItemFlag.ItemIsEditable:
+#			print(f'Column {column} was edited')
 #			# Create a QLineEdit for editing
-##			self.itemAt(event.pos().x(), event.pos().y()).
-##			editor = QLineEdit(value)
-##			editor.editingFinished.connect(self.editing_finished)
-##			self.treeWidget().setCurrentItem(self)
-##			self.treeWidget().editItem(self, column, editor)
+#			#			self.itemAt(event.pos().x(), event.pos().y()).
+#			#			editor = QLineEdit(value)
+#			#			editor.editingFinished.connect(self.editing_finished)
+#			#			self.treeWidget().setCurrentItem(self)
+#			#			self.treeWidget().editItem(self, column, editor)
 #			
-#			super().setData(column, role, value)
+#		super().setData(column, role, value)
+		
+#		self.textEdited.emit(self, column, value)
+		
+			
 #		else:
 #			super().setData(column, role, value)
 #		self.treeWidget().closeAllEditors(self)
@@ -95,6 +110,7 @@ class BreakpointTreeWidget(QTreeWidget):
 		self.header().resizeSection(8, 256)
 #		self.treBPs.itemDoubleClicked.connect(self.handle_itemDoubleClicked)
 		self.currentItemChanged.connect(self.handle_currentItemChanged)
+		self.itemChanged.connect(self.handle_itemChanged)
 #		self.currentItem()
 #		self.chan
 #		self.model().dataChanged.connect(self.handle_return_pressed)
@@ -108,15 +124,15 @@ class BreakpointTreeWidget(QTreeWidget):
 #					context=Qt.ShortcutContext.WidgetShortcut,
 #					activated=self.some_function)
 	
-	def keyPressEvent(self, event):
-		print(f'keyPressEvent: {event}')
-		return super().keyPressEvent(event)
+#	def keyPressEvent(self, event):
+#		print(f'keyPressEvent: {event}')
+#		return super().keyPressEvent(event)
 		
 	def event(self, event):
 		if isinstance(event, QKeyEvent):
 #			print(f"event: {event.key()}")
 			if event.key() == Qt.Key.Key_Return:
-				print('Return PRESSED!!!')
+#				print('Return PRESSED!!!')
 				if self.isPersistentEditorOpen(self.currentItem(), self.currentColumn()):
 #					self.closeAllEditors(self.currentItem())
 					self.closePersistentEditor(self.currentItem(), self.currentColumn())
@@ -131,12 +147,43 @@ class BreakpointTreeWidget(QTreeWidget):
 #			print(dir(event))
 		return super().event(event)
 		
-	def some_function(self):
-		print("some_function")
+#	def some_function(self):
+#		print("some_function")
 		
 	def contextMenuEvent(self, event):
 		# Show the context menu
 		self.context_menu.exec(event.globalPos())
+	
+	def handle_itemChanged(self, item, col):
+#		print(f'ITEM CHANGED => {item.text(col)} / {col}')
+		pass
+		
+	def enableAllBPs():
+		for childPar in range(self.invisibleRootItem().childCount()):
+			for childChild in range(self.invisibleRootItem().childCount()):
+				if self.invisibleRootItem().child(childPar).child(childChild) != None:
+#					print(f'self.invisibleRootItem().child(childPar).child(childChild): {self.invisibleRootItem().child(childPar).child(childChild).text(2)} / {address}')
+#					if self.invisibleRootItem().child(childPar).child(childChild).text(2) :
+					self.invisibleRootItem().child(childPar).child(childChild).enableBP(True)
+		pass
+		
+	def enableBPByAddress(self, address, enabled):
+		for childPar in range(self.invisibleRootItem().childCount()):
+			for childChild in range(self.invisibleRootItem().childCount()):
+				if self.invisibleRootItem().child(childPar).child(childChild) != None:
+					print(f'self.invisibleRootItem().child(childPar).child(childChild): {self.invisibleRootItem().child(childPar).child(childChild).text(2)} / {address}')
+					if self.invisibleRootItem().child(childPar).child(childChild).text(2) == address:
+						self.invisibleRootItem().child(childPar).child(childChild).enableBP(enabled)
+#						if daItem.parent() != None:
+		#				newEnabled = daItem.isBPEnabled
+						allDisabled = True
+						for i in range(self.invisibleRootItem().child(childPar).childCount()):
+							if self.invisibleRootItem().child(childPar).child(i).isBPEnabled:
+								allDisabled = False
+								break
+						self.invisibleRootItem().child(childPar).enableBP(not allDisabled)
+						break
+		pass
 		
 	def mouseDoubleClickEvent(self, event):
 		daItem = self.itemAt(event.pos().x(), event.pos().y())
@@ -147,6 +194,7 @@ class BreakpointTreeWidget(QTreeWidget):
 			super().mouseDoubleClickEvent(event)
 		elif col == 0x1:
 			daItem.toggleBP()
+			self.window().txtMultiline.table.enableBP(daItem.text(2), daItem.isBPEnabled)
 			if daItem.parent() != None:
 #				newEnabled = daItem.isBPEnabled
 				allDisabled = True
@@ -176,18 +224,18 @@ class BreakpointTreeWidget(QTreeWidget):
 #		self.closeAllEditors
 		
 	def handle_currentItemChanged(self, cur, prev):
-		print("ITEM CHANGED")
+#		print("ITEM CHANGED")
 		self.closeAllEditors(prev)
 		
 	def closeAllEditors(self, item):
 		if self.isPersistentEditorOpen(item, 3):
-			print("Closing 3")
+#			print("Closing 3")
 			self.closePersistentEditor(item, 3)
 		if self.isPersistentEditorOpen(item, 5):
-			print("Closing 5")
+#			print("Closing 5")
 			self.closePersistentEditor(item, 5)
 		if self.isPersistentEditorOpen(item, 6):
-			print("Closing 6")
+#			print("Closing 6")
 			self.closePersistentEditor(item, 6)
 #		pass
 		

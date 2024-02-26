@@ -122,7 +122,10 @@ def __lldb_init_module(debugger, internal_dict):
     ci.HandleCommand(f"command alias -h '({PROMPT_TEXT}) Start the target and stop at entrypoint.' -- run r", res)
     
     ci.HandleCommand(f"command alias -h '({PROMPT_TEXT}) Start the python GUI.' -H '({PROMPT_TEXT}) Start the python GUI.' -- ng TestCommand", res)
-    
+
+    ci.HandleCommand(f"command alias -h '({PROMPT_TEXT}) Start the python GUI.' -H '({PROMPT_TEXT}) Start the python GUI.' -- nglst thread list", res)
+  
+  
     ci.HandleCommand("command script add -h '(lldbinit) Display lldbinit banner.' --function lldbpyGUI.cmd_banner banner", res)
     
     ci.HandleCommand("command script add -h '(lldbpygui) Display lldbpygui banner2.' --function lldbpyGUI.cmd_banner2 banner2", res)
@@ -179,7 +182,9 @@ def close_application():
 def cmd_banner(debugger,command,result,dict):    
   print(RED + "[+] Loaded " + APP_NAME + " version " + APP_VERSION + " (BUILD: " + APP_BUILD + ")" + RESET)
 
-def cmd_banner2(debugger,command,result,dict):    
+def cmd_banner2(debugger,command,result,dict): 
+#   print(f'result => {result} / command => {command}', file=sys.stdout)
+#   sys.stdout.write("HELLO")
     print(f"" + GREEN + "#=================================================================================#")
     print(f"| Starting TEST ENVIRONMENT for {APP_NAME} (ver. {APP_VERSION})            |")
     print(f"|                                                                                 |")
@@ -195,6 +200,7 @@ def cmd_banner2(debugger,command,result,dict):
     print(f"| Author / Copyright:                                                             |")
     print(f"| Kim David Hauser (JeTeDonner), (C.) by kimhauser.ch 1991-2024                   |")
     print(f"#=================================================================================#" + RESET)
+#   return(sys.stdout)
   
 
 def StartLLDBPyGUI(debugger, command, result, dict):
