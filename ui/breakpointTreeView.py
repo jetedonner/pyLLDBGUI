@@ -134,55 +134,41 @@ class BreakpointTreeWidget(QTreeWidget):
 #		return super().keyPressEvent(event)
 		
 	def setPC(self, address):
-#		for row in range(self.table.rowCount()):
-#			if self.table.item(row, 3) != None:
-#				if self.table.item(row, 3).text().lower() == hex(pc).lower():
-#					self.table.item(row, 0).setText('>')
-#					self.table.scrollToRow(row)
-##					print(f'scrollToRow: {row}')
-#				else:
-#					self.table.item(row, 0).setText('')
-		print(f'SETTING PC: {address}')
-		for childPar in range(self.invisibleRootItem().childCount()):
-			for childChild in range(self.invisibleRootItem().child(childPar).childCount()):
-				if self.invisibleRootItem().child(childPar).child(childChild) != None:
-					print(f'self.invisibleRootItem().child(childPar).child(childChild): {self.invisibleRootItem().child(childPar).child(childChild).text(2)} / {address}')
-					if int(self.invisibleRootItem().child(childPar).child(childChild).text(2), 16) == int(address, 16):
+		items = self.getAllItemsAndSubitems()
+		for item in items:
+			for subitem in item.subItems:
+				if int(subitem.text(2), 16) == int(address, 16):
 #					if self.invisibleRootItem().child(childPar).child(childChild).text(2) == address:
-						print(f'FOUND ADDRESS FOR PC: {address}')
-						for i in range(self.invisibleRootItem().child(childPar).child(childChild).columnCount()):
-							self.invisibleRootItem().child(childPar).child(childChild).setBackground(i, ConfigClass.colorGreen)
-#						self.invisibleRootItem().child(childPar).child(childChild).enableBP(enabled)
-##						if daItem.parent() != None:
-#		#				newEnabled = daItem.isBPEnabled
-#						allDisabled = True
-#						for i in range(self.invisibleRootItem().child(childPar).childCount()):
-#							if self.invisibleRootItem().child(childPar).child(i).isBPEnabled:
-#								allDisabled = False
-#								break
-#						self.invisibleRootItem().child(childPar).enableBP(not allDisabled)
-#						break
-					else:
-						for i in range(self.invisibleRootItem().child(childPar).child(childChild).columnCount()):
-							self.invisibleRootItem().child(childPar).child(childChild).setBackground(i, ConfigClass.colorTransparent)
-#		pass()
-					
-		pass
+#						print(f'FOUND ADDRESS FOR PC: {address}')
+					for i in range(subitem.columnCount()):
+						subitem.setBackground(i, ConfigClass.colorGreen)
+					self.scrollToItem(subitem, 
+						QAbstractItemView.ScrollHint.PositionAtCenter)
+				else:
+					for i in range(subitem.columnCount()):
+						subitem.setBackground(i, ConfigClass.colorTransparent)
+						
+#		for childPar in range(self.invisibleRootItem().childCount()):
+#			for childChild in range(self.invisibleRootItem().child(childPar).childCount()):
+#				if self.invisibleRootItem().child(childPar).child(childChild) != None:
+##					print(f'self.invisibleRootItem().child(childPar).child(childChild): {self.invisibleRootItem().child(childPar).child(childChild).text(2)} / {address}')
+#					if int(self.invisibleRootItem().child(childPar).child(childChild).text(2), 16) == int(address, 16):
+##					if self.invisibleRootItem().child(childPar).child(childChild).text(2) == address:
+##						print(f'FOUND ADDRESS FOR PC: {address}')
+#						for i in range(self.invisibleRootItem().child(childPar).child(childChild).columnCount()):
+#							self.invisibleRootItem().child(childPar).child(childChild).setBackground(i, ConfigClass.colorGreen)
+#						self.scrollToItem(self.invisibleRootItem().child(childPar).child(childChild), 
+#							QAbstractItemView.ScrollHint.PositionAtCenter)
+#					else:
+#						for i in range(self.invisibleRootItem().child(childPar).child(childChild).columnCount()):
+#							self.invisibleRootItem().child(childPar).child(childChild).setBackground(i, ConfigClass.colorTransparent)
+
 		
 	def handle_gotoAddr(self):
 		newAddr = self.currentItem().text(2)
 		if newAddr != "":
-			print(f'GoTo address: {newAddr}')
 			self.window().txtMultiline.viewAddress(newAddr)
-#		if self.item(self.selectedItems()[0].row(), 3) != None:
-#			gotoDlg = GotoAddressDialog(self.item(self.selectedItems()[0].row(), 3).text())
-#			if gotoDlg.exec():
-#				print(f"GOING TO ADDRESS: {gotoDlg.txtInput.text()}")
-#				newPC = str(gotoDlg.txtInput.text())
-#				self.window().txtMultiline.viewAddress(newPC)
-#			pass
-		pass
-		
+			
 	def handle_itemEntered(self, item, col):
 		if col == 1:
 			item.setToolTip(col, "State: " + str(item.isBPEnabled))
@@ -192,9 +178,7 @@ class BreakpointTreeWidget(QTreeWidget):
 		if isinstance(event, QKeyEvent):
 #			print(f"event: {event.key()}")
 			if event.key() == Qt.Key.Key_Return:
-#				print('Return PRESSED!!!')
 				if self.isPersistentEditorOpen(self.currentItem(), self.currentColumn()):
-#					self.closeAllEditors(self.currentItem())
 					self.closePersistentEditor(self.currentItem(), self.currentColumn())
 #					return True
 				else:
@@ -206,10 +190,7 @@ class BreakpointTreeWidget(QTreeWidget):
 #						return True
 #			print(dir(event))
 		return super().event(event)
-		
-#	def some_function(self):
-#		print("some_function")
-		
+
 	def contextMenuEvent(self, event):
 		# Show the context menu
 		self.context_menu.exec(event.globalPos())
@@ -244,12 +225,22 @@ class BreakpointTreeWidget(QTreeWidget):
 #			print(target.FindBreakpointByID(item.text(0)))
 		pass
 		
+	def getAllItemsAndSubitems(self):
+		itemsRet = []
+		for childPar in range(self.invisibleRootItem().childCount()):
+			itemsRet.append(self.invisibleRootItem().child(childPar))
+			itemsRet[-1].subItems = []
+			for childChild in range(self.invisibleRootItem().child(childPar).childCount()):
+				if self.invisibleRootItem().child(childPar).child(childChild) != None:
+					itemsRet[-1].subItems.append(self.invisibleRootItem().child(childPar).child(childChild))
+#					self.invisibleRootItem().child(childPar).child(childChild).enableBP(True)
+				
+		return itemsRet
+					
 	def enableAllBPs():
 		for childPar in range(self.invisibleRootItem().childCount()):
 			for childChild in range(self.invisibleRootItem().child(childPar).childCount()):
 				if self.invisibleRootItem().child(childPar).child(childChild) != None:
-#					print(f'self.invisibleRootItem().child(childPar).child(childChild): {self.invisibleRootItem().child(childPar).child(childChild).text(2)} / {address}')
-#					if self.invisibleRootItem().child(childPar).child(childChild).text(2) :
 					self.invisibleRootItem().child(childPar).child(childChild).enableBP(True)
 		pass
 		

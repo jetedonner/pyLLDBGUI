@@ -38,7 +38,15 @@ class RegisterTableWidget(QTableWidget):
 		
 		self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
 		self.setShowGrid(False)
+		self.setMouseTracking(True)
 		self.cellDoubleClicked.connect(self.on_double_click)
+		self.itemEntered.connect(self.handle_itemEntered)
+		
+	def handle_itemEntered(self, item):
+		if item.column() == 1:
+			item.setToolTip(f"Register: {item.tableWidget().item(item.row(), 0).text()}\nValue: {str(int(item.tableWidget().item(item.row(), 1).text(), 16))}")
+		print(f"ITEM ENTERED: {item}")
+		pass
 		
 	def on_double_click(self, row, col):
 #		if col in range(3):

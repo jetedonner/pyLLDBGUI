@@ -544,6 +544,7 @@ class BreakpointsTableWidget(QTableWidget):
 		self.setItem(row, col, item)
 	
 	def item_changed_handler(self, row, col):
+		print(f"item_changed_handler ==> TABLE!!!")
 		if not self.ommitCellChanged:
 			
 			if col == 3: # Name changed

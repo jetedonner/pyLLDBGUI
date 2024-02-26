@@ -576,7 +576,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		elif bpEventType == lldb.eBreakpointEventTypeRemoved:
 			print(f"BP ID: {breakpoint.GetID()} has been DELETED !!!!!!!!!!!!!!")
 #			self.bpHelper.handle_deleteBP(self.breakpoint.GetID())
-			self.wdtBPsWPs.tblBPs.removeRowWithId(breakpoint.GetID())
+#			self.wdtBPsWPs.tblBPs.removeRowWithId(breakpoint.GetID())
 			
 			for i in range(breakpoint.GetNumLocations()):
 				self.txtMultiline.table.removeBPAtAddress(hex(breakpoint.GetLocationAtIndex(i).GetLoadAddress()))
@@ -586,13 +586,18 @@ class LLDBPyGUIWindow(QMainWindow):
 			pass
 		elif bpEventType == lldb.eBreakpointEventTypeEnabled:
 			pass
+		elif bpEventType == lldb.eBreakpointEventTypeConditionChanged:
+			print(f"bpEventType == lldb.eBreakpointEventTypeConditionChanged: {breakpoint}")
+			pass
 		
 	def event_bpAdded(self, bp):
 		print(f'bp.GetID() => {bp.GetID()}')
+		self.handle_loadBreakpointsLoadBreakpointValue(bp, False)
 		for i in range(bp.GetNumLocations()):
 			bl = bp.GetLocationAtIndex(i)
 			self.txtMultiline.table.event_bpAdded(bl)
-			self.wdtBPsWPs.tblBPs.event_bpAdded(bl)
+#			self.wdtBPsWPs.tblBPs.event_bpAdded(bl)
+			
 		
 	def loadTarget(self):
 		if self.debugger.GetNumTargets() > 0:
@@ -905,7 +910,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		if showQuestionDialog(self, "Delete all Breakpoints?", "Do you really want to delete all Breakpoints?"):
 			self.bpHelper.handle_deleteAllBPs()
 			self.txtMultiline.table.handle_deleteAllBPs()
-			self.wdtBPsWPs.tblBPs.resetContent()
+#			self.wdtBPsWPs.tblBPs.resetContent()
 			self.updateStatusBar("All Breakpoints deleted!")
 		
 	def click_exit_action(self):
@@ -915,8 +920,8 @@ class LLDBPyGUIWindow(QMainWindow):
 	def reloadBreakpoints(self, initTable = True):
 		self.updateStatusBar("Reloading breakpoints ...")
 #		if initTable: # TODO: Implement Update instead of complete refresh
-		if initTable:
-			self.wdtBPsWPs.tblBPs.resetContent()
+#		if initTable:
+#			self.wdtBPsWPs.tblBPs.resetContent()
 		self.start_loadBreakpointsWorker(initTable)
 		
 	def reloadRegister(self, initTabs = True):
@@ -998,7 +1003,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		for bl in bp:
 			if initTable:
 				self.txtMultiline.table.setBPAtAddress(hex(bl.GetLoadAddress()), True, False)
-			self.wdtBPsWPs.tblBPs.addRow(bp.IsEnabled(), bp.GetID(), hex(bl.GetLoadAddress()), name, str(bp.GetHitCount()), bp.GetCondition())
+#			self.wdtBPsWPs.tblBPs.addRow(bp.IsEnabled(), bp.GetID(), hex(bl.GetLoadAddress()), name, str(bp.GetHitCount()), bp.GetCondition())
 			extra_args = lldb.SBStructuredData()
 			self.driver.handleCommand("command script import --allow-reload ./lldbpyGUIWindow.py")
 			bp.SetScriptCallbackFunction("lldbpyGUIWindow.my_callback", extra_args)
@@ -1012,37 +1017,40 @@ class LLDBPyGUIWindow(QMainWindow):
 		bpNode.setExpanded(True)
 	
 	def handle_updateBreakpointsLoadBreakpointValue(self, bp):
-#	def handle_updateBreakpointsLoadBreakpointValue(self, bpId, idx, loadAddr, name, hitCount, condition, initTable, enabled, bp):
-#		if initTable:
-#			self.txtMultiline.table.setBPAtAddress(loadAddr, True, False)
-#		print(f'handle_updateBreakpointsLoadBreakpointValue => {bpId}')
-		name_list = lldb.SBStringList()
-		bp.GetNames(name_list)
-		num_names = name_list.GetSize()
-		name = name_list.GetStringAtIndex(0)
-		for bl in bp:
-#			name_list = lldb.SBStringList()
-#			bp.GetNames(name_list)
-#			num_names = name_list.GetSize()
-#			name = name_list.GetStringAtIndex(0)
-			self.wdtBPsWPs.tblBPs.updateRow(bp.IsEnabled(), bp.GetID(), hex(bl.GetLoadAddress()), name, str(bp.GetHitCount()), bp.GetCondition())
-			extra_args = lldb.SBStructuredData()
-			self.driver.handleCommand("command script import --allow-reload ./lldbpyGUIWindow.py")
-			bp.SetScriptCallbackFunction("lldbpyGUIWindow.my_callback", extra_args)
-	#		self.driver.handleCommand("command script import --allow-reload ./lldbpyGUI.py")
-	#		bp.SetScriptCallbackFunction("lldbpyGUI.my_callback", extra_args)
-	#		print("Reloading BPs ...")
+##	def handle_updateBreakpointsLoadBreakpointValue(self, bpId, idx, loadAddr, name, hitCount, condition, initTable, enabled, bp):
+##		if initTable:
+##			self.txtMultiline.table.setBPAtAddress(loadAddr, True, False)
+##		print(f'handle_updateBreakpointsLoadBreakpointValue => {bpId}')
+#		name_list = lldb.SBStringList()
+#		bp.GetNames(name_list)
+#		num_names = name_list.GetSize()
+#		name = name_list.GetStringAtIndex(0)
+#		for bl in bp:
+##			name_list = lldb.SBStringList()
+##			bp.GetNames(name_list)
+##			num_names = name_list.GetSize()
+##			name = name_list.GetStringAtIndex(0)
+#			self.wdtBPsWPs.tblBPs.updateRow(bp.IsEnabled(), bp.GetID(), hex(bl.GetLoadAddress()), name, str(bp.GetHitCount()), bp.GetCondition())
+#			extra_args = lldb.SBStructuredData()
+#			self.driver.handleCommand("command script import --allow-reload ./lldbpyGUIWindow.py")
+#			bp.SetScriptCallbackFunction("lldbpyGUIWindow.my_callback", extra_args)
+#	#		self.driver.handleCommand("command script import --allow-reload ./lldbpyGUI.py")
+#	#		bp.SetScriptCallbackFunction("lldbpyGUI.my_callback", extra_args)
+#	#		print("Reloading BPs ...")
 		
 #		print(f'SETTING PC: {address}')
 		rootItem = self.wdtBPsWPs.treBPs.invisibleRootItem()
 		for childPar in range(rootItem.childCount()):
 			parentItem = rootItem.child(childPar)
 			if parentItem.text(0) == str(bp.GetID()):
-				parentItem.setText(4, str(bp.GetHitCount()))
-				if bp.GetCondition() != None:
-					parentItem.setText(5, str(bp.GetCondition()))
+				if parentItem.text(4) != str(bp.GetHitCount()):
+					parentItem.setText(4, str(bp.GetHitCount()))
+				if bp.GetCondition() != None and str(bp.GetCondition()) != "":
+					if parentItem.text(5) != str(bp.GetCondition()):
+						parentItem.setText(5, str(bp.GetCondition()))
 				else:
-					parentItem.setText(5, "")
+					if parentItem.text(5) != "":
+						parentItem.setText(5, "")
 					
 				idx = 0
 				for bl in bp:
@@ -1050,11 +1058,14 @@ class LLDBPyGUIWindow(QMainWindow):
 						childItem = parentItem.child(childChild)
 						if childItem != None:
 							if childItem.text(0) == str(bp.GetID()) + "." + str(bl.GetID()):
-								childItem.setText(4, str(bl.GetHitCount()))
-								if bl.GetCondition() != None:
-									childItem.setText(5, str(bl.GetCondition()))
+								if childItem.text(4) != str(bl.GetHitCount()):
+									childItem.setText(4, str(bl.GetHitCount()))
+								if bl.GetCondition() != None and str(bl.GetCondition()) != "":
+									if childItem.text(5) != str(bl.GetCondition()):
+										childItem.setText(5, str(bl.GetCondition()))
 								else:
-									childItem.setText(5, "")
+									if childItem.text(5) != "":
+										childItem.setText(5, "")
 								break
 					idx += 1
 				break
@@ -1086,7 +1097,7 @@ class LLDBPyGUIWindow(QMainWindow):
 	def handle_loadBreakpointsFinished(self):
 #		print("handle_loadBreakpointsFinished")
 #		self.tblBPs.setCurrentBPHit(str(self.rip))
-		self.wdtBPsWPs.tblBPs.setPC(self.rip)
+#		self.wdtBPsWPs.tblBPs.setPC(self.rip)
 		self.wdtBPsWPs.treBPs.setPC(self.rip)
 		pass
 		
@@ -1271,7 +1282,7 @@ class LLDBPyGUIWindow(QMainWindow):
 				self.driver.handleCommand("br com a -F lldbpyGUI.breakpointHandlerNG")
 	
 	def handle_enableBP(self, address, enabled):
-		self.wdtBPsWPs.tblBPs.enableBP(address, enabled)
+#		self.wdtBPsWPs.tblBPs.enableBP(address, enabled)
 		if self.bpHelper.handle_checkBPExists(address) != None:
 			self.bpHelper.handle_enableBP(address, enabled)
 			if enabled:
@@ -1318,7 +1329,7 @@ class LLDBPyGUIWindow(QMainWindow):
 			self.threadpool.start(self.workerDebug)
 		
 	def handle_debugSetPC(self, newPC):
-		self.wdtBPsWPs.tblBPs.setPC(newPC)
+#		self.wdtBPsWPs.tblBPs.setPC(newPC)
 		self.wdtBPsWPs.treBPs.setPC(hex(newPC))
 		
 		pass
