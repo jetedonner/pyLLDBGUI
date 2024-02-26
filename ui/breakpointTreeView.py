@@ -10,12 +10,23 @@ from config import *
 
 class EditableTreeItem(QTreeWidgetItem):
 	
+	isBPEnabled = True
+	
 	def __init__(self, parent, text):
 		super().__init__(parent, text)
 #		self.setText(0, text)
 #		self.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsEnabled)  # Set flags for editing
 
+	def toggleBP(self):
+		self.enableBP(not self.isBPEnabled)
 	
+	def enableBP(self, enabled):
+		if self.isBPEnabled and not enabled:
+			self.isBPEnabled = False
+			self.setIcon(1, ConfigClass.iconBPDisabled)
+		elif not self.isBPEnabled and enabled: 
+			self.isBPEnabled = True
+			self.setIcon(1, ConfigClass.iconBPEnabled)
 #	def setData(self, column, role, value):
 #		print("SET DATA")
 #		# Intercept data setting behavior to handle editing
@@ -96,6 +107,10 @@ class BreakpointTreeWidget(QTreeWidget):
 #					self, 
 #					context=Qt.ShortcutContext.WidgetShortcut,
 #					activated=self.some_function)
+	
+	def keyPressEvent(self, event):
+		print(f'keyPressEvent: {event}')
+		return super().keyPressEvent(event)
 		
 	def event(self, event):
 		if isinstance(event, QKeyEvent):
@@ -105,13 +120,14 @@ class BreakpointTreeWidget(QTreeWidget):
 				if self.isPersistentEditorOpen(self.currentItem(), self.currentColumn()):
 #					self.closeAllEditors(self.currentItem())
 					self.closePersistentEditor(self.currentItem(), self.currentColumn())
-					return True
+#					return True
 				else:
 					if self.currentItem().childCount() == 0:
 						col = self.currentColumn()
 						if col == 3 or col == 5 or col == 6:
 							self.openPersistentEditor(self.currentItem(), col)
-						return True
+							self.editItem(self.currentItem(), col)
+#						return True
 #			print(dir(event))
 		return super().event(event)
 		
@@ -129,9 +145,21 @@ class BreakpointTreeWidget(QTreeWidget):
 		col = self.columnAt(event.pos().x())
 		if daItem.childCount() > 0:
 			super().mouseDoubleClickEvent(event)
+		elif col == 0x1:
+			daItem.toggleBP()
+			if daItem.parent() != None:
+#				newEnabled = daItem.isBPEnabled
+				allDisabled = True
+				for i in range(daItem.parent().childCount()):
+					if daItem.parent().child(i).isBPEnabled:
+						allDisabled = False
+						break
+				daItem.parent().enableBP(not allDisabled)
+#					aItem.parent().child(i)
 		else:
 			if col == 3 or col == 5 or col == 6:
 				self.openPersistentEditor(daItem, col)
+				self.editItem(daItem, col)
 #		if col == 5 or col == 6 or (self.columnAt(event.pos().x()) == 0 and daItem.childCount() > 0):
 #			super().mouseDoubleClickEvent(event)
 #		pass
