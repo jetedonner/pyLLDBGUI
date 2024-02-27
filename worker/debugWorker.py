@@ -18,7 +18,7 @@ class DebugWorkerSignals(BaseWorkerSignals):
 	debugStepCompleted = pyqtSignal(object, bool, str, object)
 #	debugValue = pyqtSignal(int, str, str, str)
 	updateRegisterValue = pyqtSignal(int, str, str, str)
-	setPC = pyqtSignal(str)
+#	setPC = pyqtSignal(str)
 
 class DebugWorker(BaseWorker):
 	

@@ -35,11 +35,13 @@ class FindReferencesWorker(BaseWorker):
 		print(f"Finding references to address: '{self.address}'")
 		
 		thread = self.target.GetProcess().GetSelectedThread()
+		numAll = self.target.GetNumModules()
 		idxOuter = 0
 		for module in self.target.module_iter():
-			if idxOuter != 0:
-				idxOuter += 1
-				continue
+#			if idxOuter != 0:
+#				idxOuter += 1
+#				continue
+			self.signals.sendProgressUpdate.emit(int(idxOuter/numAll), "Searching for references to '{self.address}' ...")
 			idx = 0
 			for section in module.section_iter():
 				if section.GetName() == "__TEXT":

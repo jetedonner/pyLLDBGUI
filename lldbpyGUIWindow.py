@@ -387,6 +387,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.tabWidgetDbg.addTab(self.gbpVariables, "Variables")
 		
 		self.txtSource = QConsoleTextEdit()
+		self.txtSource.setReadOnly(True)
 		self.txtSource.setFont(ConfigClass.font)
 		self.gbpSource = QGroupBox("Source")
 		self.gbpSource.setLayout(QHBoxLayout())
@@ -582,6 +583,7 @@ class LLDBPyGUIWindow(QMainWindow):
 			bl = bp.GetLocationAtIndex(i)
 			self.txtMultiline.table.event_bpAdded(bl)
 #			self.wdtBPsWPs.tblBPs.event_bpAdded(bl)
+			self.wdtBPsWPs.treBPs.setPC(hex(bl.GetLoadAddress()), False)
 			
 		
 	def loadTarget(self):
@@ -1131,12 +1133,12 @@ class LLDBPyGUIWindow(QMainWindow):
 			self.setResumeActionIcon(ConfigClass.iconPause)
 			self.workerDebug = DebugWorker(driver, kind)
 			self.workerDebug.signals.debugStepCompleted.connect(self.handle_debugStepCompleted)
-			self.workerDebug.signals.setPC.connect(self.handle_debugSetPC)
+#			self.workerDebug.signals.setPC.connect(self.handle_debugSetPC)
 			
 			self.threadpool.start(self.workerDebug)
 		
-	def handle_debugSetPC(self, newPC):
-		self.wdtBPsWPs.treBPs.setPC(hex(newPC))
+#	def handle_debugSetPC(self, newPC):
+#		self.wdtBPsWPs.treBPs.setPC(hex(newPC))
 		
 	rip = ""
 	

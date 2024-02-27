@@ -52,6 +52,9 @@ class RegisterTableWidget(QTableWidget):
 #		if col in range(3):
 #			self.toggleBPOn(row)
 ##			self.sigBPOn.emit(self.item(self.selectedItems()[0].row(), 3).text(), self.item(self.selectedItems()[0].row(), 1).isBPOn)
+		if col == 1:
+			print(f'Memory for Register: {self.item(row, 0).text()} => {self.item(row, col).text()}')
+			self.window().doReadMemory(int(self.item(row, col).text(), 16))
 		pass
 			
 	def contextMenuEvent(self, event):

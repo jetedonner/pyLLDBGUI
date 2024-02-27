@@ -157,9 +157,11 @@ class SearchWidget(QWidget):
 			matches = []
 			
 			chunk_size = 4096  # Adjust as needed for performance
+#			numAll = self.target.GetNumModules()
 			numFound = 0
 			idxOuter = 0
 			for module in self.target.module_iter():
+#				self.signals.sendProgressUpdate.emit(int(idxOuter/numAll), "Searching for '{searchTerm}' ...")
 				idx = 0
 #				module = target.GetModuleAtIndex(0)  # Assuming the executable is the first module
 				base_address = module.GetObjectFileHeaderAddress().GetLoadAddress(self.target)
@@ -213,9 +215,12 @@ class SearchWidget(QWidget):
 		else:
 			print(f'Searching WITHOUT REGEXP!!!!')
 			
+			numAll = self.target.GetNumModules()
+			
 			numFound = 0
 			idxOuter = 0
 			for module in self.target.module_iter():
+				self.window().handle_progressUpdate(int(idxOuter/numAll*100), f"Searching for '{searchTerm}' ...")
 				idx = 0
 				for section in module.section_iter():
 					for subsec in section:
@@ -250,8 +255,8 @@ class SearchWidget(QWidget):
 							
 							address += len(data)
 							remaining_bytes -= len(data)
-				idx += 1
-			idxOuter += 1
+					idx += 1
+				idxOuter += 1
 		
 	def bytearray_to_hex(self, byte_array):
 #		return "{:02x}".format(byte_array)

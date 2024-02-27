@@ -369,9 +369,12 @@ class BreakpointsTableWidget(QTableWidget):
 				itemCell = self.item(i, 0)
 				itemCell.toggleBPOn()
 				break
-		if True and not bBPFound:
+		if not bBPFound:
 			print(f'str(bp.GetBreakpoint().GetID()) => {str(bp.GetBreakpoint().GetID())}')
 			self.addRow(True, str(bp.GetBreakpoint().GetID()), hex(bp.GetLoadAddress()), '', str(bp.GetHitCount()), bp.GetCondition())
+			
+#			self.window().wdtBPsWPs.treBPs.viewAddress
+			
 	
 	def __init__(self, driver):
 		super().__init__()

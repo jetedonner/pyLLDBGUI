@@ -616,6 +616,7 @@ class AssemblerTextEdit(QWidget):
 		
 		# Create a spanning cell item
 		item = QTableWidgetItem(f'function: {text}')
+		item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
 		item.setBackground(QColor(64, 0, 255, 96))
 		# Set the item to span all columns
 		table_widget.setSpan(row_count, 0, 1, table_widget.columnCount())  # Adjust row and column indices as needed

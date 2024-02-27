@@ -140,20 +140,26 @@ class BreakpointTreeWidget(QTreeWidget):
 #		print(f'keyPressEvent: {event}')
 #		return super().keyPressEvent(event)
 		
-	def setPC(self, address):
+#	self.window().wdtBPsWPs.treBPs.viewAddress
+	
+	def setPC(self, address, setPC=True):
 		items = self.getAllItemsAndSubitems()
 		for item in items:
 			for subitem in item.subItems:
 				if int(subitem.text(2), 16) == int(address, 16):
 #					if self.invisibleRootItem().child(childPar).child(childChild).text(2) == address:
 #						print(f'FOUND ADDRESS FOR PC: {address}')
-					for i in range(subitem.columnCount()):
-						subitem.setBackground(i, ConfigClass.colorGreen)
+					if setPC:
+						for i in range(subitem.columnCount()):
+							subitem.setBackground(i, ConfigClass.colorGreen)
 					self.scrollToItem(subitem, 
 						QAbstractItemView.ScrollHint.PositionAtCenter)
+					if not setPC:
+						break
 				else:
-					for i in range(subitem.columnCount()):
-						subitem.setBackground(i, ConfigClass.colorTransparent)
+					if setPC:
+						for i in range(subitem.columnCount()):
+							subitem.setBackground(i, ConfigClass.colorTransparent)
 						
 #		for childPar in range(self.invisibleRootItem().childCount()):
 #			for childChild in range(self.invisibleRootItem().child(childPar).childCount()):
