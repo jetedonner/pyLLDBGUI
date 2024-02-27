@@ -55,11 +55,23 @@ class VariablesTableWidget(QTableWidget):
 		self.cellChanged.connect(self.item_changed_handler)
 		
 	def on_double_click(self, row, col):
-#		if col in range(3):
-#			self.toggleBPOn(row)
-##			self.sigBPOn.emit(self.item(self.selectedItems()[0].row(), 3).text(), self.item(self.selectedItems()[0].row(), 1).isBPOn)
-		pass
+		if col == 3:
+			if self.item(row, col) != None:
+				item = self.item(row, col)
+				self.window().updateStatusBar(f"Showing memory for variable '{self.item(row, 0).text()}' at address: {item.text()}")
+				self.doReadMemory(int(item.text(), 16))
 		
+	def doReadMemory(self, address, size = 0x100):
+		self.window().tabWidgetDbg.setCurrentWidget(self.window().tabMemory)
+		self.window().tblHex.txtMemAddr.setText(hex(address))
+		self.window().tblHex.txtMemSize.setText(hex(size))
+		try:
+#           global debugger
+#			self.handle_readMemory(self.driver.debugger, int(self.window().tblHex.txtMemAddr.text(), 16), int(self.window().tblHex.txtMemSize.text(), 16))
+			self.window().tblHex.handle_readMemory(self.window().driver.debugger, int(self.window().tblHex.txtMemAddr.text(), 16), int(self.window().tblHex.txtMemSize.text(), 16))
+		except Exception as e:
+			print(f"Error while reading memory from process: {e}")
+			
 	def contextMenuEvent(self, event):
 #		for i in dir(event):
 #			print(i)
@@ -67,7 +79,6 @@ class VariablesTableWidget(QTableWidget):
 #		print(self.itemAt(event.pos().x(), event.pos().y()))
 #		print(self.selectedItems())
 		self.context_menu.exec(event.globalPos())
-		pass
 		
 	def handle_editValue(self):
 		item = self.item(self.selectedItems()[0].row(), 0)

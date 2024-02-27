@@ -292,7 +292,7 @@ class BreakpointTreeWidget(QTreeWidget):
 		col = self.columnAt(event.pos().x())
 		if daItem.childCount() > 0:
 			super().mouseDoubleClickEvent(event)
-		elif col == 0x1:
+		elif col == 1:
 			daItem.toggleBP()
 			self.window().txtMultiline.table.enableBP(daItem.text(2), daItem.isBPEnabled)
 			if daItem.parent() != None:
@@ -304,6 +304,9 @@ class BreakpointTreeWidget(QTreeWidget):
 						break
 				daItem.parent().enableBP(not allDisabled)
 #					aItem.parent().child(i)
+		elif col == 2:
+			self.window().txtMultiline.viewAddress(daItem.text(2))
+			pass
 		else:
 			if col == 3 or col == 5 or col == 6:
 				self.openPersistentEditor(daItem, col)

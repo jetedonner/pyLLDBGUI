@@ -9,6 +9,7 @@ import pyperclip
 from PyQt6.QtGui import *
 from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
+from PyQt6.QtGui import QBrush, QPixmap, QImage
 from PyQt6 import uic, QtWidgets
 from config import *
 from helper.breakpointHelper import *
@@ -92,7 +93,27 @@ class DisassemblyImageTableWidgetItem(QTableWidgetItem):
 		else:
 			self.setIcon(self.iconBPDisabled)
 		pass
+	
+
+
+class CustomDelegate(QStyledItemDelegate):
+	def paint(self, painter, option, index):
+		super().paint(painter, option, index)
 		
+		if option.state & QStyle.StateFlag.State_Selected:# Qt.State_Selected:
+			
+			brush = QBrush(Qt.GlobalColor.darkYellow)
+			# Set custom background color for selected rows
+			option.backgroundBrush = brush # Adjust color as desired
+		else:
+			# Create a temporary QPixmap and fill it with the brush color
+			pixmap = QPixmap(option.rect.size())  # Adjust dimensions as needed
+			pixmap.fill(Qt.GlobalColor.transparent)
+			
+			# Convert the QPixmap to a QImage
+			image = pixmap.toImage()
+			
+			painter.drawImage(option.rect, image)#option.background())
 		
 class DisassemblyTableWidget(QTableWidget):
 	
@@ -257,6 +278,10 @@ class DisassemblyTableWidget(QTableWidget):
 #		self.horizontalHeaderItem(5).setFont(ConfigClass.font)
 		self.horizontalHeaderItem(6).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
 		self.horizontalHeaderItem(7).setTextAlignment(Qt.AlignmentFlag.AlignVCenter)
+		# Usage (assuming you have a created table widget named `table`):
+		self.delegate = CustomDelegate()
+		self.setItemDelegate(self.delegate)		
+		
 #		self.horizontalHeaderItem(6).setFont(ConfigClass.font)
 		self.setFont(ConfigClass.font)
 		
@@ -591,7 +616,7 @@ class AssemblerTextEdit(QWidget):
 		
 		# Create a spanning cell item
 		item = QTableWidgetItem(f'function: {text}')
-		
+		item.setBackground(QColor(64, 0, 255, 96))
 		# Set the item to span all columns
 		table_widget.setSpan(row_count, 0, 1, table_widget.columnCount())  # Adjust row and column indices as needed
 		
