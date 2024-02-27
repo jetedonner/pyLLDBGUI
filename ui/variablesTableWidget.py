@@ -11,6 +11,8 @@ from PyQt6.QtWidgets import *
 from PyQt6 import uic, QtWidgets
 from config import *
 
+from ui.editVariableDialog import *
+
 class VariablesTableWidget(QTableWidget):
 	
 	ommitCellChanged = False
@@ -18,8 +20,10 @@ class VariablesTableWidget(QTableWidget):
 	def __init__(self):
 		super().__init__()
 		self.context_menu = QMenu(self)
-		actionShowMemory = self.context_menu.addAction("Show Memory")
-		actionShowMemory.triggered.connect(self.handle_showMemory)
+		self.actionShowMemory = self.context_menu.addAction("Show Memory")
+		self.actionShowMemory.triggered.connect(self.handle_showMemory)
+		self.actionEditValue = self.context_menu.addAction("Edit variable value")
+		self.actionEditValue.triggered.connect(self.handle_editValue)
 #		actionToggleBP = self.context_menu.addAction("Toggle Breakpoint")
 #		actionToggleBP.triggered.connect(self.handle_toggleBP)
 #		actionDisableBP = self.context_menu.addAction("Enable / Disable Breakpoint")
@@ -63,6 +67,42 @@ class VariablesTableWidget(QTableWidget):
 #		print(self.itemAt(event.pos().x(), event.pos().y()))
 #		print(self.selectedItems())
 		self.context_menu.exec(event.globalPos())
+		pass
+		
+	def handle_editValue(self):
+		item = self.item(self.selectedItems()[0].row(), 0)
+		print(f'Editing Value For: {item.text()}')
+		
+		# Get the frame object from the current debugging session
+		frame = self.window().driver.getTarget().GetProcess().GetThreadAtIndex(0).GetFrameAtIndex(0)
+		
+		# Get the variable you want to modify by name
+		variable = frame.FindVariable(item.text())
+		# Check if the variable was found
+		if variable.IsValid():
+			
+			if EditVariableDialog(variable).exec():
+				# Get the variable's type using GetType()
+#				variable_type = variable.GetType()
+#			
+#				val = lldb.SBValue()
+#				valNew = val.CreateValueFromData(item.text(), lldb.SBData().CreateDataFromSInt32Array(lldb.eByteOrderLittle, 0x1, [0xa]), variable_type)
+#				# Create an SBValue corresponding to the new value and data type
+#	#			new_value_object = variable_type.MakeDataValue(321)
+#				
+#				# Update the variable's value using SetData()
+#				error = lldb.SBError()
+#				variable.SetData(lldb.SBData().CreateDataFromSInt32Array(lldb.eByteOrderLittle, 0x1, [0xa]), error)
+#				if error == None:
+#					successMsg = f"Variable '{item.text()}' with type: '{variable_type}' updated to: {variable.GetValue()}"
+#	#				print(successMsg)
+#					self.window().updateStatusBar(successMsg)
+#				else:
+#					print(f"ERROR: {error}")
+				pass
+		else:
+			print("Variable not found.")
+		
 		pass
 		
 	def handle_showMemory(self):

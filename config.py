@@ -23,9 +23,10 @@ class ConfigClass():
 	
 	supportURL = "https://pylldbgui.kimhauser.ch/support"
 	githubURL = "https://github.com/jetedonner/pyLLDBGUI"
-	testBPsFilename = "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/testbps_withSubFunc3.json"
+	testBPsFilename = "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/testbps_withSubFunc3NG.json"
 	
 	toolbarIconSize = 24
+	currentDebuggerSubTab = 1
 	
 	iconAdd = None
 	iconSave = None

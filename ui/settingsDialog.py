@@ -35,6 +35,18 @@ class SettingsHelper(QObject):
 	def __init__(self):
 		super().__init__()
 		
+	@staticmethod
+	def getSettings():
+		return QSettings(ConfigClass.companyName, ConfigClass.appName)
+		
+	@staticmethod
+	def GetChecked(setting):
+		return SettingsHelper().getChecked(setting)
+	
+	@staticmethod
+	def GetValue(setting):
+		return SettingsHelper().getValue(setting)
+	
 	def initDefaults(self):
 		self.settings.setValue(SettingsValues.ConfirmRestartTarget.value[0], True)
 		self.settings.setValue(SettingsValues.ConfirmQuitApp.value[0], True)
@@ -46,12 +58,10 @@ class SettingsHelper(QObject):
 		self.settings.setValue(setting.value[0], checkableItem.checkState() == Qt.CheckState.Checked)
 		
 	def getChecked(self, setting):
-#		print(f'self.settings.value(setting.value[0], True, bool) => {self.settings.value(setting.value[0], True, bool)} / Key: {setting.value[0]} / Default: {setting.value[1]} / Datatype: {setting.value[2]}')
-#		if self.settings.value(setting.value[0], setting.value[1], setting.value[2]):
-#			print(f'IF => YESSSSSSS!!!!!')
-#		else:
-#			print(f'IF => NOOOOOOOOO!!!!!')
 		return Qt.CheckState.Checked if self.settings.value(setting.value[0], setting.value[1], setting.value[2]) else Qt.CheckState.Unchecked
+	
+#	def getBool(self, setting):
+#		return True if self.settings.value(setting.value[0], setting.value[1], setting.value[2]) else False
 	
 	def getValue(self, setting):
 		return self.settings.value(setting.value[0], setting.value[1], setting.value[2])

@@ -18,7 +18,7 @@ from PyQt6 import uic, QtWidgets
 
 #from QSwitch import *
 from config import *
-
+from ui.settingsDialog import *
 
 
 class ByteGrouping(enum.Enum):
@@ -27,9 +27,16 @@ class ByteGrouping(enum.Enum):
 	FourChars = ("Four", 4) #"Four characters"
 	EightChars = ("Eight", 8) #"Four characters"
 	
-class MyTextEdit(QTextEdit):
+class ReadOnlySelectableTextEdit(QTextEdit):
 	def __init__(self, parent=None):
 		super().__init__(parent)
+		
+	def keyPressEvent(self, event):
+		if event.key() in (Qt.Key.Key_Left, Qt.Key.Key_Right, Qt.Key.Key_Up, Qt.Key.Key_Down):
+			# Only allow arrow key selection
+			super().keyPressEvent(event)
+		else:
+			event.ignore()  # Ignore any editing-related key presses
 #		self.line_height = 20  # Set desired line height
 #		cursor = self.textCursor()
 #		if cursor.block():
@@ -49,30 +56,30 @@ class MyTextEdit(QTextEdit):
 ##				y += self.line_height
 ##			cursor.movePosition(QTextCursor.MoveOperation.NextBlock)
 			
-class TransparentLineEdit(QLineEdit):
-	
-	item_sel_changed = pyqtSignal(object, object)
-	
-	parent_item = None
-	def __init__(self, parent=None, parent_item=None):
-		super().__init__(parent)
-		self.parent_item = parent_item
-#		self.setParent(parent)
-		self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground, True)
-		self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-		self.selectionChanged.connect(self.transparentLineEdit_selectionchanged)
-		
-	def paintEvent(self, event):
-		painter = QPainter(self)
-		painter.fillRect(event.rect(), Qt.GlobalColor.transparent)
-		super().paintEvent(event)
-		
-	def transparentLineEdit_selectionchanged(self):
-#		cursor = self.cursor()
-		print("TransparentLineEdit Selection start: %d end: %d" % (self.selectionStart(), self.selectionEnd()))
-		self.item_sel_changed.emit(self.parent_item, self)
-		
-		pass
+#class TransparentLineEdit(QLineEdit):
+#	
+#	item_sel_changed = pyqtSignal(object, object)
+#	
+#	parent_item = None
+#	def __init__(self, parent=None, parent_item=None):
+#		super().__init__(parent)
+#		self.parent_item = parent_item
+##		self.setParent(parent)
+#		self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground, True)
+#		self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+#		self.selectionChanged.connect(self.transparentLineEdit_selectionchanged)
+#		
+#	def paintEvent(self, event):
+#		painter = QPainter(self)
+#		painter.fillRect(event.rect(), Qt.GlobalColor.transparent)
+#		super().paintEvent(event)
+#		
+#	def transparentLineEdit_selectionchanged(self):
+##		cursor = self.cursor()
+#		print("TransparentLineEdit Selection start: %d end: %d" % (self.selectionStart(), self.selectionEnd()))
+#		self.item_sel_changed.emit(self.parent_item, self)
+#		
+#		pass
 		
 		
 class QHexTableWidget(QTableWidget):
@@ -105,28 +112,21 @@ class QHexTableWidget(QTableWidget):
 		
 		self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectItems)
 		self.setShowGrid(False)
-#		self.cellDoubleClicked.connect(self.on_double_click)
-		
-		
+
 	def resetContent(self):
-#		for row in range(self.rowCount(), 0):
-#			self.removeRow(row)
 		self.setRowCount(0)
-#		print(f'Reloading BPs {self.rowCount()}')
 			
 	def addRow(self, address, value, raw):
 		currRowCount = self.rowCount()
 		
 		if currRowCount == 0:
-			self.line_height = 30  # Set desired line height
+			self.line_height = 30
 			
 			self.setRowCount(currRowCount + 1)
-			self.txtAddr = MyTextEdit()
+			self.txtAddr = ReadOnlySelectableTextEdit()
 			self.txtAddr.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 			self.txtAddr.setText(address)
 			self.startAddr = int(address, 16)
-#			self.txtAddr.setStyleSheet("QTextEdit { paragraph-spacing: 20px; }")
-#			self.txtAddr.setStyleSheet("MyTextEdit { line-height: 3.5; }")
 			self.txtAddr.setFont(ConfigClass.font)
 			
 			blockFmt = QTextBlockFormat()
@@ -138,20 +138,12 @@ class QHexTableWidget(QTableWidget):
 			theCursor.mergeBlockFormat(blockFmt)
 			
 			self.setCellWidget(currRowCount, 0, self.txtAddr)
-#			cursor = self.txtAddr.textCursor()
-#			if cursor.block():
-#				block_format = cursor.blockFormat()
-#				block_format.setLineHeight(self.line_height, 2)
 			
-			self.txtHex = MyTextEdit()
+			self.txtHex = ReadOnlySelectableTextEdit()
 			self.txtHex.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 			self.txtHex.setText(value)
-#			self.txtHex.setStyleSheet("QTextEdit { paragraph-spacing: 20px; }")
-#			self.txtHex.setStyleSheet("MyTextEdit { line-height: 3.5; }")
-			
 			self.txtHex.setFont(ConfigClass.font)
 			self.txtHex.setStyleSheet("selection-background-color: #ff0000;")
-#			self.txtHex.setStyleSheet("line-height: 13.5;")
 			
 			theCursor2 = self.txtHex.textCursor()
 			theCursor2.clearSelection()
@@ -159,17 +151,11 @@ class QHexTableWidget(QTableWidget):
 			theCursor2.mergeBlockFormat(blockFmt)
 			self.txtHex.selectionChanged.connect(self.txtHex_selectionchanged)
 			self.setCellWidget(currRowCount, 1, self.txtHex)
-#			cursor = self.txtHex.textCursor()
-#			if cursor.block():
-#				block_format = cursor.blockFormat()
-#				block_format.setLineHeight(self.line_height, 2)
 			
-			
-			self.txtData = MyTextEdit()
+			self.txtData = ReadOnlySelectableTextEdit()
 			self.txtData.acceptRichText()
 			self.txtData.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 			self.txtData.insertHtml(raw) # + "<br>")
-#			self.txtData.setStyleSheet("MyTextEdit { line-height: 3.5; }")
 			self.txtData.setFont(ConfigClass.font)
 			self.txtData.setStyleSheet("selection-background-color: #ff0000;")
 			
@@ -211,41 +197,7 @@ class QHexTableWidget(QTableWidget):
 			theCursor3.clearSelection()
 			theCursor3.select(QTextCursor.SelectionType.Document)
 			theCursor3.mergeBlockFormat(blockFmt2)
-#			self.txtData.setLineSpacing(30)
-#		self.setRowCount(currRowCount + 1)
-#		self.addItem(currRowCount, 0, str(address))
-#		
-##		item1 = EditableItem(str(value))
-##		item2 = EditableItem(str(raw))
-##		self.setItem(currRowCount, 1, item1)
-##		self.setItem(currRowCount, 2, item2)
-#		
-##		self.Table.setCellWidget(row, column, widget
-#		itemA = QTableWidgetItem()
-#		item1 = TransparentLineEdit(None, itemA)
-#		item1.setText(str(value))
-#		item1.setFont(ConfigClass.font)
-#		item1.setStyleSheet("background-color: transparent; border: none;")
-#		item1.item_sel_changed.connect(self.handle_selectionChanged)
-#
-##		custom_widget = CustomCellWidget(item)
-#		self.setItem(currRowCount, 1, itemA)
-#		self.setCellWidget(currRowCount, 1, item1)
-#	
-#		itemB = QTableWidgetItem()
-#		item2 = TransparentLineEdit(None, itemB)
-#		item2.setText(str(raw))
-#		item2.setFont(ConfigClass.font)
-#		item2.setStyleSheet("background-color: transparent; border: none;")
-#		
-#		self.setItem(currRowCount, 2, itemB)
-#		self.setCellWidget(currRowCount, 2, item2)
 
-		
-#		self.setCellWidget(currRowCount, 1, item1)
-#		self.setCellWidget(currRowCount, 2, item2)
-#		self.addItem(currRowCount, 1, str(value))
-#		self.addItem(currRowCount, 2, str(raw))
 		self.setRowHeight(currRowCount, self.get_required_row_height(self.txtAddr, self.height()))
 	
 	def create_line_height_stylesheet(self, reference_line_height):
@@ -318,9 +270,12 @@ class QHexTableWidget(QTableWidget):
 		dataStart = self.hexPosToData(hexStart) + (int(hexStart / 48))
 		dataEnd = self.hexPosToData(hexEnd) + (int(hexEnd / 48))
 		
-		print(f"txtHex Selection start: %d end: %d => Address: {hex(self.startAddr + self.hexPosToData(hexStart))} - {hex(self.startAddr + self.hexPosToData(hexEnd))}" % (hexStart, hexEnd))
-		self.window().updateStatusBar(f'Selected memory: {hex(self.startAddr + self.hexPosToData(hexStart))} - {hex(self.startAddr + self.hexPosToData(hexEnd))}')
-		print(f'===> Data-Start: {dataStart} / End: {dataEnd}')
+#		print(f"txtHex Selection start: %d end: %d => Address: {hex(self.startAddr + self.hexPosToData(hexStart))} - {hex(self.startAddr + self.hexPosToData(hexEnd))}" % (hexStart, hexEnd))
+		
+		if SettingsHelper.GetValue(SettingsValues.MemViewShowSelectedStatubarMsg):
+			self.window().updateStatusBar(f'Selected memory: {hex(self.startAddr + self.hexPosToData(hexStart))} - {hex(self.startAddr + self.hexPosToData(hexEnd))}')
+			
+#		print(f'===> Data-Start: {dataStart} / End: {dataEnd}')
 		
 		cursorData = self.txtData.textCursor()
 		cursorData.clearSelection()
@@ -373,16 +328,13 @@ class QHexTableWidget(QTableWidget):
 		cursorHex.clearSelection()
 		txtLen = len(self.txtHex.toPlainText())
 
-		print("txtData Selection start: %d end: %d" % (dataStart, dataEnd))
-		print(f'===> Hex-Start: {hexStart} / End: {hexEnd}')
-		print(f'(math.floor(hexEnd  / 48)) = {(math.floor(hexEnd  / 48))}')
-#		hexEnd -= (math.floor(hexEnd / 48))
-#		if math.floor((hexEnd / 48)) > 0:
-#			hexEnd -= (math.floor((hexEnd / 48) * 2))
-		print(f'=======> Hex-Start: {hexStart} / End: {hexEnd}')
-		
-#		if hexStart % 2 == 0:
-#			hexStart += 1
+#		print("txtData Selection start: %d end: %d" % (dataStart, dataEnd))
+#		print(f'===> Hex-Start: {hexStart} / End: {hexEnd}')
+#		print(f'(math.floor(hexEnd  / 48)) = {(math.floor(hexEnd  / 48))}')
+##		hexEnd -= (math.floor(hexEnd / 48))
+##		if math.floor((hexEnd / 48)) > 0:
+##			hexEnd -= (math.floor((hexEnd / 48) * 2))
+#		print(f'=======> Hex-Start: {hexStart} / End: {hexEnd}')
 			
 		if hexStart > txtLen:
 			hexStart = 0
@@ -393,8 +345,6 @@ class QHexTableWidget(QTableWidget):
 			hexEnd = txtLen - 1
 		
 		cursorHex.setPosition(hexStart)
-		
-			
 		cursorHex.setPosition(hexEnd, QTextCursor.MoveMode.KeepAnchor)
 		self.updateTxt = False
 		self.updateHexTxt = False

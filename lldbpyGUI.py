@@ -283,6 +283,18 @@ def TestCommand(debugger, command, result, dict):
 ##     loop_bp.SetCondition("$eax == 0x00000000")
 ##     loop_bp.SetScriptCallbackFunction("disasm_ui.breakpointHandler")
 #     print(loop_bp)
+
+#     start_bp = target.BreakpointCreateByAddress(0x100003f0a) # 0x100003f85) # 0x100003c90) 
+#     start_bp.SetEnabled(True)
+#     start_bp.AddName("start_bp")
+#     
+#     ##     start_bp.SetScriptCallbackFunction("lldbpyGUI.breakpointHandler")
+#     ##     start_bp.SetCondition("$eax == 0x00000000")
+#     ##     start_bp.SetScriptCallbackFunction("disasm_ui.breakpointHandler")
+#     
+#     print(start_bp)
+#     4294983434
+#     4294983405
       
 #     loop_bp2 = target.BreakpointCreateByAddress(0x100003f6d) # 0x100003c90)
 #     loop_bp2.SetEnabled(True)
