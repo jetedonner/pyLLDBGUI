@@ -672,7 +672,7 @@ class BPsWPsWidget(QWidget):
 #		self.gbpBPs.setLayout(QVBoxLayout())
 		self.wdtBPs = QWidget()
 		self.wdtBPs.setLayout(QVBoxLayout())
-		self.wdtBPs.layout().addWidget(self.wgtBPCtrls)
+#		self.wdtBPs.layout().addWidget(self.wgtBPCtrls)
 		self.wdtBPs.layout().addWidget(self.treBPs)
 		self.wdtBPs.setContentsMargins(0, 0, 0, 0)
 		
