@@ -77,7 +77,7 @@ class IntHexValidator(QValidator):
 #		self.hex_regex = QtCore.QRegExp(r"^0x[0-9a-fA-F]+$")  # Allows hex values with 0x prefix
 		
 		self.int_regex = r"^-?\d+$"  # Match anything within square brackets, excluding the brackets themselves
-		self.hex_regex = r"^(0x|0X)?[a-fA-F0-9]+$" # ^0x[0-9a-fA-F]+$"
+		self.hex_regex = r"^(0[xX])?[A-Fa-f0-9]+$" #"^(0x|0X)?[a-fA-F0-9]+$" # ^0x[0-9a-fA-F]+$"
 		
 	def validate(self, input_text, pos):
 		try:
@@ -94,7 +94,7 @@ class IntHexValidator(QValidator):
 			# Check for valid hex value
 			if re.search(self.hex_regex, input_text): #if self.hex_regex.exactMatch(input_text):
 				return (QValidator.State.Acceptable, input_text, pos)
-			elif input_text == "0x" or input_text == "0X":
+			elif input_text.lower() == "0x": # or input_text == "0X":
 				return (QValidator.State.Acceptable, input_text, pos)
 	
 		except Exception as e:

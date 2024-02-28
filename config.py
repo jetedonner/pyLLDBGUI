@@ -23,7 +23,7 @@ class ConfigClass():
 	
 	supportURL = "https://pylldbgui.kimhauser.ch/support"
 	githubURL = "https://github.com/jetedonner/pyLLDBGUI"
-	testBPsFilename = "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/testbps_withSubFunc3NG.json"
+	testBPsFilename = "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/testbps_withSubFunc5.json"
 	testTarget = "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/hello_world_test"
 	testTargetSource = "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/hello_world_test.c"
 	

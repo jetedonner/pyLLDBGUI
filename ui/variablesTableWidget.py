@@ -12,6 +12,7 @@ from PyQt6 import uic, QtWidgets
 from config import *
 
 from ui.editVariableDialog import *
+from helper.variableHelper import *
 
 class VariablesTableWidget(QTableWidget):
 	
@@ -158,19 +159,57 @@ class VariablesTableWidget(QTableWidget):
 		self.setItem(row, col, item)
 	
 	def item_changed_handler(self, row, col):
+		print(f"item_changed_handler => row: {row} / col: {col}")
 		if not self.ommitCellChanged:
-			if self.item(row, 3).text() == "int":
-				if col == 1 or col == 2:
+			if self.item(row, 2).text() == "int":
+				if col == 1: #  or col == 2 or col == 2
 					changedItem = self.item(row, col)
 #					print(f"Item changed: {row} / {col} => NewVal: {changedItem.text()}")
-					newVal = 0
+					newVal = ''
 					if col == 1:
-						newVal = int(changedItem.text())
-						self.item(row, 2).setText(hex(newVal))
-					else:
-						newVal = int(changedItem.text(), 16)
-						self.item(row, 1).setText(str(newVal))
+						varName = self.item(row, 0).text()
+						newVal = self.item(row, 1).text()
+						if newVal.lower().startswith("0x"):
+							newVal = int(newVal, 16)
+						else:
+							newVal = int(newVal)
+						# Get the frame object from the current debugging session
+#						frame = self.window().driver.getTarget().GetProcess().GetThreadAtIndex(0).GetFrameAtIndex(0)
+#						
+#						# Get the variable you want to modify by name
+#						var = frame.FindVariable(varName)
+#						var = VariablesHelper.GetVariable(self.window().driver, varName)
+						
+						if VariablesHelper.SetVariableDataInt(self.window().driver, varName, newVal):
+							self.item(row, 4).setText(hex(newVal))
+							self.item(row, 1).setText(str(newVal))
+						
+#						self.variable_type = var.GetType()
+#						print(f"self.variable_type => {self.variable_type}")
+#						
+#						value = str(var.GetValue())
+#						
+#						error = lldb.SBError()
+#						if self.variable_type.GetBasicType() == lldb.eBasicTypeInt:
+#							var.SetData(lldb.SBData().CreateDataFromSInt32Array(lldb.eByteOrderLittle, var.GetByteSize(), [int(self.item(row, 1).text())]), error)
+##						elif str(self.variable_type).startswith("char"):
+##							self.variable.SetData(lldb.SBData().CreateDataFromCString(lldb.eByteOrderLittle, int(self.txtSize.text(), 16), self.txtValue.text()), error)
+##							
+##							pass
+#							
+#						if error.Success():
+#							successMsg = f"Variable '{varName}' with type: '{self.variable_type}' ('{self.variable_type.GetBasicType()}') updated to: {self.item(row, 1).text()}"
+#							print(successMsg)
+#							self.window().updateStatusBar(successMsg)
+#						#			self.window().updateStatusBar(successMsg)
+#						else:
+#							print(f"ERROR: {error}")
+#						newVal = int(changedItem.text())
+#						self.item(row, 1).setText(hex(newVal))
+#					else:
+#						newVal = int(changedItem.text(), 16)
+#						self.item(row, 1).setText(str(newVal))
 					
-					varName = self.item(row, 0).text()
-					self.window().driver.handleCommand(f"expr {varName}={newVal}")
-					self.window().updateStatusBar(f"Updated value of variable '{varName}' to '{newVal}'")
+#					varName = self.item(row, 0).text()
+#					self.window().driver.handleCommand(f"expr {varName}={newVal}")
+#					self.window().updateStatusBar(f"Updated value of variable '{varName}' to '{newVal}'")

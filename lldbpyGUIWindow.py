@@ -405,6 +405,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.treThreads.header().resizeSection(1, 128)
 		self.treThreads.header().resizeSection(2, 512)
 		self.treThreads.header().resizeSection(3, 128)
+		self.treThreads.doubleClicked.connect(self.treThreads_doubleClicked)
 		
 		self.gbpThreads = QGroupBox("Threads / Frames")
 		self.gbpThreads.setLayout(QHBoxLayout())
@@ -541,6 +542,11 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.tabWidgetDbg.setCurrentIndex(ConfigClass.currentDebuggerSubTab)
 	
+	def treThreads_doubleClicked(self, event):
+		print(f"treThreads_doubleClicked")
+		print(dir(event))
+		self.txtMultiline.viewAddress(self.treThreads.currentItem().text(3))
+		
 	def my_callback(self, frame, bp_loc, dict):
 		# Your code to execute when the breakpoint hits
 		print("Breakpoint hit!!!!!!!! =========>>>>>>>>  YEESSSS!!!!!!")
@@ -1171,7 +1177,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		idx = 0
 		if self.thread:
-			
+#			self.treThreads.doubleClicked.connect()
 			self.treThreads.clear()
 			self.processNode = QTreeWidgetItem(self.treThreads, ["#0 " + str(self.process.GetProcessID()), hex(self.process.GetProcessID()) + "", self.process.GetTarget().GetExecutable().GetFilename(), '', ''])
 			
