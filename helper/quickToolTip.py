@@ -210,17 +210,17 @@ class QuickToolTip:
 		frame = thread.GetSelectedFrame()
 			
 		if RegisterNames.startswith(part1):
-#			operandsText = self.extractOperand(part1)
-			print(f"REGISTER FOUND!!!!")
-#			return "REGISTER FOUND!!!"
+##			operandsText = self.extractOperand(part1)
+#			print(f"REGISTER FOUND!!!!")
+##			return "REGISTER FOUND!!!"
 			rbp_value = frame.EvaluateExpression(f"${part1}").GetValueAsUnsigned()
-			operandsText = part1 + ":\t" + hex(rbp_value)
+			operandsText = part1 + ":\t" + hex(rbp_value) + " (" + str(rbp_value) + ")"
 		elif RegisterNames.startswith(part2):
-#			operandsText = self.extractOperand(part2)
-			print(f"REGISTER FOUND!!!!")
-#			return "REGISTER FOUND!!!"
+##			operandsText = self.extractOperand(part2)
+#			print(f"REGISTER FOUND!!!!")
+##			return "REGISTER FOUND!!!"
 			rbp_value = frame.EvaluateExpression(f"${part2}").GetValueAsUnsigned()
-			operandsText = part2 + ":\t" + hex(rbp_value)
+			operandsText = part2 + ":\t" + hex(rbp_value) + " (" + str(rbp_value) + ")"
 		else:
 			pass
 			

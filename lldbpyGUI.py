@@ -204,7 +204,7 @@ def cmd_banner2(debugger,command,result,dict):
   
 
 def StartLLDBPyGUI(debugger, command, result, dict):
-    testTarget = "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/hello_world_test"
+    testTarget = ConfigClass.testTarget #"/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/hello_world_test"
     cmd_banner2(debugger, command, result, dict)
     
     global pymobiledevice3GUIApp
@@ -252,7 +252,7 @@ def StartLLDBPyGUI(debugger, command, result, dict):
     pass
   
 def TestCommand(debugger, command, result, dict):
-    testTarget = "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/hello_world_test"
+    testTarget = ConfigClass.testTarget #"/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/hello_world_test"
     cmd_banner2(debugger, command, result, dict)
     print("LOADING TARGET: %s" % testTarget)
 #   debugger.SetAsync(False)

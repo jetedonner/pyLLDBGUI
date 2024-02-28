@@ -4,6 +4,7 @@ import lldb
 
 import os
 import sys
+import re
 #
 #from enum import Enum
 ##import re	
@@ -19,6 +20,7 @@ from PyQt6.QtWidgets import *
 from PyQt6 import uic, QtWidgets
 #
 from config import *
+
 #from helper.dbgHelper import *
 #
 #
@@ -68,6 +70,39 @@ from config import *
 #	def getValue(self, setting):
 #		return self.settings.value(setting.value[0], setting.value[1], setting.value[2])
 	
+class IntHexValidator(QValidator):
+	def __init__(self, parent=None):
+		super().__init__(parent)
+#		self.int_regex = QtCore.QRegExp(r"^-?\d+$")  # Allows signed integers
+#		self.hex_regex = QtCore.QRegExp(r"^0x[0-9a-fA-F]+$")  # Allows hex values with 0x prefix
+		
+		self.int_regex = r"^-?\d+$"  # Match anything within square brackets, excluding the brackets themselves
+		self.hex_regex = r"^(0x|0X)?[a-fA-F0-9]+$" # ^0x[0-9a-fA-F]+$"
+		
+	def validate(self, input_text, pos):
+		try:
+#			help(QValidator.validate)
+#			print(help(QValidator.validate))
+			print(f"Validating: '{input_text}', pos: {pos}")
+			# Check if input is empty or a single minus sign
+			if input_text == "" or input_text == "-":
+				return (QValidator.State.Acceptable, input_text, pos)
+			
+			if re.search(self.int_regex, input_text): #.exactMatch(input_text):
+				return (QValidator.State.Acceptable, input_text, pos)
+			
+			# Check for valid hex value
+			if re.search(self.hex_regex, input_text): #if self.hex_regex.exactMatch(input_text):
+				return (QValidator.State.Acceptable, input_text, pos)
+			elif input_text == "0x" or input_text == "0X":
+				return (QValidator.State.Acceptable, input_text, pos)
+	
+		except Exception as e:
+			print(f"Error validating: {e}")
+			
+		# Invalid input
+		return (QValidator.State.Invalid, input_text, pos)
+	
 class EditVariableDialog(QDialog):
 	
 #	settings = QSettings("DaVe_inc", "LLDBPyGUI")
@@ -100,8 +135,9 @@ class EditVariableDialog(QDialog):
 #		else:
 #			self.setHelper = SettingsHelper()
 #		
-		self.lblVariableName = self.findChild(QtWidgets.QLabel, "lblVariableName")
-		self.lblVariableAddress = self.findChild(QtWidgets.QLabel, "lblVariableAddress")
+		self.lblVariableName = self.findChild(QtWidgets.QLineEdit, "lblVariableName")
+		self.lblVariableAddress = self.findChild(QtWidgets.QLineEdit, "lblVariableAddress")
+		
 		
 		
 		self.optInt = self.findChild(QtWidgets.QRadioButton, "optInt")
@@ -109,7 +145,11 @@ class EditVariableDialog(QDialog):
 		self.optChar = self.findChild(QtWidgets.QRadioButton, "optChar")
 		
 		self.txtSize = self.findChild(QtWidgets.QLineEdit, "txtSize")
+		self.txtSize.setValidator(IntHexValidator())
+#		self.txtSize.setInputMask("HHHH;H{0,7}")
+		
 		self.txtValue = self.findChild(QtWidgets.QLineEdit, "txtValue")
+#		line_edit.setValidator(IntHexValidator())
 		
 #		self.layout = self.tab_first.layout()
 #		self.table_widget = self.layout.itemAt(0).widget()
@@ -125,19 +165,28 @@ class EditVariableDialog(QDialog):
 	
 	def loadVariable(self, var):
 		
-		self.lblVariableName.setText("Name: " + var.GetName())
-		self.lblVariableAddress.setText("Address: " + hex(int(var.GetLocation(), 16)))
+		self.lblVariableName.setText(var.GetName())
+		self.lblVariableAddress.setText(hex(int(var.GetLocation(), 16)))
 			# Get the variable's type using GetType()
 		self.variable_type = var.GetType()
+		print(f"self.variable_type => {self.variable_type}")
+		
 		value = str(var.GetValue())
 		if self.variable_type.GetBasicType() == lldb.eBasicTypeInt:
 			self.optInt.setChecked(True)
-		elif self.variable_type.GetBasicType() == lldb.eBasicTypeInvalid: #eBasicTypeChar:
+		elif self.variable_type.GetBasicType() == lldb.eBasicTypeChar: #eBasicTypeChar: # eBasicTypeInvalid
 			self.optChar.setChecked(True)
 			byte_array = var.GetPointeeData(0, var.GetByteSize())
 			error = lldb.SBError()
 			sRet = byte_array.GetString(error, 0)
 			value = "" if sRet == 0 else sRet
+		elif str(self.variable_type.GetName()).startswith("char["):
+			print(f"GOT CHAR-ARRAY!!!")
+			self.optChar.setChecked(True)
+			byte_array = var.GetPointeeData(0, var.GetByteSize())
+			error = lldb.SBError()
+			sBytes = byte_array.GetString(error, 0)
+			value = "" if sBytes == 0 else sBytes
 			
 		
 		self.txtSize.setText(hex(var.GetByteSize()))

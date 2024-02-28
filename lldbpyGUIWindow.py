@@ -154,7 +154,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 	def onQApplicationStarted(self):
 		print('onQApplicationStarted started')
-		self.driver.createTarget("/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/hello_world_test")
+		self.driver.createTarget(ConfigClass.testTarget)
 		if self.driver.debugger.GetNumTargets() > 0:
 			target = self.driver.getTarget()
 			
@@ -629,14 +629,18 @@ class LLDBPyGUIWindow(QMainWindow):
 #									print(sec.GetSubSectionAtIndex(idx3).GetName())
 									
 									subSec = sec.GetSubSectionAtIndex(idx3)
-									
+									print(subSec)
+									for idx4 in range(subSec.GetNumSubSections()):
+										subSubSec = sec.GetSubSectionAtIndex(idx4)
+										print(subSubSec)
+										
 									subSectionNode = QTreeWidgetItem(sectionNode, [subSec.GetName(), str(hex(subSec.GetFileAddress())), str(hex(subSec.GetFileAddress() + subSec.GetByteSize())), hex(subSec.GetFileByteSize()), hex(subSec.GetByteSize()), lldbHelper.SectionTypeString(subSec.GetSectionType()) + " (" + str(subSec.GetSectionType()) + ")"])
 									
 									for sym in module.symbol_in_section_iter(subSec):
 										subSectionNode2 = QTreeWidgetItem(subSectionNode, [sym.GetName(), str(hex(sym.GetStartAddress().GetFileAddress())), str(hex(sym.GetEndAddress().GetFileAddress())), hex(sym.GetSize()), '', f'{lldbHelper.SymbolTypeString(sym.GetType())} ({sym.GetType()})'])
 							
 							context = frame.GetSymbolContext(lldb.eSymbolContextEverything)
-							self.start_loadSourceWorker(self.debugger, "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/hello_world_test.c", self.interruptLoadSourceWorker, context.GetLineEntry().GetLine())
+							self.start_loadSourceWorker(self.debugger, ConfigClass.testTargetSource, self.interruptLoadSourceWorker, context.GetLineEntry().GetLine())
 	
 	def start_findReferencesWorker(self, address, initTable = True):
 #		print(">>>> start_loadBreakpointsWorker")
@@ -698,18 +702,18 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.txtMultiline.appendAsmText(hex(int(str(instruction.GetAddress().GetFileAddress()), 10)), instruction.GetMnemonic(target),  instruction.GetOperands(target), instruction.GetComment(target), str(instruction.GetData(target)).replace("                             ", "\t\t").replace("		            ", "\t\t\t").replace("		         ", "\t\t").replace("		      ", "\t\t").replace("			   ", "\t\t\t"), True, self.rip)
 		pass
 		
-	def disassemble_instructions(self, insts, target, rip):
-		idx = 0
-		for i in insts:
-			if idx == 0:
-				self.txtMultiline.setInstsAndAddr(insts, hex(int(str(i.GetAddress().GetFileAddress()), 10)))
-#				print(dir(i))
-#			print(i)
-			idx += 1
-#			print(i.GetData(target))
-			self.txtMultiline.appendAsmText(hex(int(str(i.GetAddress().GetFileAddress()), 10)), i.GetMnemonic(target),  i.GetOperands(target), i.GetComment(target), str(i.GetData(target)).replace("                             ", "\t\t").replace("		            ", "\t\t\t").replace("		         ", "\t\t").replace("		      ", "\t\t").replace("			   ", "\t\t\t"), True, rip)
-			
-			print(f'i.GetComment(target) => {i.GetComment(target)}')
+#	def disassemble_instructions(self, insts, target, rip):
+#		idx = 0
+#		for i in insts:
+#			if idx == 0:
+#				self.txtMultiline.setInstsAndAddr(insts, hex(int(str(i.GetAddress().GetFileAddress()), 10)))
+##				print(dir(i))
+##			print(i)
+#			idx += 1
+##			print(i.GetData(target))
+#			self.txtMultiline.appendAsmText(hex(int(str(i.GetAddress().GetFileAddress()), 10)), i.GetMnemonic(target),  i.GetOperands(target), i.GetComment(target), str(i.GetData(target)).replace("                             ", "\t\t").replace("		            ", "\t\t\t").replace("		         ", "\t\t").replace("		      ", "\t\t").replace("			   ", "\t\t\t"), True, rip)
+#			
+#			print(f'i.GetComment(target) => {i.GetComment(target)}')
 			
 	def handle_output(self, output):
 		print(f">>>>>> OUTPUT: {output}")
@@ -773,19 +777,19 @@ class LLDBPyGUIWindow(QMainWindow):
 		error = lldb.SBError()
 		target.Launch(launch_info, error)
 
-	def click_ReadMemory(self):
-		try:
-			self.handle_readMemory(self.driver.debugger, int(self.tblHex.txtMemAddr.text(), 16), int(self.tblHex.txtMemSize.text(), 16))
-		except Exception as e:
-			print(f"Error while reading memory from process: {e}")
+#	def click_ReadMemory(self):
+#		try:
+#			self.handle_readMemory(self.driver.debugger, int(self.tblHex.txtMemAddr.text(), 16), int(self.tblHex.txtMemSize.text(), 16))
+#		except Exception as e:
+#			print(f"Error while reading memory from process: {e}")
 			
-	def click_saveBP(self):
-		filename = showSaveFileDialog()
-		if filename != None:
-			print(f'Saving to: {filename} ...')
-			self.bpHelper.handle_saveBreakpoints(self.driver.getTarget(), filename)
-			self.updateStatusBar(f"Saving breakpoints to {filename} ...")
-#			self.driver.handleCommand(f"breakpoint write -f {filename}")
+#	def click_saveBP(self):
+#		filename = showSaveFileDialog()
+#		if filename != None:
+#			print(f'Saving to: {filename} ...')
+#			self.bpHelper.handle_saveBreakpoints(self.driver.getTarget(), filename)
+#			self.updateStatusBar(f"Saving breakpoints to {filename} ...")
+##			self.driver.handleCommand(f"breakpoint write -f {filename}")
 			
 	def loadTestBPs(self, filename):
 		if filename != None:
@@ -794,25 +798,25 @@ class LLDBPyGUIWindow(QMainWindow):
 			self.driver.handleCommand(f"breakpoint read -f {filename}")
 		pass
 		
-	def click_loadBP(self):
-		filename = showOpenBPFileDialog()
-		if filename != None:
-			print(f'Loading Breakpoints from: {filename} ...')
-			self.updateStatusBar(f"Loading Breakpoints from {filename} ...")
-			self.driver.handleCommand(f"breakpoint read -f {filename}")
-			
-#		self.updateStatusBar("Loading breakpoints ...")
-		pass
+#	def click_loadBP(self):
+#		filename = showOpenBPFileDialog()
+#		if filename != None:
+#			print(f'Loading Breakpoints from: {filename} ...')
+#			self.updateStatusBar(f"Loading Breakpoints from {filename} ...")
+#			self.driver.handleCommand(f"breakpoint read -f {filename}")
+#			
+##		self.updateStatusBar("Loading breakpoints ...")
+#		pass
 	
-	def click_reloadBP(self):
-		self.reloadBreakpoints(True)
-		self.updateStatusBar("All Breakpoints reloaded!")
+#	def click_reloadBP(self):
+#		self.reloadBreakpoints(True)
+#		self.updateStatusBar("All Breakpoints reloaded!")
 	
-	def click_deleteAllBP(self):
-		if showQuestionDialog(self, "Delete all Breakpoints?", "Do you really want to delete all Breakpoints?"):
-			self.bpHelper.handle_deleteAllBPs()
-			self.txtMultiline.table.handle_deleteAllBPs()
-			self.updateStatusBar("All Breakpoints deleted!")
+#	def click_deleteAllBP(self):
+#		if showQuestionDialog(self, "Delete all Breakpoints?", "Do you really want to delete all Breakpoints?"):
+#			self.bpHelper.handle_deleteAllBPs()
+#			self.txtMultiline.table.handle_deleteAllBPs()
+#			self.updateStatusBar("All Breakpoints deleted!")
 		
 	def click_exit_action(self):
 		self.close()
@@ -1151,7 +1155,7 @@ class LLDBPyGUIWindow(QMainWindow):
 			self.reloadBreakpoints(False)
 			self.loadStacktrace()
 			context = frm.GetSymbolContext(lldb.eSymbolContextEverything)
-			self.start_loadSourceWorker(self.debugger, "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/hello_world_test.c", self.interruptLoadSourceWorker, context.GetLineEntry().GetLine())
+			self.start_loadSourceWorker(self.debugger, ConfigClass.testTargetSource, self.interruptLoadSourceWorker, context.GetLineEntry().GetLine())
 			self.setResumeActionIcon(ConfigClass.iconResume)
 		else:
 			print(f"Debug STEP ({kind}) FAILED!!!")
@@ -1235,15 +1239,15 @@ class LLDBPyGUIWindow(QMainWindow):
 		scroll_value -= self.txtSource.viewport().height() / 2
 		self.txtSource.verticalScrollBar().setValue(int(scroll_value))
 	
-	def read_memory(self, process, address, size):
-		error = lldb.SBError()
-		target = process.GetTarget()
-		
-		# Read memory using ReadMemory function
-		data = target.ReadMemory(address, size, error)
-		
-		if error.Success():
-			return data
-		else:
-			print("Error reading memory:", error)
-			return None			
+#	def read_memory(self, process, address, size):
+#		error = lldb.SBError()
+#		target = process.GetTarget()
+#		
+#		# Read memory using ReadMemory function
+#		data = target.ReadMemory(address, size, error)
+#		
+#		if error.Success():
+#			return data
+#		else:
+#			print("Error reading memory:", error)
+#			return None			

@@ -1,0 +1,9 @@
+---
+triple:          'x86_64-apple-darwin'
+binary-path:     hello_world_test_ext
+relocations:
+  - { offset: 0x26, size: 0x8, addend: 0x0, symName: _subfunc, symObjAddr: 0x0, symBinAddr: 0x100003DC0, symSize: 0x30 }
+  - { offset: 0x41, size: 0x8, addend: 0x0, symName: _subfunc, symObjAddr: 0x0, symBinAddr: 0x100003DC0, symSize: 0x30 }
+  - { offset: 0x65, size: 0x8, addend: 0x0, symName: _subfuncWithChar, symObjAddr: 0x30, symBinAddr: 0x100003DF0, symSize: 0x90 }
+  - { offset: 0x99, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0xC0, symBinAddr: 0x100003E80, symSize: 0xA8 }
+...

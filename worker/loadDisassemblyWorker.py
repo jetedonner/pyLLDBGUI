@@ -71,7 +71,7 @@ class LoadDisassemblyWorker(BaseWorker):
 #					print('Number of subsections: %d' % section.GetNumSubSections())
 					for subsec in section:
 #						print(repr(subsec))
-						if subsec.GetName() == "__text":
+						if subsec.GetName() == "__text" or subsec.GetName() == "__stubs":
 #							print("GOTIT!!!!!")
 							
 							idxSym = 0
