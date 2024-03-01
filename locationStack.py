@@ -24,9 +24,11 @@ class LocationStack(QObject):
 		return self.currentLocation <= 0
 	
 	def pushLocation(self, location):
-		self.locationStack.append(location)
-		self.currentLocation = len(self.locationStack) - 1
-		print(f"Pushing new location: {location}, currentLocation: {self.currentLocation}")
+		if self.currentLocation == -1 or self.locationStack[self.currentLocation] != location:
+			del self.locationStack[self.currentLocation+1:]
+			self.locationStack.append(location)
+			self.currentLocation = len(self.locationStack) - 1
+			print(f"Pushing new location: {location}, currentLocation: {self.currentLocation}")
 	
 	def popLocation(self):
 		return self.locationStack.pop()

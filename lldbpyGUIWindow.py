@@ -58,6 +58,8 @@ except ImportError:
 global event_queueBP
 event_queueBP = queue.Queue()
 
+from worker.breakpointWorker import *
+
 #
 #def worker2():
 #	from lldbutil import print_stacktrace
@@ -75,20 +77,20 @@ event_queueBP = queue.Queue()
 #				print frame
 #	pass
 
-def worker():
-	while True:
-		global event_queueBP
-		item = event_queueBP.get()
-		print(f'Working on {item}')
-#		print(f'Finished {item}')
-		event_queueBP.task_done()
-		
-		# Turn-on the worker thread.
-threading.Thread(target=worker, daemon=True).start()
-
-global my_target
-def myTest():
-	print("MYTEST")
+#def worker():
+#	while True:
+#		global event_queueBP
+#		item = event_queueBP.get()
+#		print(f'Working on {item}')
+##		print(f'Finished {item}')
+#		event_queueBP.task_done()
+#		
+#		# Turn-on the worker thread.
+#threading.Thread(target=worker, daemon=True).start()
+#
+#global my_target
+#def myTest():
+#	print("MYTEST")
 	
 def my_callback(frame, bp_loc, dict): # self,
 	
@@ -108,7 +110,8 @@ def my_callback(frame, bp_loc, dict): # self,
 	
 	if frame.GetThread().GetStopReason() == lldb.eStopReasonBreakpoint:
 		print(f'frame.GetThread().GetStopReason() == lldb.eStopReasonBreakpoint')
-	
+		
+#		self.event_queueBP.put(event)
 	
 #	global my_window
 #	my_window.my_callbackWindow(frame, bp_loc, dict)
@@ -120,8 +123,8 @@ class LLDBPyGUIWindow(QMainWindow):
 	"""PyMobiledevice3GUI's main window (GUI or view)."""
 	
 #	regTreeList = []
-	global my_target
-	my_target = myTest
+#	global my_target
+#	my_target = myTest
 	driver = None
 	debugger = None
 	interruptEventListenerWorker = None
@@ -561,7 +564,7 @@ class LLDBPyGUIWindow(QMainWindow):
 #		self.forward.setEnabled(True)
 		newLoc = self.txtMultiline.locationStack.backLocation()
 		if newLoc:
-			print(f"GOING BACK to {newLoc} ...")
+			print(f"GOING BACK to {newLoc} ... {self.txtMultiline.locationStack.currentLocation}")
 			self.txtMultiline.viewAddress(newLoc, False)
 		self.forward.setEnabled(not self.txtMultiline.locationStack.currentIsLast())
 		self.back.setEnabled(not self.txtMultiline.locationStack.currentIsFirst())
@@ -570,7 +573,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		print(f"GOING FORWARD ... {self.txtMultiline.locationStack.currentLocation}")
 		newLoc = self.txtMultiline.locationStack.forwardLocation()
 		if newLoc:
-			print(f"GOING FORWARD to {newLoc} ...")
+			print(f"GOING FORWARD to {newLoc} ... {self.txtMultiline.locationStack.currentLocation}")
 			self.txtMultiline.viewAddress(newLoc, False)
 #			self.back.setEnabled(True)
 		self.forward.setEnabled(not self.txtMultiline.locationStack.currentIsLast())
@@ -698,7 +701,31 @@ class LLDBPyGUIWindow(QMainWindow):
 							
 							context = frame.GetSymbolContext(lldb.eSymbolContextEverything)
 							self.start_loadSourceWorker(self.debugger, ConfigClass.testTargetSource, self.interruptLoadSourceWorker, context.GetLineEntry().GetLine())
+						
+						self.start_breakpointWorker()
 	
+	
+	
+	
+	
+	def start_breakpointWorker(self):
+		print(">>>> start_breakpointWorker")
+#		self.symFuncName = ""
+#		self.txtMultiline.table.resetContent()
+		global event_queueBP
+		self.breakpointWorker = BreakpointWorker(self.driver, event_queueBP)
+#		self.findReferencesWorker.signals.finished.connect(self.handle_breakpointWorkerFinished)
+		self.breakpointWorker.signals.sendStatusBarUpdate.connect(self.handle_statusBarUpdate)
+		self.breakpointWorker.signals.sendProgressUpdate.connect(self.handle_progressUpdate)
+		
+		self.breakpointWorker.signals.gotEvent.connect(self.handle_gotEvent)
+		
+		self.threadpool.start(self.breakpointWorker)
+		
+	def handle_gotEvent(self, event):
+		print(f"handle_gotEvent => {event}")
+		pass
+		
 	def start_findReferencesWorker(self, address, initTable = True):
 #		print(">>>> start_loadBreakpointsWorker")
 #		self.symFuncName = ""
@@ -953,8 +980,10 @@ class LLDBPyGUIWindow(QMainWindow):
 			if initTable:
 				self.txtMultiline.table.setBPAtAddress(hex(bl.GetLoadAddress()), True, False)
 				
+			print(f"SETTING UP BP CALLBACK")
+			print(f"command script import --allow-reload ./lldbpyGUIWindow.py")
 			extra_args = lldb.SBStructuredData()
-			self.driver.handleCommand("command script import --allow-reload ./lldbpyGUIWindow.py")
+			self.driver.handleCommand("command script import --allow-reload lldbpyGUIWindow.py")
 			bp.SetScriptCallbackFunction("lldbpyGUIWindow.my_callback", extra_args)
 			
 			txtID = str(bp.GetID()) + "." + str(idx)

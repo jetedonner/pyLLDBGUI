@@ -342,6 +342,7 @@ class DisassemblyTableWidget(QTableWidget):
 ##		#							self.table.item(row, 0).setText('')
 ##								print(f'JUMPING!!!')
 ##								self.window().txtMultiline.pushAddressFromSelected()
+					self.window().txtMultiline.locationStack.pushLocation(str(self.item(self.selectedItems()[0].row(), 3).text()))
 					self.window().txtMultiline.locationStack.pushLocation(jumpAddr)
 					self.window().txtMultiline.viewAddress(jumpAddr)
 #								break

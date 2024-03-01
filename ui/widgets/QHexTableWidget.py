@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import lldb
 
 import array
 import enum
@@ -8,6 +9,7 @@ import math
 
 # import enum
 
+from PyQt6 import *
 from PyQt6.QtGui import *
 from PyQt6.QtCore import *
 
@@ -28,11 +30,67 @@ class ByteGrouping(enum.Enum):
 	EightChars = ("Eight", 8) #"Four characters"
 	
 class ReadOnlySelectableTextEdit(QTextEdit):
+	
+	isReadOnly = True
+	
 	def __init__(self, parent=None):
 		super().__init__(parent)
 		
+		self.context_menu = QMenu(self)
+		actionEditMemory = self.context_menu.addAction("Edit memory")
+		actionEditMemory.triggered.connect(self.handle_editMemory)
+		actionWriteMemory = self.context_menu.addAction("Write memory")
+		actionWriteMemory.triggered.connect(self.handle_writeMemory)
+		self.textChanged.connect(self.handle_text_changed)
+		
+	def handle_text_changed(self):
+		# Get the current cursor position
+		cursor = self.textCursor()
+		
+		# Get the start and end positions of the edited text
+		start_pos = cursor.selectionStart()
+		end_pos = cursor.selectionEnd()
+		
+		# Access and process the edited text (optional)
+		edited_text = self.toPlainText()[start_pos:end_pos]
+		
+		print(f"Text changed! Start: {start_pos}, End: {end_pos}, Edited Text: {edited_text}")
+		
+	def contextMenuEvent(self, event):
+		self.context_menu.exec(event.globalPos())
+		
+	def handle_editMemory(self):
+		self.isReadOnly = not self.isReadOnly
+#		self.setTextBackgroundColor(QColor.green())
+#		self.setStyleSheet("background-color: rgba(0, 255, 0, 48);")
+		if not self.isReadOnly:
+			p = self.viewport().palette()
+			p.setColor(self.viewport().backgroundRole(), QtGui.QColor(0, 255, 0, 24))
+			self.viewport().setPalette(p)
+		else:
+			p = self.viewport().palette()
+			p.setColor(self.viewport().backgroundRole(), QtGui.QColor(0, 255, 0, 0))
+			self.viewport().setPalette(p)
+		
+	def handle_writeMemory(self):
+		# Target memory address to write to
+		memory_address = 0x100003f50  # Replace with the actual address
+		
+		# Data to write (as a byte string)
+#		data_to_write = b"NOP"
+		data_to_write = bytes.fromhex("90")
+		
+		# Write the data to memory
+		error = lldb.SBError()
+		bytes_written = self.window().driver.getTarget().GetProcess().WriteMemory(memory_address, data_to_write, error)
+		
+		if error.Success():
+			print(f"Wrote {bytes_written} bytes to memory address 0x{memory_address:x}")
+		else:
+			print(f"Error writing memory: {error}")
+		
 	def keyPressEvent(self, event):
-		if event.key() in (Qt.Key.Key_Left, Qt.Key.Key_Right, Qt.Key.Key_Up, Qt.Key.Key_Down):
+		if (self.isReadOnly and event.key() in (Qt.Key.Key_Left, Qt.Key.Key_Right, Qt.Key.Key_Up, Qt.Key.Key_Down)) or not self.isReadOnly:
 			# Only allow arrow key selection
 			super().keyPressEvent(event)
 		else:
@@ -56,6 +114,7 @@ class ReadOnlySelectableTextEdit(QTextEdit):
 ##				y += self.line_height
 ##			cursor.movePosition(QTextCursor.MoveOperation.NextBlock)
 			
+		
 #class TransparentLineEdit(QLineEdit):
 #	
 #	item_sel_changed = pyqtSignal(object, object)
@@ -89,9 +148,9 @@ class QHexTableWidget(QTableWidget):
 	def __init__(self, parent=None):
 		QTableWidget.__init__(self, parent=parent)
 		
-#		self.context_menu = QMenu(self)
-#		actionToggleBP = self.context_menu.addAction("Toggle Breakpoint")
-#		actionToggleBP.triggered.connect(self.handle_toggleBP)
+		self.context_menu = QMenu(self)
+		actionEditMemory = self.context_menu.addAction("Edit memory")
+		actionEditMemory.triggered.connect(self.handle_editMemory)
 #		actionDisableBP = self.context_menu.addAction("Enable / Disable Breakpoint")
 #		actionDisableBP.triggered.connect(self.handle_disableBP)
 #		
@@ -113,6 +172,13 @@ class QHexTableWidget(QTableWidget):
 		self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectItems)
 		self.setShowGrid(False)
 
+	def contextMenuEvent(self, event):
+		self.context_menu.exec(event.globalPos())
+		
+	def handle_editMemory(self):
+		self.txtHex.isReadOnly = not self.txtHex.isReadOnly
+		pass
+		
 	def resetContent(self):
 		self.setRowCount(0)
 			
