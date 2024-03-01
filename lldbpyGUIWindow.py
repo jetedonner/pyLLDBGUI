@@ -328,6 +328,20 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.stop.triggered.connect(self.handle_stopThread)
 		self.toolbar.addAction(self.stop)
 		
+		self.back = QAction(ConfigClass.iconLeft, '&Back', self)
+		self.back.setStatusTip('Back')
+#		self.load_resume.setShortcut('Ctrl+L')
+		self.back.triggered.connect(self.handle_back)
+		self.toolbar.addAction(self.back)
+		
+		self.forward = QAction(ConfigClass.iconRight, '&Forward', self)
+		self.forward.setStatusTip('Back')
+#		self.load_resume.setShortcut('Ctrl+L')
+		self.forward.triggered.connect(self.handle_forward)
+		self.forward.setEnabled(False)
+		self.toolbar.addAction(self.forward)
+		
+		
 		self.toolbar.addAction(self.settings_action)
 		self.toolbar.addAction(self.help_action)
 		
@@ -542,6 +556,26 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.tabWidgetDbg.setCurrentIndex(ConfigClass.currentDebuggerSubTab)
 	
+	def handle_back(self):
+		print(f"GOING BACK ... {self.txtMultiline.locationStack.currentLocation}")
+#		self.forward.setEnabled(True)
+		newLoc = self.txtMultiline.locationStack.backLocation()
+		if newLoc:
+			print(f"GOING BACK to {newLoc} ...")
+			self.txtMultiline.viewAddress(newLoc, False)
+		self.forward.setEnabled(not self.txtMultiline.locationStack.currentIsLast())
+		self.back.setEnabled(not self.txtMultiline.locationStack.currentIsFirst())
+		
+	def handle_forward(self):
+		print(f"GOING FORWARD ... {self.txtMultiline.locationStack.currentLocation}")
+		newLoc = self.txtMultiline.locationStack.forwardLocation()
+		if newLoc:
+			print(f"GOING FORWARD to {newLoc} ...")
+			self.txtMultiline.viewAddress(newLoc, False)
+#			self.back.setEnabled(True)
+		self.forward.setEnabled(not self.txtMultiline.locationStack.currentIsLast())
+		self.back.setEnabled(not self.txtMultiline.locationStack.currentIsFirst())
+		
 	def treThreads_doubleClicked(self, event):
 		print(f"treThreads_doubleClicked")
 		print(dir(event))
@@ -552,6 +586,22 @@ class LLDBPyGUIWindow(QMainWindow):
 		print("Breakpoint hit!!!!!!!! =========>>>>>>>>  YEESSSS!!!!!!")
 		# Access the frame, breakpoint location, and any extra arguments passed to the callback
 		
+		
+	def handle_processEvent(self, process):
+		print(f'Process-EVENT: {process}')
+		state = 'stopped'
+		if process.state == eStateStepping or process.state == eStateRunning:
+			state = 'running'
+		elif process.state == eStateExited:
+			state = 'exited'
+			self.should_quit = True
+		thread = process.selected_thread
+		print('Process event: %s, reason: %d' % (state, thread.GetStopReason()))
+		if thread.GetStopReason() == lldb.eStopReasonBreakpoint:
+			print(f'REASON BP RFEACHED (listener) Event: {process} => Continuing...')
+			print(f"thread.GetFrameAtIndex(0).GetPC() => {thread.GetFrameAtIndex(0).GetPC()}")
+			self.txtMultiline.locationStack.pushLocation(hex(thread.GetFrameAtIndex(0).GetPC()))
+		pass
 		
 	def handle_stdoutEvent(self, data):
 		print(f'EVENT: {data}')
@@ -612,8 +662,9 @@ class LLDBPyGUIWindow(QMainWindow):
 					
 					self.listener = LLDBListener(self.process)
 					self.listener.breakpointEvent.connect(self.handle_breakpointEvent)
+					self.listener.aprocessEvent.connect(self.handle_processEvent)
 					self.listener.stdoutEvent.connect(self.handle_stdoutEvent)
-					
+					self.listener.addListenerCalls()
 					self.listener.start()
 					
 					idx = 0

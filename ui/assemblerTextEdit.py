@@ -15,6 +15,7 @@ from config import *
 from helper.breakpointHelper import *
 from helper.quickToolTip import *
 from helper.dialogHelper import *
+from locationStack import *
 
 class BreakpointTreeWidgetItem(QTreeWidgetItem):
 	iconStd = None
@@ -123,6 +124,8 @@ class DisassemblyTableWidget(QTableWidget):
 	actionShowMemory = None
 	quickToolTip = QuickToolTip()
 	
+	
+	
 	def handle_copyHexValue(self):
 		if self.item(self.selectedItems()[0].row(), 5) != None:
 			item = self.item(self.selectedItems()[0].row(), 5)
@@ -193,6 +196,7 @@ class DisassemblyTableWidget(QTableWidget):
 					newPC = int(str(dlg.txtInput.text()), 16)
 					frame.SetPC(newPC)
 					self.window().txtMultiline.setPC(newPC)
+#					self.setPC(newPC)
 					
 	def handle_gotoAddr(self):
 		if self.item(self.selectedItems()[0].row(), 3) != None:
@@ -326,16 +330,21 @@ class DisassemblyTableWidget(QTableWidget):
 #		#							self.table.item(row, 0).setText('')
 #								print(f'JUMPING!!!')
 #								break
-					for row in range(self.rowCount()):
-						if self.item(row, 3) != None and self.item(row, 5) != None: 
-							if self.item(row, 3).text() == str(self.item(self.selectedItems()[0].row(), 5).text()):
-		#							self.table.item(row, 0).setText('>')
-								self.scrollToRow(row)
-								self.selectRow(row)
-		#						else:
-		#							self.table.item(row, 0).setText('')
-								print(f'JUMPING!!!')
-								break
+					jumpAddr = str(self.item(self.selectedItems()[0].row(), 5).text())
+#					for row in range(self.rowCount()):
+#						if self.item(row, 3) != None and self.item(row, 5) != None: 
+#							
+#							if self.item(row, 3).text() == jumpAddr:
+#		#							self.table.item(row, 0).setText('>')
+##								self.scrollToRow(row)
+##								self.selectRow(row)
+##		#						else:
+##		#							self.table.item(row, 0).setText('')
+##								print(f'JUMPING!!!')
+##								self.window().txtMultiline.pushAddressFromSelected()
+					self.window().txtMultiline.locationStack.pushLocation(jumpAddr)
+					self.window().txtMultiline.viewAddress(jumpAddr)
+#								break
 #			pass
 #			self.sigBPOn.emit(self.item(self.selectedItems()[0].row(), 3).text(), self.item(self.selectedItems()[0].row(), 1).isBPOn)
 			
@@ -592,6 +601,7 @@ class AssemblerTextEdit(QWidget):
 	table = None
 	insts = None
 	addr = 0
+	locationStack = LocationStack()
 	
 	def setInstsAndAddr(self, insts, addr):
 		self.insts = insts
@@ -636,7 +646,18 @@ class AssemblerTextEdit(QWidget):
 	def setTextColor(self, color = "black", lineNum = False):
 		pass
 	
-	def viewAddress(self, address):
+	def getAddressFromSelected(self):
+		if self.table.selectedItems()[0].row() != None and self.table.item(self.table.selectedItems()[0].row(), 3) != None:
+			return self.table.item(self.table.selectedItems()[0].row(), 3).text()
+		return None
+	
+	def pushAddressFromSelected(self):
+		addrSel = self.getAddressFromSelected()
+		print(f"pushAddressFromSelected: {addrSel}")
+		if addrSel != None:
+			self.locationStack.pushLocation(addrSel)
+		
+	def viewAddress(self, address, pushLocation = True):
 		for row in range(self.table.rowCount()):
 			if self.table.item(row, 3) != None:
 				if self.table.item(row, 3).text().lower() == address.lower():
@@ -645,18 +666,24 @@ class AssemblerTextEdit(QWidget):
 					self.table.selectRow(row)
 					self.table.scrollToRow(row)
 					break
-				
-	def setPC(self, pc):
+#		if pushLocation:
+#			self.locationStack.pushLocation(address.lower())
+		
+	currentPC = ""
+	
+	def setPC(self, pc, pushLocation = False):
+		self.currentPC = hex(pc).lower()
 		for row in range(self.table.rowCount()):
 			if self.table.item(row, 3) != None:
-				if self.table.item(row, 3).text().lower() == hex(pc).lower():
+				if self.table.item(row, 3).text().lower() == self.currentPC:
 					self.table.item(row, 0).setText('>')
 					self.table.scrollToRow(row)
 #					print(f'scrollToRow: {row}')
 				else:
 					self.table.item(row, 0).setText('')
-				
-		pass
+		
+		if pushLocation:		
+			self.locationStack.pushLocation(self.currentPC)
 		
 	driver = None
 	

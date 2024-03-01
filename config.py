@@ -30,6 +30,9 @@ class ConfigClass():
 	toolbarIconSize = 24
 	currentDebuggerSubTab = 1
 	
+	iconLeft = None
+	iconRight = None
+	
 	iconAdd = None
 	iconSave = None
 	iconLoad = None
@@ -91,6 +94,11 @@ class ConfigClass():
 		ConfigClass.pixTrash = QPixmap(os.path.join(resources_root, 'delete.png')).scaled(QSize(18, 18))
 #		ui->label->setStyleSheet("border-image:url(:/2.png);");
 #		ui->label->setPixmap(pix);
+		
+		
+		
+		ConfigClass.iconLeft = QIcon(os.path.join(resources_root, 'left-arrow_blue.png'))
+		ConfigClass.iconRight = QIcon(os.path.join(resources_root, 'right-arrow_blue.png'))
 		
 		ConfigClass.iconAdd = QIcon(os.path.join(resources_root, 'add.png'))
 		ConfigClass.iconSave = QIcon(os.path.join(resources_root, 'save.png'))

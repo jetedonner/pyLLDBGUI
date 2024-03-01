@@ -29,8 +29,10 @@ from PyQt6 import *
 #from config import *
 
 class LLDBListener(QtCore.QObject, Thread):
+	
 	should_quit = False
 	
+	aprocessEvent = pyqtSignal(object)
 	breakpointEvent = pyqtSignal(object)
 	stdoutEvent = pyqtSignal(object)
 	
@@ -39,9 +41,12 @@ class LLDBListener(QtCore.QObject, Thread):
 		Thread.__init__(self)
 		print('INITING LISTENER!!!!')
 		self.listener = lldb.SBListener('Chrome Dev Tools Listener')
-		self._add_listener_to_process(process)
-		self._broadcast_process_state(process)
-		self._add_listener_to_target(process.target)
+		self.process = process
+		
+	def addListenerCalls(self):
+		self._add_listener_to_process(self.process)
+		self._broadcast_process_state(self.process)
+		self._add_listener_to_target(self.process.target)
 		
 	def _add_listener_to_target(self, target):
 		# Listen for breakpoint/watchpoint events (Added/Removed/Disabled/etc).
@@ -55,7 +60,7 @@ class LLDBListener(QtCore.QObject, Thread):
 		mask = SBProcess.eBroadcastBitStateChanged | SBProcess.eBroadcastBitSTDOUT
 		broadcaster.AddListener(self.listener, mask)
 		
-	def _broadcast_process_state(self, process):
+	def _broadcast_process_state(self, process, event = None):
 		state = 'stopped'
 		if process.state == eStateStepping or process.state == eStateRunning:
 			state = 'running'
@@ -65,7 +70,13 @@ class LLDBListener(QtCore.QObject, Thread):
 		thread = process.selected_thread
 		print('Process event: %s, reason: %d' % (state, thread.GetStopReason()))
 		if thread.GetStopReason() == lldb.eStopReasonBreakpoint:
-			print(f'REASON BP RFEACHED => Continuing...')
+			print(f'REASON BP RFEACHED (listener) Event: {event} => Continuing...')
+			
+		print(f"======================== IN HEA ========================")
+		self.aprocessEvent.emit(process)
+		QCoreApplication.processEvents()
+		print(f"====================== IN HEA END ======================")
+#			self.breakpointEvent.emit(event)
 #     error = lldb.SBError()
 #     thread.Resume(error)
 #     process.Continue()
@@ -74,9 +85,11 @@ class LLDBListener(QtCore.QObject, Thread):
 			
 			
 	def _breakpoint_event(self, event):
+		print(f"_breakpoint_event")
 		breakpoint = SBBreakpoint.GetBreakpointFromEvent(event)
 		bpEventType = SBBreakpoint.GetBreakpointEventTypeFromEvent(event)
 		self.breakpointEvent.emit(event)
+		QCoreApplication.processEvents()
 #		print(event)
 #		print(f'EVENTTYPE: {SBBreakpoint.GetBreakpointEventTypeFromEvent(event)}')
 #		print(dir(event))
@@ -111,7 +124,9 @@ class LLDBListener(QtCore.QObject, Thread):
 #             self.signals.event_output.emit("".join(["%02x" % ord(i) for i in stdout]))
 						QCoreApplication.processEvents()
 				elif SBProcess.EventIsProcessEvent(event):
-					self._broadcast_process_state(SBProcess.GetProcessFromEvent(event))
+					self._broadcast_process_state(SBProcess.GetProcessFromEvent(event), event)
+					self.processEvent.emit(event)
+					QCoreApplication.processEvents()
 					print("STD OUT EVENT ALT!!!")
 				elif SBBreakpoint.EventIsBreakpointEvent(event):
 					print("GOT BREAKPOINT EVENT YESSSSS!!!")

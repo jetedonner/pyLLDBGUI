@@ -96,7 +96,7 @@ class LLDBListenerThread(Thread):
     thread = process.selected_thread
     print('Process event: %s, reason: %d' % (state, thread.GetStopReason()))
     if thread.GetStopReason() == lldb.eStopReasonBreakpoint:
-      print(f'REASON BP RFEACHED => Continuing...')
+      print(f'REASON BP RFEACHED (driver) => Continuing...')
 #     error = lldb.SBError()
 #     thread.Resume(error)
 #     process.Continue()

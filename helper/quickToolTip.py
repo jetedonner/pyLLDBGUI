@@ -125,7 +125,7 @@ class QuickToolTip:
 			isMinus = False
 			if len(parts) <= 1:
 #				print("ISSOLO")
-				log("SOLO menemonic!!!")
+#				log("SOLO menemonic!!!")
 				isSolo = True
 			
 #		if len(parts) == 2:
@@ -196,8 +196,8 @@ class QuickToolTip:
 		operandsText = ""
 		
 		part1, part2 = self.splitOperands(openrands)
-		print(f"getOperandsText->part1: {part1}")
-		print(f"getOperandsText->part2: {part2}")
+#		print(f"getOperandsText->part1: {part1}")
+#		print(f"getOperandsText->part2: {part2}")
 #		if SizeDirPtrs.startswith(part1):
 #			operandsText = self.extractOperand(part1)
 #		elif SizeDirPtrs.startswith(part2):

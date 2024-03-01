@@ -159,7 +159,7 @@ class VariablesTableWidget(QTableWidget):
 		self.setItem(row, col, item)
 	
 	def item_changed_handler(self, row, col):
-		print(f"item_changed_handler => row: {row} / col: {col}")
+#		print(f"item_changed_handler => row: {row} / col: {col}")
 		if not self.ommitCellChanged:
 			if self.item(row, 2).text() == "int":
 				if col == 1: #  or col == 2 or col == 2
