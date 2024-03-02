@@ -6,6 +6,7 @@ from PyQt6.QtCore import *
 
 from PyQt6.QtWidgets import *
 from PyQt6 import uic, QtWidgets
+from config import *
 
 class ProcessesDialog(QDialog):
 	def __init__(self, title = "", prompt = ""):
@@ -19,16 +20,38 @@ class ProcessesDialog(QDialog):
 		self.buttonBox.accepted.connect(self.accept)
 		self.buttonBox.rejected.connect(self.reject)
 		
+		self.wdtInner = QWidget()
+		self.layoutMain = QHBoxLayout()
 		self.layout = QVBoxLayout()
+		# Create QLabel and load image
+		self.image_label = QLabel()
+#			pixmap = QPixmap("path/to/your/image.jpg")  # Replace with your image path
+		self.image_label.setPixmap(ConfigClass.pixGears)
+		
+			# Add label to layout
+			
 		self.message = QLabel(prompt)
 		self.cmbPID = QComboBox()
 #		self.txtInput = QLineEdit()
 #		self.txtInput.setText(preset)
+		self.layoutMain.addWidget(self.image_label)
 		self.layout.addWidget(self.message)
 #		self.layout.addWidget(self.txtInput)
 		self.layout.addWidget(self.cmbPID)
+		
+		self.wdtManual = QWidget()
+		self.layoutManual = QHBoxLayout()
+#		self.layoutManual.addWidget(QLabel("PID:"))
+		self.txtPID = QLineEdit()
+		self.txtPID.setPlaceholderText("Enter PID manually ...")
+		self.layoutManual.addWidget(QLabel("PID:"))
+		self.layoutManual.addWidget(self.txtPID)
+		self.wdtManual.setLayout(self.layoutManual)
+		self.layout.addWidget(self.wdtManual)
 		self.layout.addWidget(self.buttonBox)
-		self.setLayout(self.layout)
+		self.wdtInner.setLayout(self.layout)
+		self.layoutMain.addWidget(self.wdtInner)
+		self.setLayout(self.layoutMain)
 #		self.txtInput.setFocus()
 		self.loadPIDs()
 		
@@ -49,8 +72,16 @@ class ProcessesDialog(QDialog):
 				pass
 				
 #		print(process_info)
-				
+	
+	def getProcessForPID(self):
+		for process in self.processes:
+			if str(process.pid) == self.txtPID.text():
+				return process
+		return None
+			
 	def getSelectedProcess(self):
+		if self.txtPID.text() != "":
+			return self.getProcessForPID()
 		return self.processes[self.cmbPID.currentIndex()]
 		
 class ConfirmDialog(QDialog):

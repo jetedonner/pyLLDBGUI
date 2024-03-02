@@ -34,12 +34,15 @@ class ConfigClass():
 	iconRight = None
 	
 	iconGears = None
+	iconGearsGrey = None
 	iconAdd = None
 	iconSave = None
 	iconLoad = None
 	iconReload = None
 	iconInfo = None
 	
+	pixGears = None
+	pixGearsGrey = None
 	pixBug = None
 	pixBugGreen = None
 	pixAdd = None
@@ -85,6 +88,8 @@ class ConfigClass():
 		
 		ConfigClass.iconStd = QIcon()
 		
+		ConfigClass.pixGears = QPixmap(os.path.join(resources_root, 'gears.png')).scaled(QSize(48, 48))
+		ConfigClass.pixGearsGrey = QPixmap(os.path.join(resources_root, 'gears_grey.png')).scaled(QSize(48, 48))
 		ConfigClass.pixBug = QPixmap(os.path.join(resources_root, 'bug.png')).scaled(QSize(18, 18))
 		ConfigClass.pixBugGreen = QPixmap(os.path.join(resources_root, 'bug_green2.png')).scaled(QSize(18, 18))
 		ConfigClass.pixAdd = QPixmap(os.path.join(resources_root, 'add.png')).scaled(QSize(18, 18))
@@ -102,6 +107,7 @@ class ConfigClass():
 		ConfigClass.iconRight = QIcon(os.path.join(resources_root, 'right-arrow_blue.png'))
 		
 		ConfigClass.iconGears = QIcon(os.path.join(resources_root, 'gears.png'))
+		ConfigClass.iconGearsGrey = QIcon(os.path.join(resources_root, 'gears_grey.png'))
 		
 		ConfigClass.iconAdd = QIcon(os.path.join(resources_root, 'add.png'))
 		ConfigClass.iconSave = QIcon(os.path.join(resources_root, 'save.png'))

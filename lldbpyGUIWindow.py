@@ -157,6 +157,8 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 	def onQApplicationStarted(self):
 		print('onQApplicationStarted started')
+		return
+	
 		self.driver.createTarget(ConfigClass.testTarget)
 		if self.driver.debugger.GetNumTargets() > 0:
 			target = self.driver.getTarget()
@@ -576,12 +578,26 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.tabWidgetDbg.setCurrentIndex(ConfigClass.currentDebuggerSubTab)
 	
+	isAttached = False
 	def attach_clicked(self):
-		print(f"Attaching to process ...")
-		pd = ProcessesDialog("Select process", "Select a process to attach to.")
-		if pd.exec():
-			print(f"Process Idx: '{pd.cmbPID.currentIndex()}' / PID: '{pd.getSelectedProcess().pid}' / Name: '{pd.getSelectedProcess().name()}' selected")
-			pass
+		if not self.isAttached:
+			print(f"Attaching to process ...")
+			pd = ProcessesDialog("Select process to debug", "Select a process to attach to and load for debugging.")
+			if pd.exec():
+				print(f"Process Idx: '{pd.cmbPID.currentIndex()}' / PID: '{pd.getSelectedProcess().pid}' / Name: '{pd.getSelectedProcess().name()}' selected")
+				self.attach_action.setIcon(ConfigClass.iconGearsGrey)
+				self.attach_action.setToolTip("Detach from process")
+				self.handle_reset()
+				self.driver.attachProcess(pd.getSelectedProcess().pid)
+				self.loadTarget()
+				self.isAttached = True	
+		else:
+			error = self.driver.getTarget().GetProcess().Detach()
+			self.handle_reset()
+			print(f"Detach from process returned with result: {error}")
+			self.attach_action.setIcon(ConfigClass.iconGears)
+			self.attach_action.setToolTip("Attach to process")
+			self.isAttached = False
 			
 #		import psutil
 #		
@@ -846,10 +862,10 @@ class LLDBPyGUIWindow(QMainWindow):
 		if self.symFuncName != instruction.GetAddress().GetFunction().GetName():
 			self.symFuncName = instruction.GetAddress().GetFunction().GetName()
 			
-			self.txtMultiline.appendAsmSymbol(str(instruction.GetAddress().GetFileAddress()), self.symFuncName)
+			self.txtMultiline.appendAsmSymbol(str(instruction.GetAddress().GetLoadAddress(target)), self.symFuncName)
 
 #		print(f'instruction.GetComment(target) => {instruction.GetComment(target)}')
-		self.txtMultiline.appendAsmText(hex(int(str(instruction.GetAddress().GetFileAddress()), 10)), instruction.GetMnemonic(target),  instruction.GetOperands(target), instruction.GetComment(target), str(instruction.GetData(target)).replace("                             ", "\t\t").replace("		            ", "\t\t\t").replace("		         ", "\t\t").replace("		      ", "\t\t").replace("			   ", "\t\t\t"), True, self.rip)
+		self.txtMultiline.appendAsmText(hex(int(str(instruction.GetAddress().GetLoadAddress(target)), 10)), instruction.GetMnemonic(target),  instruction.GetOperands(target), instruction.GetComment(target), str(instruction.GetData(target)).replace("                             ", "\t\t").replace("		            ", "\t\t\t").replace("		         ", "\t\t").replace("		      ", "\t\t").replace("			   ", "\t\t\t"), True, self.rip)
 		pass
 		
 #	def disassemble_instructions(self, insts, target, rip):
