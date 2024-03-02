@@ -183,13 +183,16 @@ class BreakpointTreeWidget(QTreeWidget):
 #							self.invisibleRootItem().child(childPar).child(childChild).setBackground(i, ConfigClass.colorTransparent)
 
 	def handle_deleteBP(self):
-		print(f"Going to delete Breakpoint: {self.currentItem().text(0)}")
-		if self.breakpointHelper.handle_deleteBP(self.currentItem().text(0)):
-			print(f"Breakpoint: {self.currentItem().text(0)} deleted SUCCESSFULLY")
+		daItem = self.currentItem()
+		if self.currentItem().childCount() <= 0:
+			daItem = daItem.parent()
+		print(f"Going to delete Breakpoint: {daItem.text(0)}")
+		if self.breakpointHelper.handle_deleteBP(daItem.text(0)):
+			print(f"Breakpoint: {daItem.text(0)} deleted SUCCESSFULLY")
 #			self.currentItem().parent().removeChild(self.currentItem())
 			# Get the index of the item to remove
+			self.setCurrentItem(daItem)
 			index = self.currentIndex()
-			
 			# Check if a valid item is selected
 			if index.isValid():
 				# Remove and delete the item
@@ -317,7 +320,8 @@ class BreakpointTreeWidget(QTreeWidget):
 	def mouseDoubleClickEvent(self, event):
 		daItem = self.itemAt(event.pos().x(), event.pos().y())
 #		print(f"MOUSE DOUBLE => Children: {daItem.childCount()}")
-		
+		if daItem == None:
+			return
 		col = self.columnAt(event.pos().x())
 		if daItem.childCount() > 0:
 			super().mouseDoubleClickEvent(event)

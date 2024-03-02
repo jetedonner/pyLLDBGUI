@@ -32,7 +32,8 @@ class SettingsValues(Enum):
 	# Developer Settings
 	LoadTestTarget = ("Load test target", True, bool)
 	LoadTestBPs = ("Load test breakpoints", True, bool)
-		
+	TestAttachPID = ("Test attach pid", 19840, int)
+	
 class SettingsHelper(QObject):
 	
 	settings = QSettings(ConfigClass.companyName, ConfigClass.appName)
@@ -64,6 +65,9 @@ class SettingsHelper(QObject):
 		self.settings.setValue(SettingsValues.LoadTestTarget.value[0], True)
 		self.settings.setValue(SettingsValues.LoadTestBPs.value[0], True)
 	
+	def setValue(self, setting, value):
+		self.settings.setValue(setting.value[0], value)
+		
 	def setChecked(self, setting, checkableItem):
 		self.settings.setValue(setting.value[0], checkableItem.checkState() == Qt.CheckState.Checked)
 		

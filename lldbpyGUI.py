@@ -207,6 +207,8 @@ def StartLLDBPyGUI(debugger, command, result, dict):
     testTarget = ConfigClass.testTarget #"/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/hello_world_test"
     cmd_banner2(debugger, command, result, dict)
     
+    debugger.SetAsync(True)
+    
     global pymobiledevice3GUIApp
     pymobiledevice3GUIApp = QApplication([])
     pymobiledevice3GUIApp.aboutToQuit.connect(close_application)

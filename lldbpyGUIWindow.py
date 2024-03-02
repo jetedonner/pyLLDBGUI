@@ -49,6 +49,7 @@ from helper.dbgHelper import *
 from helper.dialogHelper import *
 from lldbpyGUIConfig import *
 from listener import *
+from threading import Thread
 
 try:
 	import queue
@@ -119,6 +120,103 @@ def my_callback(frame, bp_loc, dict): # self,
 global my_window
 my_window = None
 
+class Executor(Thread):
+		""" Drives the debugger and responds to events. """
+	
+		aborted = False
+#		signals = None
+			
+		def __init__(self, event_queue):
+				Thread.__init__(self)
+#				self.signals = DebuggerDriverSignals()
+				self.event_queue = event_queue
+				# This is probably not great because it does not give liblldb a chance
+				# to clean up
+				self.daemon = True
+				self.initialize()
+			
+		def initialize(self):
+				print("INITIALISING EXECUTER!!!")
+				self.done = False
+			
+		def setDone(self):
+				self.done = True
+			
+		def isDone(self):
+				return self.done
+		
+		inited = False
+	
+		def eventLoop(self):
+#       global process
+				while not self.isDone() and not self.aborted:
+					if not self.inited:
+						self.inited = True
+						import subprocess
+						
+						# Path to your executable
+						executable_path = "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/hello_world_test"  # Replace with actual path
+						
+						# Start the executable with subprocess.Popen
+						process = subprocess.Popen([executable_path])
+						print(f"objret => {process.pid}")
+						self.event_queue.put(process.pid)
+					else:
+						continue
+#						event = lldb.SBEvent()
+#						got_event = self.listener.WaitForEvent(lldb.UINT32_MAX, event)
+#						print(f'GOT-EVENT: {event} / {event.GetType()}')
+#						desc = lldbutil.get_description(event)
+#						print('Event description:', desc)
+#						print('Event data flavor:', event.GetDataFlavor())
+##           if event.GetDataFlavor() == "Breakpoint::BreakpointEventData":
+##             print("GOT BREAKPOINT CHANGE!!!")
+##           global process
+##           print('Process state:', lldbutil.state_type_to_str(process.GetState()))
+#						print()
+#					
+#						# eBroadcastBitSTDOUT
+#						if event.GetType() == lldb.SBProcess.eBroadcastBitSTDOUT:
+#							print(">>>>> WE GOT STDOUT")
+#							stdout = self.getTarget().GetProcess().GetSTDOUT(256)
+#							if stdout is not None and len(stdout) > 0:
+#								message = {"status":"event", "type":"stdout", "output": "".join(["%02x" % ord(i) for i in stdout])}
+#								print(message)
+#								self.signals.event_output.emit("".join(["%02x" % ord(i) for i in stdout]))
+#								QCoreApplication.processEvents()
+##                 continue
+#							else:
+#								break
+#							while stdout:
+#								stdout = self.getTarget().GetProcess().GetSTDOUT(256)
+#								if stdout is not None and len(stdout) > 0:
+#									message = {"status":"event", "type":"stdout", "output": "".join(["%02x" % ord(i) for i in stdout])}
+#									print(message)
+#									self.signals.event_output.emit("".join(["%02x" % ord(i) for i in stdout]))
+#									QCoreApplication.processEvents()
+##                 continue
+#								else:
+#									break
+#							continue
+#	#           if got_event and not event.IsValid():
+#	##               self.winAddStr("Warning: Invalid or no event...")
+#	#               continue
+#	##             elif not event.GetBroadcaster().IsValid():
+#	##                 continue
+					
+#					self.event_queue.put(event)
+#						self.signals.event_queued.emit(event)
+#           QCoreApplication.processEvents()
+				self.terminate()
+			
+		def run(self):
+				self.eventLoop()
+			
+		def terminate(self):
+#				lldb.SBDebugger.Terminate()
+#				sys.exit(0)
+			pass
+				
 class LLDBPyGUIWindow(QMainWindow):
 	"""PyMobiledevice3GUI's main window (GUI or view)."""
 	
@@ -157,6 +255,9 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 	def onQApplicationStarted(self):
 		print('onQApplicationStarted started')
+		
+#		if self.setHelper.getValue(SettingsValues.LoadTestTarget):
+#			self.launchTestTarget()
 		return
 	
 		self.driver.createTarget(ConfigClass.testTarget)
@@ -362,7 +463,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.reset = QAction(ConfigClass.iconRight, '&Reset', self)
 		self.reset.setStatusTip('Reset')
 #		self.load_resume.setShortcut('Ctrl+L')
-		self.reset.triggered.connect(self.handle_reset)
+		self.reset.triggered.connect(self.launchTestTarget)
 #		self.reset.setEnabled(False)
 		self.toolbar.addAction(self.reset)
 		
@@ -578,26 +679,81 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.tabWidgetDbg.setCurrentIndex(ConfigClass.currentDebuggerSubTab)
 	
+	
+	def launchTestTarget(self):
+#		return
+#		import subprocess
+#		
+#		# Path to your executable
+#		executable_path = "/Volumes/Data/dev/_reversing/disassembler/pyLLDBGUI/LLDBPyGUI/testtarget/hello_world_test"  # Replace with actual path
+#		
+#		# Start the executable with subprocess.Popen
+#		process = subprocess.Popen([executable_path])
+#		print(f"objret => {process.pid}")
+#		global event_queueBP
+#		executor = Executor(event_queueBP)
+#		executor.start()
+#		import time
+#		
+#		time.sleep(1) 
+#		
+#		import psutil
+#		
+##		psutil.pids(cache=False)
+#		# Get list of all processes
+#		self.processes = list(psutil.process_iter())
+#		
+#		# Extract PID and name for each process
+##		process_info = []
+#		for process in self.processes:
+#			try:
+##				process_info.append((process.pid, process.name()))
+##				self.cmbPID.addItem(str(process.name() + " (" + str(process.pid) + ")"), process.pid)
+#				if process.name() == "hello_world_test":
+		pid = event_queueBP.get()
+		print(f"Attaching to {pid}")
+		self.driver.attachProcess(pid)
+		self.loadTarget()
+		self.attach_action.setIcon(ConfigClass.iconGearsGrey)
+		self.attach_action.setToolTip("Detach from process")
+		self.setHelper.setValue(SettingsValues.TestAttachPID, int(pid))
+		#					self.isAttached = True	
+#					break
+#			except (psutil.NoSuchProcess, psutil.AccessDenied):
+#				# Handle potential errors (process might disappear or insufficient permissions)
+#				pass
+#				
+#		pass
+		
 	isAttached = False
 	def attach_clicked(self):
 		if not self.isAttached:
 			print(f"Attaching to process ...")
 			pd = ProcessesDialog("Select process to debug", "Select a process to attach to and load for debugging.")
+			pd.txtPID.setText(str(self.setHelper.getValue(SettingsValues.TestAttachPID)))
 			if pd.exec():
-				print(f"Process Idx: '{pd.cmbPID.currentIndex()}' / PID: '{pd.getSelectedProcess().pid}' / Name: '{pd.getSelectedProcess().name()}' selected")
-				self.attach_action.setIcon(ConfigClass.iconGearsGrey)
-				self.attach_action.setToolTip("Detach from process")
 				self.handle_reset()
-				self.driver.attachProcess(pd.getSelectedProcess().pid)
-				self.loadTarget()
-				self.isAttached = True	
+				try:
+					proc = pd.getSelectedProcess()
+					print(f"Process Idx: '{pd.cmbPID.currentIndex()}' / PID: '{proc.pid}' / Name: '{proc.name()}' selected")
+					self.driver.attachProcess(proc.pid)
+					self.loadTarget()
+					self.attach_action.setIcon(ConfigClass.iconGearsGrey)
+					self.attach_action.setToolTip("Detach from process")
+					self.setHelper.setValue(SettingsValues.TestAttachPID, int(proc.pid))
+					self.isAttached = True	
+				except Exception as e:
+					sError = f"Error while attaching to process: {e}"
+					self.updateStatusBar(sError)
+					print(sError)
 		else:
 			error = self.driver.getTarget().GetProcess().Detach()
-			self.handle_reset()
-			print(f"Detach from process returned with result: {error}")
-			self.attach_action.setIcon(ConfigClass.iconGears)
-			self.attach_action.setToolTip("Attach to process")
-			self.isAttached = False
+			if error.Success():
+				self.handle_reset()
+				print(f"Detach from process returned with result: {error}")
+				self.attach_action.setIcon(ConfigClass.iconGears)
+				self.attach_action.setToolTip("Attach to process")
+				self.isAttached = False
 			
 #		import psutil
 #		
@@ -668,7 +824,40 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.tblHex.resetContent()
 #		self.wdtBPsWPs.treWPs.clear()
 		
-	def handle_processEvent(self, event):
+	def handle_processEvent(self, process):
+		print(f"PROCESS EVENT {process}!!!")
+		try:
+			state = 'stopped'
+			if process.state == eStateStepping or process.state == eStateRunning:
+				state = 'running'
+			elif process.state == eStateExited:
+				state = 'exited'
+				self.should_quit = True
+			thread = process.selected_thread
+			print('Process event: %s, reason: %d' % (state, thread.GetStopReason()))
+			if thread.GetStopReason() == lldb.eStopReasonBreakpoint or thread.GetStopReason() == lldb.eStopReasonPlanComplete:
+				self.load_resume.setIcon(ConfigClass.iconResume)
+				self.setWinTitleWithState("Interrupted")
+				print(f"thread.GetFrameAtIndex(0).GetPC() => {hex(thread.GetFrameAtIndex(0).GetPC())}")
+				self.reloadBreakpoints(False)
+		#		print(f'self.rip => {self.rip}')
+#				QApplication.processEvents()
+#		#		QCoreApplication.processEvents()
+				
+				newAddr = hex(thread.GetFrameAtIndex(0).GetPC())
+				self.rip = newAddr
+				self.txtMultiline.setInstsAndAddr(None, newAddr)
+				self.txtMultiline.setPC(thread.GetFrameAtIndex(0).GetPC())
+				self.wdtBPsWPs.tblBPs.setPC(newAddr)
+				self.wdtBPsWPs.treBPs.setPC(newAddr)
+				self.loadStacktrace()
+				self.start_loadRegisterWorker(False)	
+#				self.txtMultiline.setPC(thread.GetFrameAtIndex(0).GetPC())
+#				self.wdtBPsWPs.treBPs.setPC(hex(thread.GetFrameAtIndex(0).GetPC()))
+				
+				pass
+		except:
+			pass
 #		if SBProcess.EventIsProcessEvent(event):
 #			process = SBProcess.GetProcessFromEvent(event)
 #		else:
@@ -732,7 +921,7 @@ class LLDBPyGUIWindow(QMainWindow):
 			
 #			print(f"TARGET-1: {self.debugger.GetTargetAtIndex(0)}")
 			target = self.debugger.GetTargetAtIndex(0)
-			
+			print(f"loadTarget => {target}")
 			if target:
 				print(f'target.GetTriple() => {target.GetTriple()}')
 #				self.start_loadDisassemblyWorker(True)
@@ -754,38 +943,46 @@ class LLDBPyGUIWindow(QMainWindow):
 					self.listener.start()
 					
 					idx = 0
+					print(f"self.process.GetNumThreads() => {self.process.GetNumThreads()}")
 					self.thread = self.process.GetThreadAtIndex(0)
 					if self.thread:
 						
-						frame = self.thread.GetFrameAtIndex(0)
-						if frame:
-							print(frame)
-							rip = lldbHelper.convert_address(frame.register["rip"].value)
-							self.rip = rip
-							self.start_loadDisassemblyWorker(True)
-							
-							module = frame.GetModule()
-							for sec in module.section_iter():
-								sectionNode = QTreeWidgetItem(self.treFile, [sec.GetName(), str(hex(sec.GetFileAddress())), str(hex(sec.GetFileAddress() + sec.GetByteSize())), hex(sec.GetFileByteSize()), hex(sec.GetByteSize()), lldbHelper.SectionTypeString(sec.GetSectionType()) + " (" + str(sec.GetSectionType()) + ")"])
-								
-								for idx3 in range(sec.GetNumSubSections()):
-#									print(sec.GetSubSectionAtIndex(idx3).GetName())
-									
-									subSec = sec.GetSubSectionAtIndex(idx3)
-									print(subSec)
-									for idx4 in range(subSec.GetNumSubSections()):
-										subSubSec = sec.GetSubSectionAtIndex(idx4)
-										print(subSubSec)
-										
-									subSectionNode = QTreeWidgetItem(sectionNode, [subSec.GetName(), str(hex(subSec.GetFileAddress())), str(hex(subSec.GetFileAddress() + subSec.GetByteSize())), hex(subSec.GetFileByteSize()), hex(subSec.GetByteSize()), lldbHelper.SectionTypeString(subSec.GetSectionType()) + " (" + str(subSec.GetSectionType()) + ")"])
-									
-									for sym in module.symbol_in_section_iter(subSec):
-										subSectionNode2 = QTreeWidgetItem(subSectionNode, [sym.GetName(), str(hex(sym.GetStartAddress().GetFileAddress())), str(hex(sym.GetEndAddress().GetFileAddress())), hex(sym.GetSize()), '', f'{lldbHelper.SymbolTypeString(sym.GetType())} ({sym.GetType()})'])
-							
-							context = frame.GetSymbolContext(lldb.eSymbolContextEverything)
-							self.start_loadSourceWorker(self.debugger, ConfigClass.testTargetSource, self.interruptLoadSourceWorker, context.GetLineEntry().GetLine())
+						print(f"self.thread.GetNumFrames() => {self.thread.GetNumFrames()}")
 						
-						self.start_breakpointWorker()
+						for z in range(self.thread.GetNumFrames()):
+							frameTest = self.thread.GetFrameAtIndex(z)
+							if frameTest.GetModule().GetFileSpec().GetFilename() != target.GetExecutable().GetFilename():
+								continue
+							print(f"frameTest.GetModule() => {frameTest.GetModule().GetFileSpec().GetFilename()}")
+							frame = self.thread.GetFrameAtIndex(z)
+							if frame:
+								print(frame)
+								rip = lldbHelper.convert_address(frame.register["rip"].value)
+								self.rip = rip
+								self.start_loadDisassemblyWorker(True)
+								
+								module = frame.GetModule()
+								for sec in module.section_iter():
+									sectionNode = QTreeWidgetItem(self.treFile, [sec.GetName(), str(hex(sec.GetFileAddress())), str(hex(sec.GetFileAddress() + sec.GetByteSize())), hex(sec.GetFileByteSize()), hex(sec.GetByteSize()), lldbHelper.SectionTypeString(sec.GetSectionType()) + " (" + str(sec.GetSectionType()) + ")"])
+									
+									for idx3 in range(sec.GetNumSubSections()):
+	#									print(sec.GetSubSectionAtIndex(idx3).GetName())
+										
+										subSec = sec.GetSubSectionAtIndex(idx3)
+										print(subSec)
+										for idx4 in range(subSec.GetNumSubSections()):
+											subSubSec = sec.GetSubSectionAtIndex(idx4)
+											print(subSubSec)
+											
+										subSectionNode = QTreeWidgetItem(sectionNode, [subSec.GetName(), str(hex(subSec.GetFileAddress())), str(hex(subSec.GetFileAddress() + subSec.GetByteSize())), hex(subSec.GetFileByteSize()), hex(subSec.GetByteSize()), lldbHelper.SectionTypeString(subSec.GetSectionType()) + " (" + str(subSec.GetSectionType()) + ")"])
+										
+										for sym in module.symbol_in_section_iter(subSec):
+											subSectionNode2 = QTreeWidgetItem(subSectionNode, [sym.GetName(), str(hex(sym.GetStartAddress().GetFileAddress())), str(hex(sym.GetEndAddress().GetFileAddress())), hex(sym.GetSize()), '', f'{lldbHelper.SymbolTypeString(sym.GetType())} ({sym.GetType()})'])
+								
+								context = frame.GetSymbolContext(lldb.eSymbolContextEverything)
+								self.start_loadSourceWorker(self.debugger, ConfigClass.testTargetSource, self.interruptLoadSourceWorker, context.GetLineEntry().GetLine())
+							
+							self.start_breakpointWorker()
 	
 	
 	
@@ -1377,6 +1574,7 @@ class LLDBPyGUIWindow(QMainWindow):
 #			self.workerDebug.signals.setPC.connect(self.handle_debugSetPC)
 			
 			self.threadpool.start(self.workerDebug)
+			print(f"After self.threadpool.start(self.workerDebug)")
 		
 #	def handle_debugSetPC(self, newPC):
 #		self.wdtBPsWPs.treBPs.setPC(hex(newPC))
