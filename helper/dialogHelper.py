@@ -7,6 +7,52 @@ from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
 from PyQt6 import uic, QtWidgets
 
+class ProcessesDialog(QDialog):
+	def __init__(self, title = "", prompt = ""):
+		super().__init__()
+		
+		self.setWindowTitle(title)
+		
+		QBtn = QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+		
+		self.buttonBox = QDialogButtonBox(QBtn)
+		self.buttonBox.accepted.connect(self.accept)
+		self.buttonBox.rejected.connect(self.reject)
+		
+		self.layout = QVBoxLayout()
+		self.message = QLabel(prompt)
+		self.cmbPID = QComboBox()
+#		self.txtInput = QLineEdit()
+#		self.txtInput.setText(preset)
+		self.layout.addWidget(self.message)
+#		self.layout.addWidget(self.txtInput)
+		self.layout.addWidget(self.cmbPID)
+		self.layout.addWidget(self.buttonBox)
+		self.setLayout(self.layout)
+#		self.txtInput.setFocus()
+		self.loadPIDs()
+		
+	def loadPIDs(self):
+		import psutil
+		
+		# Get list of all processes
+		self.processes = list(psutil.process_iter())
+		
+		# Extract PID and name for each process
+		process_info = []
+		for process in self.processes:
+			try:
+				process_info.append((process.pid, process.name()))
+				self.cmbPID.addItem(str(process.name() + " (" + str(process.pid) + ")"), process.pid)
+			except (psutil.NoSuchProcess, psutil.AccessDenied):
+				# Handle potential errors (process might disappear or insufficient permissions)
+				pass
+				
+#		print(process_info)
+				
+	def getSelectedProcess(self):
+		return self.processes[self.cmbPID.currentIndex()]
+		
 class ConfirmDialog(QDialog):
 	def __init__(self, title, question):
 		super().__init__()

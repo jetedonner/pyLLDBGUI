@@ -229,7 +229,8 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.debugger = debugger
 		
-		self.setWindowTitle(APP_NAME + " " + APP_VERSION)
+#		self.setWindowTitle(APP_NAME + " " + APP_VERSION)
+		self.setWinTitleWithState("GUI Started")
 		self.setBaseSize(WINDOW_SIZE * 2, WINDOW_SIZE)
 		self.setMinimumSize(WINDOW_SIZE * 2, WINDOW_SIZE + 72)
 		self.move(1200, 200)
@@ -263,6 +264,14 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.load_action.setShortcut('Ctrl+L')
 		self.load_action.triggered.connect(self.load_clicked)
 		self.toolbar.addAction(self.load_action)
+		
+		self.attach_action = QAction(ConfigClass.iconGears, '&Attach Process', self)
+		self.attach_action.setStatusTip('Attach Process')
+		self.attach_action.setShortcut('Ctrl+A')
+		self.attach_action.triggered.connect(self.attach_clicked)
+		self.toolbar.addAction(self.attach_action)
+		
+		
 		
 		self.settings_action = QAction(ConfigClass.iconSettings, 'Settings', self)
 		self.settings_action.setStatusTip('Settings')
@@ -347,6 +356,13 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.toolbar.addAction(self.settings_action)
 		self.toolbar.addAction(self.help_action)
+		
+		self.reset = QAction(ConfigClass.iconRight, '&Reset', self)
+		self.reset.setStatusTip('Reset')
+#		self.load_resume.setShortcut('Ctrl+L')
+		self.reset.triggered.connect(self.handle_reset)
+#		self.reset.setEnabled(False)
+		self.toolbar.addAction(self.reset)
 		
 		file_menu.addAction(self.settings_action)
 		
@@ -441,10 +457,10 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.wdtSearch = SearchWidget(self.driver)
 		self.tabWidgetDbg.addTab(self.wdtSearch, "Search")
 		
-		self.txtOutput = QConsoleTextEdit()
-		self.txtOutput.setFont(ConfigClass.font)
-		self.txtOutput.setReadOnly(True)
-		self.tabWidgetDbg.addTab(self.txtOutput, "Stacktrace")
+#		self.txtOutput = QConsoleTextEdit()
+#		self.txtOutput.setFont(ConfigClass.font)
+#		self.txtOutput.setReadOnly(True)
+#		self.tabWidgetDbg.addTab(self.txtOutput, "Stacktrace")
 		
 		self.tabWidgetMain = QTabWidget()
 		self.tabWidgetMain.addTab(self.splitter, "Debugger")
@@ -541,6 +557,7 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.txtCommands.setReadOnly(True)
 		self.txtCommands.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
 		self.txtCommands.setFont(ConfigClass.font)
+		self.txtCommands.setText("Here you can run LLDB commands. Type 'help' for a list of available commands.\n")
 		self.layCmdParent.addWidget(self.txtCommands)
 		self.layCmdParent.addWidget(self.wdgCmd)
 		
@@ -559,6 +576,30 @@ class LLDBPyGUIWindow(QMainWindow):
 		
 		self.tabWidgetDbg.setCurrentIndex(ConfigClass.currentDebuggerSubTab)
 	
+	def attach_clicked(self):
+		print(f"Attaching to process ...")
+		pd = ProcessesDialog("Select process", "Select a process to attach to.")
+		if pd.exec():
+			print(f"Process Idx: '{pd.cmbPID.currentIndex()}' / PID: '{pd.getSelectedProcess().pid}' / Name: '{pd.getSelectedProcess().name()}' selected")
+			pass
+			
+#		import psutil
+#		
+#		# Get list of all processes
+#		processes = list(psutil.process_iter())
+#		
+#		# Extract PID and name for each process
+#		process_info = []
+#		for process in processes:
+#			try:
+#				process_info.append((process.pid, process.name()))
+#			except (psutil.NoSuchProcess, psutil.AccessDenied):
+#				# Handle potential errors (process might disappear or insufficient permissions)
+#				pass
+#				
+#		print(process_info)
+#		pass
+		
 	def handle_back(self):
 		print(f"GOING BACK ... {self.txtMultiline.locationStack.currentLocation}")
 #		self.forward.setEnabled(True)
@@ -590,20 +631,45 @@ class LLDBPyGUIWindow(QMainWindow):
 		# Access the frame, breakpoint location, and any extra arguments passed to the callback
 		
 		
-	def handle_processEvent(self, process):
-		print(f'Process-EVENT: {process}')
-		state = 'stopped'
-		if process.state == eStateStepping or process.state == eStateRunning:
-			state = 'running'
-		elif process.state == eStateExited:
-			state = 'exited'
-			self.should_quit = True
-		thread = process.selected_thread
-		print('Process event: %s, reason: %d' % (state, thread.GetStopReason()))
-		if thread.GetStopReason() == lldb.eStopReasonBreakpoint:
-			print(f'REASON BP RFEACHED (listener) Event: {process} => Continuing...')
-			print(f"thread.GetFrameAtIndex(0).GetPC() => {thread.GetFrameAtIndex(0).GetPC()}")
-			self.txtMultiline.locationStack.pushLocation(hex(thread.GetFrameAtIndex(0).GetPC()))
+	def handle_reset(self):
+		print(f"Resetting GUI")
+		self.updateStatusBar(f"Resetting GUI ...")
+		self.txtMultiline.resetContent()
+		self.tblFileInfos.resetContent()
+		self.treFile.clear()
+		self.treStats.clear()
+#		self.tblReg.resetContent()
+		for tbl in self.tblRegs:
+			tbl.resetContent()
+		self.tblRegs.clear()
+		self.tabWidgetReg.clear()
+		self.tblVariables.resetContent()
+		self.wdtBPsWPs.treBPs.clear()
+		self.wdtBPsWPs.tblWPs.resetContent()
+		self.txtSource.setText("")
+		self.treThreads.clear()
+		self.wdtSearch.resetContent()
+		self.tblHex.resetContent()
+#		self.wdtBPsWPs.treWPs.clear()
+		
+	def handle_processEvent(self, event):
+#		if SBProcess.EventIsProcessEvent(event):
+#			process = SBProcess.GetProcessFromEvent(event)
+#		else:
+#			process = event
+#		print(f'Process-EVENT: {event} => {process}')
+#		state = 'stopped'
+#		if process.state == eStateStepping or process.state == eStateRunning:
+#			state = 'running'
+#		elif process.state == eStateExited:
+#			state = 'exited'
+#			self.should_quit = True
+#		thread = process.selected_thread
+#		print('Process event: %s, reason: %d' % (state, thread.GetStopReason()))
+#		if thread.GetStopReason() == lldb.eStopReasonBreakpoint:
+#			print(f'REASON BP RFEACHED (listener) Event: {process} => Continuing...')
+#			print(f"thread.GetFrameAtIndex(0).GetPC() => {thread.GetFrameAtIndex(0).GetPC()}")
+#			self.txtMultiline.locationStack.pushLocation(hex(thread.GetFrameAtIndex(0).GetPC()))
 		pass
 		
 	def handle_stdoutEvent(self, data):
@@ -665,7 +731,7 @@ class LLDBPyGUIWindow(QMainWindow):
 					
 					self.listener = LLDBListener(self.process)
 					self.listener.breakpointEvent.connect(self.handle_breakpointEvent)
-					self.listener.aprocessEvent.connect(self.handle_processEvent)
+					self.listener.processEvent.connect(self.handle_processEvent)
 					self.listener.stdoutEvent.connect(self.handle_stdoutEvent)
 					self.listener.addListenerCalls()
 					self.listener.start()
@@ -1056,10 +1122,12 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.updateStatusBar(statusTxt)
 		
 	currTreDet = None
+	tblRegs = []
 	def handle_loadRegisterLoadRegister(self, type):
 		tabDet = QWidget()
 		tblReg = RegisterTableWidget()
 		tabDet.tblWdgt = tblReg
+		self.tblRegs.append(tblReg)
 		tabDet.setLayout(QVBoxLayout())
 		tabDet.layout().addWidget(tblReg)
 		self.tabWidgetReg.addTab(tabDet, type)
@@ -1132,20 +1200,89 @@ class LLDBPyGUIWindow(QMainWindow):
 			self.txtCmd.doAddCmdToHist = self.setHelper.getValue(SettingsValues.CmdHistory)
 		
 	def load_clicked(self, s):
+		
+#		global pymobiledevice3GUIApp
+		
+		useNativeDlg = SettingsHelper.GetValue(SettingsValues.UseNativeDialogs)
+		if not useNativeDlg:
+			self.app.setAttribute(Qt.ApplicationAttribute.AA_DontUseNativeDialogs, True)
+		
+		dlg = QMessageBox()
+		dlg.setWindowTitle("Active target running")
+		dlg.setText("Do you want to quit the current target and start a new one?")
+		dlg.setIcon(QMessageBox.Icon.Warning)
+		dlg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+		dlg.setDefaultButton(QMessageBox.StandardButton.Yes)
+		button = dlg.exec()
+		
+		doLoadNew = False
+		if button == QMessageBox.StandardButton.Yes:
+			print(f"RELOADING TARGET!!!!")
+			doLoadNew = True
+		
+#		if not useNativeDlg:
+#			self.app.setAttribute(Qt.ApplicationAttribute.AA_DontUseNativeDialogs, False)
+		
+		if doLoadNew:
+			self.openLoadTargetFileBrowser()
+			
+		if not useNativeDlg:
+			self.app.setAttribute(Qt.ApplicationAttribute.AA_DontUseNativeDialogs, False)
+		return
+	
+	def openLoadTargetFileBrowser(self):
 		dialog = QFileDialog(None, "Select executable or library", "", "All Files (*.*)")
 		dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
 		dialog.setNameFilter("Executables (*.exe *.com *.bat *);;Libraries (*.dll *.so *.dylib)")
 		
 		if dialog.exec():
 			filename = dialog.selectedFiles()[0]
-			print(filename)
-#			self.start_workerLoadTarget(filename)
-		else:
-			return None
+			print(f"Loading new target: {filename}")
+#			print("close_application()")
+			# # Stop all running tasks in the thread pool
+			if self.driver.getTarget().GetProcess(): #pymobiledevice3GUIWindow.process:
+				print("KILLING PROCESS")
+				
+				self.driver.aborted = True
+				print("Aborted sent")
+				#					os._exit(1)
+				#       sys.exit(0)
+				#       pymobiledevice3GUIWindow.process.Kill()
+				#       global driver
+				#       driver.terminate()
+				#       pymobiledevice3GUIWindow.driver.getTarget().GetProcess().Stop()
+				#       print("Process stopped")        
+				self.driver.getTarget().GetProcess().Kill()
+				print("Process killed")
+				self.handle_reset()
+				
+				global event_queue
+				event_queue = queue.Queue()
+#				
+#				#				global driver
+				self.driver = debuggerdriver.createDriver(self.debugger, event_queue)
+				self.driver.aborted = False
+				self.driver.createTarget(filename)
+				if self.driver.debugger.GetNumTargets() > 0:
+					target = self.driver.getTarget()
+					
+					fname = "main"
+					main_bp = target.BreakpointCreateByName(fname, target.GetExecutable().GetFilename())
+					main_bp.AddName(fname)
+					
+					self.click_restartTarget()
+					self.loadTarget()
+					self.updateStatusBar(f"New target '{filename}' loaded successfully!")
+			else:
+				print("NO PROCESS TO KILL!!!")
+#			else:
+		return None
 	
+	targetBasename = "<not set>"
 	def loadFileInfo(self, target):
-		self.setWindowTitle(APP_NAME + " " + APP_VERSION + " - " + os.path.basename(target))
-		
+		self.targetBasename = os.path.basename(target)
+#		self.setWindowTitle(APP_NAME + " " + APP_VERSION + " - " + self.targetBasename)
+		self.setWinTitleWithState("Initialized")
 		mach_header = helper.lldbHelper.GetFileHeader(target)
 		
 		self.tblFileInfos.addRow("Magic", lldbHelper.MachoMagic.to_str(lldbHelper.MachoMagic.create_magic_value(mach_header.magic)), hex(mach_header.magic))
@@ -1199,13 +1336,29 @@ class LLDBPyGUIWindow(QMainWindow):
 		else:
 			ci.HandleCommand(f"breakpoint set -a {address} -C bpcb", res)
 		self.bpHelper.handle_enableBP(address, on)
-		pass
+		
+	def setWinTitleWithState(self, state):
+		self.setWindowTitle(APP_NAME + " " + APP_VERSION + " - " + self.targetBasename + " - " + state)
 		
 	def handle_resumeThread(self):
 #		print("Trying to Continue ...")
 #		error = self.process.Continue()
-		self.start_debugWorker(self.driver, StepKind.Continue)
-		self.load_resume.setIcon(ConfigClass.iconPause)
+#		self.isRunning = False
+		if self.workerDebug is None or (self.workerDebug != None and not self.workerDebug.isRunning):
+			self.start_debugWorker(self.driver, StepKind.Continue)
+			self.load_resume.setIcon(ConfigClass.iconPause)
+			self.setWinTitleWithState("Running")
+		else:
+			target = self.driver.getTarget()
+			process = target.GetProcess()
+			if process:
+				thread = process.GetThreadAtIndex(0)
+				self.workerDebug.isRunning = False
+				error = lldb.SBError()
+				if thread.Suspend(error):
+					print(f"Suspend-Error: {error}")
+					self.load_resume.setIcon(ConfigClass.iconPlay)
+					self.setWinTitleWithState("Paused")
 #		print("After Continue ...")
 #		if error:
 #			print(error)
@@ -1213,6 +1366,7 @@ class LLDBPyGUIWindow(QMainWindow):
 	def handle_stopThread(self):
 		print("Trying to SIGINT ...")
 		error = self.process.Stop()
+		self.setWinTitleWithState("Stopped")
 		print("After SIGINT ...")
 		if error:
 			print(error)
@@ -1243,6 +1397,7 @@ class LLDBPyGUIWindow(QMainWindow):
 			context = frm.GetSymbolContext(lldb.eSymbolContextEverything)
 			self.start_loadSourceWorker(self.debugger, ConfigClass.testTargetSource, self.interruptLoadSourceWorker, context.GetLineEntry().GetLine())
 			self.setResumeActionIcon(ConfigClass.iconResume)
+			self.setWinTitleWithState("Interrupted")
 		else:
 			print(f"Debug STEP ({kind}) FAILED!!!")
 		pass

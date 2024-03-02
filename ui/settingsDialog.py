@@ -27,6 +27,7 @@ class SettingsValues(Enum):
 	CmdHistory = ("Commands history", True, bool)
 	MemViewShowSelectedStatubarMsg = ("Memory-Viewer on select show statusbar message", True, bool)
 	VisualizeCurrentBP = ("Visualise current breakpoint", True, bool)
+	UseNativeDialogs = ("Use native dialogs", True, bool)
 		
 class SettingsHelper(QObject):
 	
@@ -53,6 +54,8 @@ class SettingsHelper(QObject):
 		self.settings.setValue(SettingsValues.DisassemblerShowQuickTooltip.value[0], True)
 		self.settings.setValue(SettingsValues.CmdHistory.value[0], True)
 		self.settings.setValue(SettingsValues.MemViewShowSelectedStatubarMsg.value[0], True)
+		self.settings.setValue(SettingsValues.VisualizeCurrentBP.value[0], True)
+		self.settings.setValue(SettingsValues.UseNativeDialogs.value[0], True)
 	
 	def setChecked(self, setting, checkableItem):
 		self.settings.setValue(setting.value[0], checkableItem.checkState() == Qt.CheckState.Checked)
@@ -77,6 +80,8 @@ class SettingsDialog(QDialog):
 		self.settings.setValue(SettingsValues.DisassemblerShowQuickTooltip.value[0], True)
 		self.settings.setValue(SettingsValues.CmdHistory.value[0], True)
 		self.settings.setValue(SettingsValues.MemViewShowSelectedStatubarMsg.value[0], True)
+		self.settings.setValue(SettingsValues.VisualizeCurrentBP.value[0], True)
+		self.settings.setValue(SettingsValues.UseNativeDialogs.value[0], True)
 	
 	def __init__(self, settingsHelper = None):
 		super().__init__()
@@ -108,11 +113,14 @@ class SettingsDialog(QDialog):
 		self.loadSettings()
 		
 	def loadSettings(self):
-		self.table_widget.item(0, 1).setCheckState(self.setHelper.getChecked(SettingsValues.ConfirmRestartTarget))
-		self.table_widget.item(1, 1).setCheckState(self.setHelper.getChecked(SettingsValues.ConfirmQuitApp))
-		self.table_widget.item(2, 1).setCheckState(self.setHelper.getChecked(SettingsValues.DisassemblerShowQuickTooltip))
-		self.table_widget.item(3, 1).setCheckState(self.setHelper.getChecked(SettingsValues.CmdHistory))
-		self.table_widget.item(4, 1).setCheckState(self.setHelper.getChecked(SettingsValues.MemViewShowSelectedStatubarMsg))
+		for i in range(2):
+			self.table_widget.item(0, i).setCheckState(self.setHelper.getChecked(SettingsValues.ConfirmRestartTarget))
+			self.table_widget.item(1, i).setCheckState(self.setHelper.getChecked(SettingsValues.ConfirmQuitApp))
+			self.table_widget.item(2, 1).setCheckState(self.setHelper.getChecked(SettingsValues.DisassemblerShowQuickTooltip))
+			self.table_widget.item(3, i).setCheckState(self.setHelper.getChecked(SettingsValues.CmdHistory))
+			self.table_widget.item(4, 1).setCheckState(self.setHelper.getChecked(SettingsValues.MemViewShowSelectedStatubarMsg))
+			self.table_widget.item(5, i).setCheckState(self.setHelper.getChecked(SettingsValues.VisualizeCurrentBP))
+			self.table_widget.item(6, i).setCheckState(self.setHelper.getChecked(SettingsValues.UseNativeDialogs))
 		
 	def click_test(self):
 		print(f'{SettingsValues.CmdHistory.value[0]} => {self.settings.value(SettingsValues.CmdHistory.value[0], False)}')
@@ -121,8 +129,11 @@ class SettingsDialog(QDialog):
 		self.initDefaults()
 		
 	def click_saveSettings(self):
-		self.setHelper.setChecked(SettingsValues.ConfirmRestartTarget, self.table_widget.item(0, 1))
-		self.setHelper.setChecked(SettingsValues.ConfirmQuitApp, self.table_widget.item(1, 1))
-		self.setHelper.setChecked(SettingsValues.DisassemblerShowQuickTooltip, self.table_widget.item(2, 1))
-		self.setHelper.setChecked(SettingsValues.CmdHistory, self.table_widget.item(3, 1))
-		self.setHelper.setChecked(SettingsValues.MemViewShowSelectedStatubarMsg, self.table_widget.item(4, 1))
+		colCheckBox = 0
+		self.setHelper.setChecked(SettingsValues.ConfirmRestartTarget, self.table_widget.item(0, colCheckBox))
+		self.setHelper.setChecked(SettingsValues.ConfirmQuitApp, self.table_widget.item(1, colCheckBox))
+		self.setHelper.setChecked(SettingsValues.DisassemblerShowQuickTooltip, self.table_widget.item(2, colCheckBox))
+		self.setHelper.setChecked(SettingsValues.CmdHistory, self.table_widget.item(3, colCheckBox))
+		self.setHelper.setChecked(SettingsValues.MemViewShowSelectedStatubarMsg, self.table_widget.item(4, colCheckBox))
+		self.setHelper.setChecked(SettingsValues.VisualizeCurrentBP, self.table_widget.item(5, colCheckBox))
+		self.setHelper.setChecked(SettingsValues.UseNativeDialogs, self.table_widget.item(6, colCheckBox))

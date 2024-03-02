@@ -134,6 +134,9 @@ class SearchWidget(QWidget):
 		self.setLayout(self.laySearchMain)
 #		self.tabWidgetDbg.addTab(self.wdtSearchMain, "Search")
 		
+	def resetContent(self):
+		self.table.resetContent()
+		
 	def swtCaseSensitive_checked(self, checked):
 		self.caseSensitive = checked
 		

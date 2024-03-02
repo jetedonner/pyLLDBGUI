@@ -45,22 +45,20 @@ class DebugWorker(BaseWorker):
 				if self.kind == StepKind.StepInto:
 					print("Trying to StepInto ...")
 					thread.StepInstruction(False)
-#					frame = thread.GetFrameAtIndex(0)
-#					self.signals.setPC.emit(frame.register["rip"].value)
-#					QCoreApplication.processEvents()
+					if thread.GetStopReason() == lldb.eStopReasonBreakpoint:
+						self.isRunning = False
 					print("After StepInto ...")
 				elif self.kind == StepKind.StepOut:
 					print("Trying to StepOut ...")
 					thread.StepOut()
-#					frame = thread.GetFrameAtIndex(0)
-#					self.signals.setPC.emit(frame.register["rip"].value)
-#					QCoreApplication.processEvents()
+					if thread.GetStopReason() == lldb.eStopReasonBreakpoint:
+						self.isRunning = False
 					print("After StepOut ...")
 				elif self.kind == StepKind.StepOver:
 					print("Trying to StepOver ...")
 					thread.StepInstruction(True)
 					print("After StepOver ...")
-					ID = thread.GetThreadID()
+#					ID = thread.GetThreadID()
 					if thread.GetStopReason() == lldb.eStopReasonBreakpoint:
 						
 #						print(f'GOT if thread.GetStopReason() == lldb.eStopReasonBreakpoint:')
@@ -68,45 +66,37 @@ class DebugWorker(BaseWorker):
 #						self.signals.setPC.emit(frame.register["rip"].value)
 #						QCoreApplication.processEvents()
 						
-						from lldbutil import print_stacktrace
-						print_stacktrace(thread)
-						pass
+#						from lldbutil import print_stacktrace
+#						print_stacktrace(thread)
+						self.isRunning = False
 #					print("After StepOver ...")
 				elif self.kind == StepKind.Continue:
 					print("Trying to Continue ...")
+					if thread.IsSuspended():
+						print("thread.IsSuspended() => Trying to Resume ...")
+						thread.Resume()
 					error = process.Continue()
 					print("After Continue ...")
 					if error:
 						print(error)
-					
-#					for thread in process:
-#						if self.TraceOn():
-#							print_stacktrace(thread)
-					ID = thread.GetThreadID()
+
 					if thread.GetStopReason() == lldb.eStopReasonBreakpoint:
-#						print(f'GOT if thread.GetStopReason() == lldb.eStopReasonBreakpoint:')
-#						from lldbutil import print_stacktrace
-#						print_stacktrace(thread)
-						pass
-#					frame = thread.GetFrameAtIndex(0)
-#					self.signals.setPC.emit(frame.register["rip"].value)
-#					QCoreApplication.processEvents()
-#						self.window().wdtBPsWPs.tblBPs.setPC(int(frame.register["rip"].value))
-#					pass
+						self.isRunning = False
 				else:
 					print("Trying to StepOver ...")
 					thread.StepInstruction(True)
 					print("After StepOver ...")
-					ID = thread.GetThreadID()
+#					ID = thread.GetThreadID()
 					if thread.GetStopReason() == lldb.eStopReasonBreakpoint:
 #						print(f'GOT if thread.GetStopReason() == lldb.eStopReasonBreakpoint:')
 #						from lldbutil import print_stacktrace
 #						print_stacktrace(thread)
-						pass
+						self.isRunning = False
 #					frame = thread.GetFrameAtIndex(0)
 #					self.signals.setPC.emit(frame.register["rip"].value)
 #					QCoreApplication.processEvents()
-
+				
+				
 				frame = thread.GetFrameAtIndex(0)
 				if frame:
 					registerList = frame.GetRegisters()
@@ -114,10 +104,12 @@ class DebugWorker(BaseWorker):
 					if numRegisters > 0:
 #						print(f'GetPCAddress => {hex(frame.GetPCAddress().GetFileAddress())}')
 						self.signals.debugStepCompleted.emit(self.kind, True, frame.register["rip"].value, frame)
-						pass
+						self.isRunning = False
+#						pass
 					else:
 						self.signals.debugStepCompleted.emit(self.kind, False, '', frame)
-						pass
+						self.isRunning = False
+#						pass
 				else:
 					print("NO FRAME")
 			else:
@@ -126,4 +118,4 @@ class DebugWorker(BaseWorker):
 			print("NO PROCESS")
 #		self.signals.finished.emit()
 		self.isRunning = False
-		pass
+#		pass

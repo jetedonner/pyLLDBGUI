@@ -71,6 +71,11 @@
            <string>VisualizeCurrentBP</string>
           </property>
          </row>
+         <row>
+          <property name="text">
+           <string>Use native Dialogs</string>
+          </property>
+         </row>
          <column>
           <property name="text">
            <string>Setting</string>
@@ -85,6 +90,9 @@
           <property name="text">
            <string>Confirm restart target</string>
           </property>
+          <property name="checkState">
+           <enum>Checked</enum>
+          </property>
          </item>
          <item row="0" column="1">
           <property name="text">
@@ -97,6 +105,9 @@
          <item row="1" column="0">
           <property name="text">
            <string>Confirm Quit App</string>
+          </property>
+          <property name="checkState">
+           <enum>Checked</enum>
           </property>
          </item>
          <item row="1" column="1">
@@ -114,6 +125,9 @@
           <property name="text">
            <string>Disassembler show Quick-ToolTip</string>
           </property>
+          <property name="checkState">
+           <enum>Checked</enum>
+          </property>
          </item>
          <item row="2" column="1">
           <property name="text">
@@ -126,6 +140,9 @@
          <item row="3" column="0">
           <property name="text">
            <string>Add commands to history</string>
+          </property>
+          <property name="checkState">
+           <enum>Checked</enum>
           </property>
          </item>
          <item row="3" column="1">
@@ -140,6 +157,9 @@
           <property name="text">
            <string>MemoryViewer show selected address range statusbar message</string>
           </property>
+          <property name="checkState">
+           <enum>Checked</enum>
+          </property>
          </item>
          <item row="4" column="1">
           <property name="text">
@@ -153,8 +173,27 @@
           <property name="text">
            <string>Visuzalize current breakpoint</string>
           </property>
+          <property name="checkState">
+           <enum>Checked</enum>
+          </property>
          </item>
          <item row="5" column="1">
+          <property name="text">
+           <string/>
+          </property>
+          <property name="checkState">
+           <enum>Checked</enum>
+          </property>
+         </item>
+         <item row="6" column="0">
+          <property name="text">
+           <string>Use native Dialogs</string>
+          </property>
+          <property name="checkState">
+           <enum>Checked</enum>
+          </property>
+         </item>
+         <item row="6" column="1">
           <property name="checkState">
            <enum>Checked</enum>
           </property>

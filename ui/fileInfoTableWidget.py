@@ -56,8 +56,9 @@ class FileInfosTableWidget(QTableWidget):
 		pass
 		
 	def resetContent(self):
-		for row in range(self.rowCount(), 0):
-			self.removeRow(row)
+		self.setRowCount(0)
+#		for row in range(self.rowCount(), 0):
+#			self.removeRow(row)
 			
 	def addRow(self, key, value, raw):
 		currRowCount = self.rowCount()

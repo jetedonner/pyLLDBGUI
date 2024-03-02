@@ -84,6 +84,9 @@ class QMemoryViewer(QWidget):
 	startAddress = None
 	#	hexData = None
 	
+	def resetContent(self):
+		self.tblHex.resetContent()
+		
 	def cmbGrouping_changed(self, currentIdx:int):
 		idx = 0
 		for member in ByteGrouping:

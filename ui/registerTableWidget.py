@@ -67,8 +67,9 @@ class RegisterTableWidget(QTableWidget):
 		pass
 		
 	def resetContent(self):
-		for row in range(self.rowCount(), 0):
-			self.removeRow(row)
+		self.setRowCount(0)
+#		for row in range(self.rowCount(), 0):
+#			self.removeRow(row)
 			
 	def addRow(self, register, value, memory):
 		currRowCount = self.rowCount()

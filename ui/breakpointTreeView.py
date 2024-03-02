@@ -123,6 +123,7 @@ class BreakpointTreeWidget(QTreeWidget):
 		self.currentItemChanged.connect(self.handle_currentItemChanged)
 		self.itemChanged.connect(self.handle_itemChanged)
 		self.itemEntered.connect(self.handle_itemEntered)
+
 #		self.currentItem()
 #		self.chan
 #		self.model().dataChanged.connect(self.handle_return_pressed)

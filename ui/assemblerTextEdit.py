@@ -545,8 +545,9 @@ class DisassemblyTableWidget(QTableWidget):
 		pass
 		
 	def resetContent(self):
-		for row in range(self.rowCount(), 0):
-			self.removeRow(row)
+		self.setRowCount(0)
+#		for row in range(self.rowCount(), 0):
+#			self.removeRow(row)
 			
 	def addRow(self, lineNum, address, instr, args, comment, data, rip = ""):
 		currRowCount = self.rowCount()
@@ -609,6 +610,11 @@ class AssemblerTextEdit(QWidget):
 		self.addr = addr
 #		print(f'CURRENT ADDRESS: {self.addr}')
 	
+	def resetContent(self):
+		self.lineCountNG = 0
+		self.table.resetContent()
+		pass
+		
 	def clear(self):
 		self.lineCountNG = 0
 		self.table.resetContent()

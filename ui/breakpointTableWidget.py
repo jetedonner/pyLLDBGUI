@@ -100,6 +100,9 @@ class WatchpointsTableWidget(QTableWidget):
 		
 	oldBPName = ""
 	
+	def resetContent(self):
+		self.setRowCount(0)
+	
 	def on_double_click(self, row, col):
 		if col == 3:
 			self.oldBPName = self.item(row, 3).text()

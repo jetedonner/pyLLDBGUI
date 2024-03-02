@@ -32,7 +32,7 @@ class LLDBListener(QtCore.QObject, Thread):
 	
 	should_quit = False
 	
-	aprocessEvent = pyqtSignal(object)
+	processEvent = pyqtSignal(object)
 	breakpointEvent = pyqtSignal(object)
 	stdoutEvent = pyqtSignal(object)
 	
@@ -73,7 +73,7 @@ class LLDBListener(QtCore.QObject, Thread):
 			print(f'REASON BP RFEACHED (listener) Event: {event} => Continuing...')
 			
 		print(f"======================== IN HEA ========================")
-		self.aprocessEvent.emit(process)
+		self.processEvent.emit(process)
 		QCoreApplication.processEvents()
 		print(f"====================== IN HEA END ======================")
 #			self.breakpointEvent.emit(event)

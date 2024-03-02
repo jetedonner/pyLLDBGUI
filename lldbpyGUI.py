@@ -222,6 +222,7 @@ def StartLLDBPyGUI(debugger, command, result, dict):
     
     global pymobiledevice3GUIWindow
     pymobiledevice3GUIWindow = LLDBPyGUIWindow(debugger, driver) # QConsoleTextEditWindow(debugger)
+    pymobiledevice3GUIWindow.app = pymobiledevice3GUIApp
     #     pymobiledevice3GUIWindow.loadTarget()
     pymobiledevice3GUIWindow.show()
 

@@ -265,50 +265,55 @@ class QuickToolTip:
 #				tooltip = ""
 			tooltip += f'OpStr:\t{operandsText}'
 			tooltip += f'\nAddr:\t{hex(address)}'
-			error_ref = lldb.SBError()
-			process = debugger.GetSelectedTarget().GetProcess()
-			memory = process.ReadMemory(address, 0x20, error_ref)
-			if error_ref.Success():
-				dataTillNull = self.extract_data_until_null(memory)
-#				print(dataTillNull)
-				string = codecs.decode(dataTillNull, 'utf-8', errors='ignore')
-				
-#				isNum = False
-#				try:
-#					float(string[0])
-##					testint = ord(string[0])
-#					isNum = True
-#				except ValueError:
-#					isNum = False
-##				if len(string) == 2:
-##					string2 = "Hello, world!"
-##					first_char_int = ord(string2[0])  # Get the ASCII code using ord()
-##					
-##					print(first_char_int)  # Output: 72 (ASCII code for 'H')
-##					print(f'len({string}) == {len(string)} => ord({string[0]}) == {ord(string[0])}')
-				
-#				first_byte_hex = f"{dataTillNull[0]:02x}"
-#				print(f'CHAR: ({first_byte_hex} / {int(first_byte_hex, 16)})')
-#				
-#				print(f'STRING: ({string})')
-				if dataTillNull != b'\x00' and string != '': # and not isNum:
-					tooltip += f'\nString:\t{string}'
+			try:
+				print(f"debugger.GetSelectedTarget() => {debugger.GetSelectedTarget()}")
+				error_ref = lldb.SBError()
+				process = debugger.GetSelectedTarget().GetProcess()
+				print(f"debugger.GetSelectedTarget().GetProcess() => {debugger.GetSelectedTarget().GetProcess()}")
+				memory = process.ReadMemory(address, 0x20, error_ref)
+				if error_ref.Success():
+					dataTillNull = self.extract_data_until_null(memory)
+	#				print(dataTillNull)
+					string = codecs.decode(dataTillNull, 'utf-8', errors='ignore')
 					
-				try:
-					value = struct.unpack('<H', dataTillNull)[0]
-					tooltip += f'\nInt:\t{hex(value)} ({value})'
-				except Exception as e:
-#					print(f'Error extracting INT: {e}')
-					pass
+	#				isNum = False
+	#				try:
+	#					float(string[0])
+	##					testint = ord(string[0])
+	#					isNum = True
+	#				except ValueError:
+	#					isNum = False
+	##				if len(string) == 2:
+	##					string2 = "Hello, world!"
+	##					first_char_int = ord(string2[0])  # Get the ASCII code using ord()
+	##					
+	##					print(first_char_int)  # Output: 72 (ASCII code for 'H')
+	##					print(f'len({string}) == {len(string)} => ord({string[0]}) == {ord(string[0])}')
 					
-#				if len(dataTillNull) <= 1:
-				tooltip += f'\nBytes:\t{dataTillNull}'
-#				else:
-#					tooltip += f'\nBytes:\t{dataTillNull[:-1]}'
-			else:
-				print(str(error_ref))
-				tooltip = str(error_ref)
-		
+	#				first_byte_hex = f"{dataTillNull[0]:02x}"
+	#				print(f'CHAR: ({first_byte_hex} / {int(first_byte_hex, 16)})')
+	#				
+	#				print(f'STRING: ({string})')
+					if dataTillNull != b'\x00' and string != '': # and not isNum:
+						tooltip += f'\nString:\t{string}'
+						
+					try:
+						value = struct.unpack('<H', dataTillNull)[0]
+						tooltip += f'\nInt:\t{hex(value)} ({value})'
+					except Exception as e:
+	#					print(f'Error extracting INT: {e}')
+						pass
+						
+	#				if len(dataTillNull) <= 1:
+					tooltip += f'\nBytes:\t{dataTillNull}'
+	#				else:
+	#					tooltip += f'\nBytes:\t{dataTillNull[:-1]}'
+				else:
+					print(str(error_ref))
+					tooltip = str(error_ref)
+			except Exception as e:
+				print(f"Error in generating QUICK-TOOLTIP: {e}")
+				pass
 		return tooltip
 	
 	def extract_data_until_null(self, byte_data):

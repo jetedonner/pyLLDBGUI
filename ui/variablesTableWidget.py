@@ -124,8 +124,9 @@ class VariablesTableWidget(QTableWidget):
 		pass
 		
 	def resetContent(self):
-		for row in range(self.rowCount(), 0):
-			self.removeRow(row)
+		self.setRowCount(0)
+#		for row in range(self.rowCount(), 0):
+#			self.removeRow(row)
 	
 	def updateRow(self, name, value, datatype, address, data):
 		self.ommitCellChanged = True

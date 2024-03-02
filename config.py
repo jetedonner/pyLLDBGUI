@@ -33,6 +33,7 @@ class ConfigClass():
 	iconLeft = None
 	iconRight = None
 	
+	iconGears = None
 	iconAdd = None
 	iconSave = None
 	iconLoad = None
@@ -99,6 +100,8 @@ class ConfigClass():
 		
 		ConfigClass.iconLeft = QIcon(os.path.join(resources_root, 'left-arrow_blue.png'))
 		ConfigClass.iconRight = QIcon(os.path.join(resources_root, 'right-arrow_blue.png'))
+		
+		ConfigClass.iconGears = QIcon(os.path.join(resources_root, 'gears.png'))
 		
 		ConfigClass.iconAdd = QIcon(os.path.join(resources_root, 'add.png'))
 		ConfigClass.iconSave = QIcon(os.path.join(resources_root, 'save.png'))
