@@ -128,6 +128,21 @@ class VariablesTableWidget(QTableWidget):
 #		for row in range(self.rowCount(), 0):
 #			self.removeRow(row)
 	
+	def updateOrAddRow(self, name, value, datatype, address, data):
+		self.ommitCellChanged = True
+		found = False
+		for i in range(self.rowCount()):
+			if self.item(i, 0).text() == name:
+				found = True
+				self.item(i, 1).setText(value)
+				self.item(i, 2).setText(datatype)
+				self.item(i, 3).setText(address)
+				self.item(i, 4).setText(data)
+				break
+		if not found:
+			self.addRow(name, value, datatype, address, data)
+		self.ommitCellChanged = False
+		
 	def updateRow(self, name, value, datatype, address, data):
 		self.ommitCellChanged = True
 		for i in range(self.rowCount()):

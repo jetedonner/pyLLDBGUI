@@ -7,6 +7,7 @@ from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
 from PyQt6 import uic, QtWidgets
 
+from helper.breakpointHelper import *
 from config import *
 
 class EditableTreeItem(QTreeWidgetItem):
@@ -83,14 +84,18 @@ class BreakpointTreeWidget(QTreeWidget):
 	
 #	actionShowMemory = None
 	
-	def __init__(self):
+	def __init__(self, driver):
 		super().__init__()
+		self.driver = driver
 #       self.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
+		self.breakpointHelper = BreakpointHelper(self.window(), self.driver)
 		self.context_menu = QMenu(self)
 		
 		self.actionShowInfos = self.context_menu.addAction("Show infos")
 		self.context_menu.addSeparator()
 		self.actionEnableBP = self.context_menu.addAction("Enable / Disable Breakpoint")
+		self.actionDeleteBP = self.context_menu.addAction("Delete Breakpoint")
+		self.actionDeleteBP.triggered.connect(self.handle_deleteBP)
 		self.actionEnableAllBP = self.context_menu.addAction("Enable All Breakpoints")
 		self.actionDisableAllBP = self.context_menu.addAction("Disable All Breakpoints")
 		self.context_menu.addSeparator()
@@ -177,6 +182,23 @@ class BreakpointTreeWidget(QTreeWidget):
 #						for i in range(self.invisibleRootItem().child(childPar).child(childChild).columnCount()):
 #							self.invisibleRootItem().child(childPar).child(childChild).setBackground(i, ConfigClass.colorTransparent)
 
+	def handle_deleteBP(self):
+		print(f"Going to delete Breakpoint: {self.currentItem().text(0)}")
+		if self.breakpointHelper.handle_deleteBP(self.currentItem().text(0)):
+			print(f"Breakpoint: {self.currentItem().text(0)} deleted SUCCESSFULLY")
+#			self.currentItem().parent().removeChild(self.currentItem())
+			# Get the index of the item to remove
+			index = self.currentIndex()
+			
+			# Check if a valid item is selected
+			if index.isValid():
+				# Remove and delete the item
+				removed_item = self.takeTopLevelItem(index.row())
+				del removed_item  # Alternatively, you can use removed_item.delete()
+		else:
+			print(f"Breakpoint: {self.currentItem().text(0)} COULD NOT BE deleted!!!")
+		
+		pass
 		
 	def handle_gotoAddr(self):
 		newAddr = self.currentItem().text(2)
@@ -300,8 +322,10 @@ class BreakpointTreeWidget(QTreeWidget):
 		if daItem.childCount() > 0:
 			super().mouseDoubleClickEvent(event)
 		elif col == 1:
+			
 			daItem.toggleBP()
 			self.window().txtMultiline.table.enableBP(daItem.text(2), daItem.isBPEnabled)
+			self.breakpointHelper.handle_enableBP(daItem.text(2), daItem.isBPEnabled)
 			if daItem.parent() != None:
 #				newEnabled = daItem.isBPEnabled
 				allDisabled = True

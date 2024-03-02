@@ -61,6 +61,7 @@ class LoadRegisterWorker(BaseWorker):
 					# Load VARIABLES
 					idx = 0
 					vars = frame.GetVariables(True, True, True, False)  # type of SBValueList
+					print(f"GETTING VARIABLES: vars => {vars}")
 					for var in vars:
 #						hexVal = ""
 #						print(dir(var))

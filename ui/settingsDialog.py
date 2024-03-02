@@ -28,6 +28,10 @@ class SettingsValues(Enum):
 	MemViewShowSelectedStatubarMsg = ("Memory-Viewer on select show statusbar message", True, bool)
 	VisualizeCurrentBP = ("Visualise current breakpoint", True, bool)
 	UseNativeDialogs = ("Use native dialogs", True, bool)
+	
+	# Developer Settings
+	LoadTestTarget = ("Load test target", True, bool)
+	LoadTestBPs = ("Load test breakpoints", True, bool)
 		
 class SettingsHelper(QObject):
 	
@@ -56,6 +60,9 @@ class SettingsHelper(QObject):
 		self.settings.setValue(SettingsValues.MemViewShowSelectedStatubarMsg.value[0], True)
 		self.settings.setValue(SettingsValues.VisualizeCurrentBP.value[0], True)
 		self.settings.setValue(SettingsValues.UseNativeDialogs.value[0], True)
+		
+		self.settings.setValue(SettingsValues.LoadTestTarget.value[0], True)
+		self.settings.setValue(SettingsValues.LoadTestBPs.value[0], True)
 	
 	def setChecked(self, setting, checkableItem):
 		self.settings.setValue(setting.value[0], checkableItem.checkState() == Qt.CheckState.Checked)
@@ -82,6 +89,9 @@ class SettingsDialog(QDialog):
 		self.settings.setValue(SettingsValues.MemViewShowSelectedStatubarMsg.value[0], True)
 		self.settings.setValue(SettingsValues.VisualizeCurrentBP.value[0], True)
 		self.settings.setValue(SettingsValues.UseNativeDialogs.value[0], True)
+		
+		self.settings.setValue(SettingsValues.LoadTestTarget.value[0], True)
+		self.settings.setValue(SettingsValues.LoadTestBPs.value[0], True)
 	
 	def __init__(self, settingsHelper = None):
 		super().__init__()
@@ -104,6 +114,11 @@ class SettingsDialog(QDialog):
 		self.layout = self.tab_first.layout()
 		self.table_widget = self.layout.itemAt(0).widget()
 		
+#		self.tab_first = self.findChild(QtWidgets.QTableWidget, "tableWidget_2")
+#		self.layout = self.tab_first.layout()
+#		self.table_widget = self.layout.itemAt(0).widget()
+		self.table_widget2 = self.findChild(QtWidgets.QTableWidget, "tableWidget_2")
+		
 		self.cmdLoadDefaults.clicked.connect(self.click_loadDefaults)
 		self.cmdTest.clicked.connect(self.click_test)
 		
@@ -121,6 +136,9 @@ class SettingsDialog(QDialog):
 			self.table_widget.item(4, 1).setCheckState(self.setHelper.getChecked(SettingsValues.MemViewShowSelectedStatubarMsg))
 			self.table_widget.item(5, i).setCheckState(self.setHelper.getChecked(SettingsValues.VisualizeCurrentBP))
 			self.table_widget.item(6, i).setCheckState(self.setHelper.getChecked(SettingsValues.UseNativeDialogs))
+			
+		self.table_widget2.item(0, 1).setCheckState(self.setHelper.getChecked(SettingsValues.LoadTestTarget))
+		self.table_widget2.item(1, 1).setCheckState(self.setHelper.getChecked(SettingsValues.LoadTestBPs))
 		
 	def click_test(self):
 		print(f'{SettingsValues.CmdHistory.value[0]} => {self.settings.value(SettingsValues.CmdHistory.value[0], False)}')
@@ -137,3 +155,6 @@ class SettingsDialog(QDialog):
 		self.setHelper.setChecked(SettingsValues.MemViewShowSelectedStatubarMsg, self.table_widget.item(4, colCheckBox))
 		self.setHelper.setChecked(SettingsValues.VisualizeCurrentBP, self.table_widget.item(5, colCheckBox))
 		self.setHelper.setChecked(SettingsValues.UseNativeDialogs, self.table_widget.item(6, colCheckBox))
+		
+		self.setHelper.setChecked(SettingsValues.LoadTestTarget, self.table_widget2.item(0, 1))
+		self.setHelper.setChecked(SettingsValues.LoadTestBPs, self.table_widget2.item(1, 1))

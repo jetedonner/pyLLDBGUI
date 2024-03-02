@@ -79,12 +79,12 @@ class BreakpointHelper():
 				bl = bp.GetLocationAtIndex(j)
 				if hex(bl.GetAddress().GetLoadAddress(target)) == address:
 #					bp_cur = self.driver.getTarget().GetBreakpointAtIndex(bpId)
+					bl.SetEnabled(enabled)
 					bp.SetEnabled(enabled)
 					found = True
 					break
 			if found:
 				break
-		pass
 		
 	def handle_checkBPExists(self, address):
 		bpRet = None
@@ -109,11 +109,12 @@ class BreakpointHelper():
 	def handle_deleteBP(self, bpId, enabled = True):
 		print(f'handle_enableBP: {bpId} => {enabled}')
 		target = self.driver.getTarget()
-		if target.BreakpointDelete(bpId):
+		if target.BreakpointDelete(int(bpId)):
 			print(f"Breakpoint (ID: {bpId}) deleted successfully!")
-		
+			return True
 		else:
 			print(f"Breakpoint (ID: {bpId}) COULD NOT BE DELETED!")
+			return False
 #		for i in range(target.GetNumBreakpoints()):
 #			bp = self.driver.getTarget().GetBreakpointAtIndex(i)
 #			found = False

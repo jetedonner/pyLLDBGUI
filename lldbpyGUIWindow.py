@@ -740,7 +740,8 @@ class LLDBPyGUIWindow(QMainWindow):
 				self.loadFileInfo(target.GetExecutable().GetDirectory() + "/" + target.GetExecutable().GetFilename())
 				self.loadFileStats(target)
 				
-				self.loadTestBPs(ConfigClass.testBPsFilename)
+				if self.setHelper.getValue(SettingsValues.LoadTestBPs):
+					self.loadTestBPs(ConfigClass.testBPsFilename)
 				
 				self.process = target.GetProcess()
 				if self.process:
@@ -1166,7 +1167,10 @@ class LLDBPyGUIWindow(QMainWindow):
 		self.tblVariables.addRow(name, value, valType, address, data)
 		
 	def handle_loadRegisterUpdateVariableValue(self, name, value, data, valType, address):
-		self.tblVariables.updateRow(name, value, valType, address, data)
+		if self.isAttached:
+			self.tblVariables.updateOrAddRow(name, value, valType, address, data)
+		else:
+			self.tblVariables.updateRow(name, value, valType, address, data)
 		
 	def click_help(self):
 		self.updateStatusBar("Help for LLDBPyGUI opening ...")
@@ -1216,34 +1220,11 @@ class LLDBPyGUIWindow(QMainWindow):
 			self.txtCmd.doAddCmdToHist = self.setHelper.getValue(SettingsValues.CmdHistory)
 		
 	def load_clicked(self, s):
+		md = MessageDialog("Active target running", "Do you want to quit the current target and start a new one?", QMessageBox.Icon.Warning, self.app)
 		
-#		global pymobiledevice3GUIApp
-		
-		useNativeDlg = SettingsHelper.GetValue(SettingsValues.UseNativeDialogs)
-		if not useNativeDlg:
-			self.app.setAttribute(Qt.ApplicationAttribute.AA_DontUseNativeDialogs, True)
-		
-		dlg = QMessageBox()
-		dlg.setWindowTitle("Active target running")
-		dlg.setText("Do you want to quit the current target and start a new one?")
-		dlg.setIcon(QMessageBox.Icon.Warning)
-		dlg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-		dlg.setDefaultButton(QMessageBox.StandardButton.Yes)
-		button = dlg.exec()
-		
-		doLoadNew = False
-		if button == QMessageBox.StandardButton.Yes:
-			print(f"RELOADING TARGET!!!!")
-			doLoadNew = True
-		
-#		if not useNativeDlg:
-#			self.app.setAttribute(Qt.ApplicationAttribute.AA_DontUseNativeDialogs, False)
-		
-		if doLoadNew:
+		if md.showModal() == QMessageBox.StandardButton.Yes:
 			self.openLoadTargetFileBrowser()
 			
-		if not useNativeDlg:
-			self.app.setAttribute(Qt.ApplicationAttribute.AA_DontUseNativeDialogs, False)
 		return
 	
 	def openLoadTargetFileBrowser(self):

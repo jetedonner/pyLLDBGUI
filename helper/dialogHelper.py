@@ -7,6 +7,7 @@ from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
 from PyQt6 import uic, QtWidgets
 from config import *
+from ui.settingsDialog import *
 
 class ProcessesDialog(QDialog):
 	def __init__(self, title = "", prompt = ""):
@@ -44,6 +45,8 @@ class ProcessesDialog(QDialog):
 #		self.layoutManual.addWidget(QLabel("PID:"))
 		self.txtPID = QLineEdit()
 		self.txtPID.setPlaceholderText("Enter PID manually ...")
+		self.txtPID.setText("19091")
+#		self.txtPID.setFocus(Qt.FocusReason.NoFocusReason)
 		self.layoutManual.addWidget(QLabel("PID:"))
 		self.layoutManual.addWidget(self.txtPID)
 		self.wdtManual.setLayout(self.layoutManual)
@@ -54,6 +57,11 @@ class ProcessesDialog(QDialog):
 		self.setLayout(self.layoutMain)
 #		self.txtInput.setFocus()
 		self.loadPIDs()
+		
+	def showEvent(self, event):
+		super().showEvent(event)
+		# Set focus to line edit after the dialog is shown
+		self.txtPID.setFocus()
 		
 	def loadPIDs(self):
 		import psutil
@@ -83,7 +91,36 @@ class ProcessesDialog(QDialog):
 		if self.txtPID.text() != "":
 			return self.getProcessForPID()
 		return self.processes[self.cmbPID.currentIndex()]
+
+	
+class MessageDialog(QMessageBox):
+	
+	app = None
+	def __init__(self, title, msg, icon = QMessageBox.Icon.Warning, app = None):
+		super().__init__()
+		self.app = app
+		self.setWindowTitle(title)
+		self.setText(msg)
+		self.setIcon(icon)
+		self.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+		self.setDefaultButton(QMessageBox.StandardButton.Yes)
 		
+	def showModal(self):
+		useNativeDlg = SettingsHelper.GetValue(SettingsValues.UseNativeDialogs)
+		if self.app != None and not useNativeDlg:
+			self.app.setAttribute(Qt.ApplicationAttribute.AA_DontUseNativeDialogs, True)
+			
+		button = self.exec()
+	
+		doLoadNew = False
+		if button == QMessageBox.StandardButton.Yes:
+			doLoadNew = True
+			
+		if self.app != None and not useNativeDlg:
+			self.app.setAttribute(Qt.ApplicationAttribute.AA_DontUseNativeDialogs, False)
+			
+		return button
+			
 class ConfirmDialog(QDialog):
 	def __init__(self, title, question):
 		super().__init__()

@@ -597,7 +597,7 @@ class BPsWPsWidget(QWidget):
 		
 		self.tabWidgetBPsWPs = QTabWidget()
 		
-		self.treBPs = BreakpointTreeWidget()
+		self.treBPs = BreakpointTreeWidget(self.driver)
 #		self.treBPs.itemDoubleClicked.connect(self.handle_itemDoubleClicked)
 #		self.treBPs.currentItemChanged.connect(self.handle_currentItemChanged)
 #		
